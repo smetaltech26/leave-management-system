@@ -4,15 +4,13 @@ const path = require('path');
 const componentsDir = path.join(__dirname, '../src/components');
 
 const replacements = [
-  // ลบ class ที่ทำให้เกิดปัญหา
+  // ลบ class ที่ทำให้เกิดปัญหาตัวหนังสือมืด
   { regex: /\btext-slate-900\b/g, replace: 'text-[var(--text-main)]' },
   { regex: /\btext-slate-600\b/g, replace: 'text-[var(--text-muted)]' },
   { regex: /\btext-slate-500\b/g, replace: 'text-[var(--text-muted)]' },
-  // ลบ dark:text-... ออกให้หมด เพราะเราใช้ var() ที่เปลี่ยนตัวเองได้อยู่แล้ว
+  // ลบ dark:text-... ออกให้หมด
   { regex: /\bdark:text-\[var\(--text-main\)\]\b/g, replace: '' },
   { regex: /\bdark:text-\[var\(--text-muted\)\]\b/g, replace: '' },
-  // ป้องกันช่องว่างซ้ำซ้อน
-  { regex: /\s{2,}/g, replace: ' ' }
 ];
 
 function processDirectory(directory) {
@@ -29,7 +27,6 @@ function processDirectory(directory) {
       let modified = false;
       
       for (const rule of replacements) {
-        // For regex testing, replace all
         if (rule.regex.test(content)) {
           content = content.replace(rule.regex, rule.replace);
           modified = true;

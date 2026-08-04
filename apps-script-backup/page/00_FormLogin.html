@@ -1,0 +1,282 @@
+<section class="auth-page" id="pageformLogin">
+  <div class="auth-container fade-in">
+      <!-- ✅ Dark Mode Toggle - ใช้ class ใหม่ -->
+      <div class="dark-mode-toggle" onclick="toggleDarkMode()">
+          <div class="slider"><i class='bx bxs-sun'></i></div>
+      </div>
+
+      <!-- Login Section -->
+      <div id="loginSection" class="w-full">
+        <!-- Logo -->
+        <div class="mb-6 flex items-center justify-center mt-8">
+          <img id="logoLogin" src="https://cdn.jsdelivr.net/gh/smetaltech25/Img/SMT.png" alt="EpicCoding Logo" class="h-12 w-auto">
+          <span class="ml-3 font-bold text-2xl text-[var(--text-primary)]" id="textLoginEng">Leave Management System (LMS)</span>
+        </div>
+
+          <h1 class="text-2xl font-bold mb-6 text-[var(--text-primary)] text-center">เข้าสู่ระบบ</h1>
+
+          <form id="formLogin" class="w-full" onsubmit="loginUsers()">
+              <div class="mb-4">
+                  <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2">อีเมลหรือชื่อผู้ใช้</label>
+                  <input type="text" id="loginusername" class="form-input" placeholder="ป้อนอีเมลหรือชื่อผู้ใช้ของคุณ">
+              </div>
+              <div class="mb-6 relative">
+                  <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2">รหัสผ่าน</label>
+                  <input type="password" id="loginpassword" class="form-input pr-10" placeholder="ป้อนรหัสผ่านของคุณ">
+                  <button type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center pt-8 text-[var(--text-secondary)] hover:text-[var(--bs-blue)] focus:outline-none" onclick="togglePasswordVisibility('loginpassword', 'loginPasswordIcon')">
+                      <i class='bx bx-show text-xl' id="loginPasswordIcon"></i>
+                  </button>
+              </div>
+
+              <div class="flex items-center justify-between mb-6">
+                  <div class="flex items-center">
+                      <label class="toggle-switch">
+                          <input type="checkbox" id="rememberMe">
+                          <span class="toggle-slider"></span>
+                      </label>
+                      <label for="rememberMe" class="ml-2 text-sm text-[var(--text-secondary)] cursor-pointer">จดจำรหัสผ่าน</label>
+                  </div>
+                  <a type="button"class="text-sm text-blue-500 no-underline transition-colors duration-200 ease-in-out hover:text-blue-600 hover:underline cursor-pointer"onclick="forgotPassword()">ลืมรหัสผ่าน?</a>
+              </div>
+            <button type="submit" class="w-full py-3 px-6 rounded-xl bg-blue-500 text-white font-semibold text-base border-0 cursor-pointer transition-all duration-200 ease-in-out shadow-lg hover:bg-blue-600 hover:-translate-y-0.5 hover:shadow-xl">
+                เข้าสู่ระบบ
+            </button>
+          </form>
+
+        <div class="mt-6 text-sm text-gray-500 text-center">
+            ยังไม่มีบัญชีใช่ไหม? <a href="#" class="text-blue-500 no-underline transition-colors duration-200 ease-in-out hover:text-blue-600 hover:underline" onclick="showSignupPage()">สมัครสมาชิก</a>
+        </div>
+      </div>
+
+      <!-- Signup Section -->
+      <div id="signupSection" class="w-full" style="display:none">
+          <!-- Logo -->
+          <div class="mb-6 flex items-center justify-center">
+              <img src="https://cdn.jsdelivr.net/gh/EPICCODING17/image/Logo-EicCoding.png" alt="EpicCoding Logo" class="h-12 w-auto">
+              <span class="ml-3 font-bold text-3xl text-[var(--text-primary)]">EpicCoding</span>
+          </div>
+
+          <h1 class="text-2xl font-bold mb-6 text-[var(--text-primary)] text-center">สมัครสมาชิก</h1>
+
+          <form id="registerForm" class="w-full">
+              <div class="mb-6 flex justify-center">
+                  <div id="profilePictureArea" class="profile-picture-upload" onclick="handleProfilePicClick()">
+                      <input type="file" id="profilePictureInput" accept="image/*" class="hidden" onchange="handleProfilePicChange(event)">
+                      <i class='bx bxs-user-circle upload-icon'></i>
+                      <span class="upload-text">อัปโหลดรูปโปรไฟล์</span>
+                  </div>
+              </div>
+              
+              <img id="profile-preview" src="https://placehold.co/128x128/e0e7ff/3730a3?text=Profile" alt="Profile Preview" class="hidden">
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                      <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2">ชื่อ</label>
+                      <input type="text" id="signupfirstName" name="signupfirstName" class="form-input" placeholder="ป้อนชื่อของคุณ">
+                  </div>
+                  <div>
+                      <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2">นามสกุล</label>
+                      <input type="text" id="signuplastName" name="signuplastName" class="form-input" placeholder="ป้อนนามสกุลของคุณ">
+                  </div>
+              </div>
+
+              <div class="mb-4">
+                  <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2">ชื่อผู้ใช้งาน</label>
+                  <input type="text" id="signupUsername" name="signupUsername" class="form-input" placeholder="ป้อนชื่อผู้ใช้งานของคุณ">
+              </div>
+
+              <div class="mb-4 relative">
+                  <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2">รหัสผ่าน</label>
+                  <input type="password" id="signupPassword" name="signupPassword" class="form-input pr-10" placeholder="ป้อนรหัสผ่านของคุณ">
+                  <button type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center pt-8 text-[var(--text-secondary)] hover:text-[var(--bs-blue)] focus:outline-none" onclick="togglePasswordVisibility('signupPassword', 'signupPasswordIcon')">
+                      <i class='bx bx-show text-xl' id="signupPasswordIcon"></i>
+                  </button>
+              </div>
+
+              <div class="mb-6 relative">
+                  <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2">ยืนยันรหัสผ่าน</label>
+                  <input type="password" id="confirmPassword" name="confirmPassword" class="form-input pr-10" placeholder="ยืนยันรหัสผ่านของคุณ">
+                  <button type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center pt-8 text-[var(--text-secondary)] hover:text-[var(--bs-blue)] focus:outline-none" onclick="togglePasswordVisibility('confirmPassword', 'confirmPasswordIcon')">
+                      <i class='bx bx-show text-xl' id="confirmPasswordIcon"></i>
+                  </button>
+              </div>
+
+              <div class="mb-6 flex justify-center w-full">
+                  <div id="signatureArea" class="signature-upload" onclick="handleSignatureClick()">
+                      <input type="file" id="signatureInput" accept="image/*" class="hidden" onchange="handleSignatureChange(event)">
+                      <i class='bx bxs-edit-alt upload-icon'></i>
+                      <span class="upload-text">อัปโหลดลายเซ็น</span>
+                  </div>
+              </div>
+              
+              <img id="signature-preview" alt="Signature Preview" class="hidden">
+
+            <button type="submit" class="w-full py-3 px-6 rounded-xl bg-blue-500 text-white font-semibold text-base border-0 cursor-pointer transition-all duration-200 ease-in-out shadow-lg hover:bg-blue-600 hover:-translate-y-0.5 hover:shadow-xl" onclick="registerUser()">
+                สมัครสมาชิก
+            </button>
+          </form>
+
+        <div class="mt-6 text-sm text-gray-500 text-center">
+            มีบัญชีอยู่แล้วใช่ไหม? <a href="#" class="text-blue-500 no-underline transition-colors duration-200 ease-in-out hover:text-blue-600 hover:underline" onclick="showLoginPage()">เข้าสู่ระบบ</a>
+        </div>
+      </div>
+  </div>
+</section>
+
+<script>
+const forgotPassword = () => {
+  const username = $("#loginusername").val();
+  if (!username) {
+    showToast("กรุณากรอกชื่อผู้ใช้งานเพื่อกู้รหัสผ่าน", "error");
+    return;
+  }
+  $("#customLoader").show();
+  google.script.run.withSuccessHandler(function() {
+    $("#customLoader").hide();
+    showToast("คำขอลืมรหัสผ่านถูกส่งไปยัง Email ของคุณแล้วสมัครสมาชิกสำเร็จ", "success");
+  }).sendForgotPassword(username);
+};
+
+const togglePasswordVisibility = (inputId, iconId) => {
+  const passwordInput = document.getElementById(inputId);
+  const passwordIcon = document.getElementById(iconId);
+  
+  if (passwordInput.type === 'password') {
+    passwordInput.type = 'text';
+    passwordIcon.classList.remove('bx-show');
+    passwordIcon.classList.add('bx-hide');
+  } else {
+    passwordInput.type = 'password';
+    passwordIcon.classList.remove('bx-hide');
+    passwordIcon.classList.add('bx-show');
+  }
+};
+
+const handleProfilePicClick = () => {
+  document.getElementById('profilePictureInput').click();
+}
+
+const handleProfilePicChange = (event) => {
+  const file = event.target.files[0];
+  const profilePictureArea = document.getElementById('profilePictureArea');
+  const profilePreview = document.getElementById('profile-preview');
+  
+  if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+          profilePictureArea.style.backgroundImage = `url(${e.target.result})`;
+          profilePictureArea.innerHTML = '';
+          
+          profilePreview.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+  }
+}
+
+const handleSignatureClick = () => {
+  document.getElementById('signatureInput').click();
+}
+
+const handleSignatureChange = (event) => {
+  const file = event.target.files[0];
+  const signatureArea = document.getElementById('signatureArea');
+  const signaturePreview = document.getElementById('signature-preview');
+  
+  if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+          signatureArea.style.backgroundImage = `url(${e.target.result})`;
+          signatureArea.innerHTML = '';
+          
+          signaturePreview.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+  }
+}
+
+const showLoginPage = () => {
+  document.getElementById('loginSection').style.display = 'block';
+  document.getElementById('signupSection').style.display = 'none';
+}
+
+const showSignupPage = () => {
+  document.getElementById('loginSection').style.display = 'none';
+  document.getElementById('signupSection').style.display = 'block';
+}
+
+const registerUser = () => {
+  event.preventDefault();
+  const username = $("#signupUsername").val().trim();
+  const password = $("#signupPassword").val().trim();
+  const confirmPassword = $("#confirmPassword").val().trim();
+  const fullname = $("#signupfirstName").val().trim() + " " + $("#signuplastName").val().trim();
+
+  if (username === '' || password === '' || confirmPassword === '' || fullname.trim() === '') {
+    showToast("กรุณากรอกข้อมูลให้ครบทุกช่อง", "warning");
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    showToast("รหัสผ่านไม่ตรงกัน", "warning");
+    return;
+  }
+
+  const obj = { username, password, fullname, profileCheck: $("#profilePictureInput").val(), signatureCheck: $("#signatureInput").val() };
+
+  if (obj.profileCheck === "") {
+    obj.profileImage = "";
+  } else {
+    const profileImgElement = document.getElementById("profile-preview");
+    const profileCanvas = document.createElement("canvas");
+    const profileContext = profileCanvas.getContext("2d");
+    profileCanvas.width = profileImgElement.naturalWidth;
+    profileCanvas.height = profileImgElement.naturalHeight;
+    profileContext.drawImage(profileImgElement, 0, 0, profileImgElement.naturalWidth, profileImgElement.naturalHeight);
+    obj.profileImageDataUrl = profileCanvas.toDataURL("image/png");
+    obj.profileFiletype = "image/png";
+    obj.profileFilename = "profile_" + username;
+  }
+
+  if (obj.signatureCheck === "") {
+    obj.signatureImage = "";
+  } else {
+    const signatureImgElement = document.getElementById("signature-preview");
+    const signatureCanvas = document.createElement("canvas");
+    const signatureContext = signatureCanvas.getContext("2d");
+    signatureCanvas.width = signatureImgElement.naturalWidth;
+    signatureCanvas.height = signatureImgElement.naturalHeight;
+    signatureContext.drawImage(signatureImgElement, 0, 0, signatureImgElement.naturalWidth, signatureImgElement.naturalHeight);
+    obj.signatureImageDataUrl = signatureCanvas.toDataURL("image/png");
+    obj.signatureFiletype = "image/png";
+    obj.signatureFilename = "signature_" + username;
+  }
+
+  $("#customLoader").show();
+  google.script.run.withSuccessHandler((res) => {
+    $("#customLoader").hide();
+    if (res === true) {
+      clearRegisterForm();
+      showToast("สมัครสมาชิกสำเร็จ", "success");
+      showLoginPage();
+    } else {
+      showToast("ชื่อผู้ใช้นี้ถูกใช้งานแล้ว", "error");
+    }
+  }).registerNewUser(obj);
+};
+
+const clearRegisterForm = () => {
+  $("#signupfirstName").val('');
+  $("#signuplastName").val('');
+  $("#signupUsername").val('');
+  $("#signupPassword").val('');
+  $("#confirmPassword").val('');
+
+  $("#profilePictureInput").val('');
+  $("#profilePictureArea").css("background-image", "").html('<i class="bx bxs-user-circle upload-icon"></i><span class="upload-text">อัปโหลดรูปโปรไฟล์</span>');
+  $("#profile-preview").attr('src', 'https://placehold.co/128x128/e0e7ff/3730a3?text=Profile');
+  
+  $("#signatureInput").val('');
+  $("#signatureArea").css("background-image", "").html('<i class="bx bxs-edit-alt upload-icon"></i><span class="upload-text">อัปโหลดลายเซ็น</span>');
+  $("#signature-preview").attr('src', '');
+};
+</script>

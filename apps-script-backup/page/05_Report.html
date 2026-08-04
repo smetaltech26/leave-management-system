@@ -1,0 +1,349 @@
+<div class="bg-[var(--bg-secondary)] p-6 rounded-2xl shadow-[var(--shadow)] fade-in">
+  <div class="flex flex-col gap-4 mb-4">
+    <h3 class="font-bold text-lg">รายงานข้อมูลการลาพนักงาน</h3>
+
+    <div class="flex sm:justify-end sm:items-end">
+      <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+        <select id="itemsPerPageReportSelect"
+                class="form-select w-full sm:w-auto min-w-[80px]"
+                onchange="changeItemsReport()">
+          <option value="10">10</option>
+          <option value="25">25</option>
+          <option value="50">50</option>
+          <option value="75">75</option>
+          <option value="100">100</option>
+          <option value="all">ทั้งหมด</option>
+        </select>
+
+        <div class="relative w-full sm:w-[200px]">
+          <input type="search" id="searchReport"
+                class="form-input w-full"
+                placeholder="ค้นหาข้อมูล..." oninput="filterReport()">
+          <i class="fas fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--text-secondary)] pointer-events-none"></i>
+        </div>
+
+        <input type="date" id="startDateReport"
+              class="form-input w-full sm:w-auto" placeholder="เริ่มต้น">
+
+        <input type="date" id="endDateReport"
+              class="form-input w-full sm:w-auto" placeholder="สิ้นสุด">
+
+        <button onclick="exportReport()"
+                class="px-4 py-3 text-white bg-green-500 hover:bg-green-600 rounded-lg w-full sm:w-auto">
+          Export
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overflow-x-auto">
+    <table class="min-w-full text-sm divide-y divide-gray-200">
+      <thead class="border-b border-[var(--border-color)]">
+        <tr>
+          <th class="px-4 py-2 text-center whitespace-nowrap">รหัสคำขอ</th>
+          <th class="px-4 py-2 text-center whitespace-nowrap">พนักงาน</th>
+          <th class="px-4 py-2 text-center whitespace-nowrap">ประเภท</th>
+          <th class="px-4 py-2 text-center whitespace-nowrap">วันที่เริ่ม - สิ้นสุด</th>
+          <th class="px-4 py-2 text-center whitespace-nowrap">จำนวน</th>
+          <th class="px-4 py-2 text-center whitespace-nowrap">เหตุผล</th>
+          <th class="px-4 py-2 text-center whitespace-nowrap">สถานะ</th>
+        </tr>
+      </thead>
+      <tbody id="tableReport"></tbody>
+    </table>
+  </div>
+
+  <div class="p-4 mt-4 fade-in px-4 py-3 rounded-t-xl rounded-b-xl mt-3">
+    <div class="flex flex-col items-center justify-between gap-2 text-sm">
+      <div id="paginationReportInfo" class="text-center"></div>
+      <div id="paginationReport" class="text-center w-full overflow-x-auto py-2"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let filteredReport = [];
+let currentReport = 1;
+let itemsPerReport = 10;
+
+const changeItemsReport = () => {
+  const select = document.getElementById('itemsPerPageReportSelect');
+  const value = select.value;
+  
+  if (value === 'all') {
+    const dataToRender = filteredReport.length ? filteredReport : allDataLeaveRequests;
+    itemsPerReport = dataToRender.length || 1;
+  } else {
+    itemsPerReport = parseInt(value);
+  }
+  
+  currentReport = 1;
+  const dataToRender = filteredReport.length ? filteredReport : allDataLeaveRequests;
+  renderReport(dataToRender);
+};
+
+const renderReport = (data) => {
+  const table = document.getElementById('tableReport');
+  table.innerHTML = '';
+
+  const totalRows = data.length;
+  
+  const select = document.getElementById('itemsPerPageReportSelect');
+  const showAll = select.value === 'all';
+  
+  let pageData;
+  let startRow, endRow;
+  
+  if (showAll) {
+    pageData = data;
+    startRow = 1;
+    endRow = totalRows;
+  } else {
+    const startIndex = (currentReport - 1) * itemsPerReport;
+    const endIndex = startIndex + itemsPerReport;
+    pageData = data.slice(startIndex, endIndex);
+    startRow = startIndex + 1;
+    endRow = startIndex + pageData.length;
+  }
+
+  document.getElementById('paginationReportInfo').innerText = `แสดง ${startRow} ถึง ${endRow} จาก ${totalRows} แถว`;
+
+  if (pageData.length === 0) {
+    const row = table.insertRow();
+    row.innerHTML = `
+      <td colspan="7" class="text-center text-[var(--text-secondary)] py-6 text-base">
+        ไม่พบข้อมูล! 😓
+      </td>`;
+    return;
+  }
+
+  pageData.forEach((request) => {
+      const userData = getSearchUsers(request[4]);
+      
+      const leaveTypeText = {
+          'Annual': '<span class="status-badge status-approved"><i class="fa-solid fa-plane-up"></i> ลาพักร้อน</span>',
+          'Sick': '<span class="status-badge status-rejected"><i class="fa-solid fa-user-injured"></i> ลาป่วย</span>',
+          'Personal': '<span class="status-badge status-pending"><i class="fa-solid fa-person-walking-luggage"></i> ลากิจได้รับค่าจ้าง</span>',
+          'Maternity': '<span class="status-badge status-info"><i class="fa-solid fa-baby-carriage"></i> ลาคลอด</span>',
+          'Study': '<span class="status-badge status-info"><i class="fa-solid fa-graduation-cap"></i> ลาศึกษา</span>',
+          'Military': '<span class="status-badge status-info"><i class="fa-solid fa-person-military-rifle"></i> ลาทหาร</span>',
+          'Other': '<span class="status-badge status-info"><i class="fa-solid fa-circle-question"></i> อื่นๆ</span>'
+      }[request[6]] || `<span class="status-badge status-info"><i class="fa-solid fa-circle-question"></i> ${request[6]}</span>`;
+
+      const statusBadge = {
+          'Pending': '<span class="status-badge status-pending"><i class="fas fa-clock"></i> รออนุมัติ</span>',
+          'Approved': '<span class="status-badge status-approved"><i class="fas fa-check-circle"></i> อนุมัติ</span>',
+          'Rejected': '<span class="status-badge status-rejected"><i class="fas fa-times-circle"></i> ไม่อนุมัติ</span>'
+      }[request[7]] || `<span class="status-badge status-info"><i class="fas fa-info-circle"></i> ${request[7]}</span>`;
+
+      const leaveDuration = request[12] || 'F';
+      const dayCount = calculateActualLeaveDays(request[2], request[3], leaveDuration);
+      
+      let durationDisplay = `${dayCount} วัน`;
+      if (leaveDuration === 'AM') {
+          durationDisplay += ' (ครึ่งเช้า)';
+      } else if (leaveDuration === 'PM') {
+          durationDisplay += ' (ครึ่งบ่าย)';
+      }
+
+      const row = table.insertRow();
+      row.className = 'transition duration-200 ease-in-out';
+      row.onmouseover = () => row.style.backgroundColor = 'var(--hover-bg-color)';
+      row.onmouseout = () => row.style.backgroundColor = '';
+      
+      row.innerHTML = `
+          <td class="px-4 py-3 text-sm whitespace-nowrap text-center text-[var(--text-primary)]">${request[0]}</td>
+          <td class="px-4 py-3 text-sm whitespace-nowrap">
+              <div class="flex items-center gap-3">
+                  <img src="${userData.profile || 'https://placehold.co/100x100/eeeeee/black?text=NO_PIC'}" alt="Profile" class="w-8 h-8 rounded-full object-cover border border-[var(--border-color)]">
+                  <div>
+                      <div class="font-medium text-[var(--text-primary)]">${userData.fullname || 'ไม่ระบุ'}</div>
+                      <div class="text-xs text-[var(--text-secondary)]">${userData.agency || '-'} | ${userData.department || ''}</div>
+                  </div>
+              </div>
+          </td>
+          <td class="px-4 py-3 text-sm whitespace-nowrap text-center">${leaveTypeText}</td>
+          <td class="px-4 py-3 text-sm whitespace-nowrap text-center text-[var(--text-primary)]">
+              ${request[2]}<br>
+              <span class="text-[var(--text-secondary)]">ถึง</span><br>
+              ${request[3]}
+          </td>
+          <td class="px-4 py-3 text-sm whitespace-nowrap text-center text-[var(--text-primary)] font-medium">${dayCount} วัน</td>
+          <td class="px-4 py-3 text-sm whitespace-nowrap text-[var(--text-primary)]" title="${request[1]}">
+              ${request[1].length > 30 ? request[1].substring(0, 30) + '...' : request[1]}
+          </td>
+          <td class="px-4 py-3 text-sm whitespace-nowrap text-center">${statusBadge}</td>
+      `;
+  });
+
+  if (showAll) {
+    document.getElementById('paginationReport').innerHTML = '';
+  } else {
+    renderPageReport(totalRows);
+  }
+};
+
+const renderPageReport = (totalItems) => {
+  const totalPages = Math.ceil(totalItems / itemsPerReport);
+  const paginationContainer = document.getElementById('paginationReport');
+  paginationContainer.innerHTML = '';
+
+  if (totalPages <= 1) {
+    return;
+  }
+
+  const ul = document.createElement('ul');
+  ul.className = "custom-pagination";
+
+  const createPageButton = (htmlContent, page, isDisabled = false, isActive = false) => {
+    const li = document.createElement('li');
+    if (isDisabled) li.classList.add('disabled');
+    if (isActive) li.classList.add('active');
+
+    const button = document.createElement('button');
+    button.innerHTML = htmlContent;
+    button.addEventListener('click', () => {
+      if (!isDisabled) {
+        currentReport = page;
+        const dataToRender = filteredReport.length ? filteredReport : allDataLeaveRequests;
+        renderReport(dataToRender);
+      }
+    });
+    li.appendChild(button);
+    return li;
+  };
+
+  ul.appendChild(createPageButton('<i class="fa-solid fa-angles-left"></i>', 1, currentReport === 1));
+  ul.appendChild(createPageButton('<i class="fa-solid fa-angle-left"></i>', currentReport - 1, currentReport === 1));
+
+  let startPage, endPage;
+  if (totalPages <= 3) {
+    startPage = 1;
+    endPage = totalPages;
+  } else {
+    if (currentReport <= 2) {
+      startPage = 1;
+      endPage = 3;
+    } else if (currentReport + 1 >= totalPages) {
+      startPage = totalPages - 2;
+      endPage = totalPages;
+    } else {
+      startPage = currentReport - 1;
+      endPage = currentReport + 1;
+    }
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    ul.appendChild(createPageButton(i, i, false, currentReport === i));
+  }
+
+  ul.appendChild(createPageButton('<i class="fa-solid fa-angle-right"></i>', currentReport + 1, currentReport === totalPages));
+  ul.appendChild(createPageButton('<i class="fa-solid fa-angles-right"></i>', totalPages, currentReport === totalPages));
+
+  paginationContainer.appendChild(ul);
+}
+
+const filterReport = () => {
+  const query = document.getElementById('searchReport').value.toLowerCase();
+
+  filteredReport = allDataLeaveRequests.filter(row => {
+    return query === '' || row.some(column => column.toLowerCase().includes(query));
+  });
+
+  currentReport = 1;
+  renderReport(filteredReport);
+};
+
+const parseReportThaiDate = (str) => {
+  if (!str.includes('/')) return new Date(str);
+  const [d, m, y] = str.split('/');
+  return new Date(+y, +m - 1, +d);
+}
+
+const exportReport = () => {
+  const startVal = document.getElementById('startDateReport').value;
+  const endVal   = document.getElementById('endDateReport').value;
+  
+  const startDate = startVal ? new Date(startVal) : null;
+  const endDate   = endVal   ? new Date(endVal)   : null;
+
+  const src = filteredReport.length ? filteredReport : allDataLeaveRequests;
+
+  const toExport = src.filter(r => {
+    if (startDate && endDate) {
+      const leaveStartDate = parseReportThaiDate(r[2]);
+      const leaveEndDate = parseReportThaiDate(r[3]);
+      
+      const filterStartDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+      const filterEndDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+      
+      return (leaveStartDate <= filterEndDate) && (leaveEndDate >= filterStartDate);
+    } else if (startDate) {
+      const leaveEndDate = parseReportThaiDate(r[3]);
+      const filterStartDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+      return leaveEndDate >= filterStartDate;
+    } else if (endDate) {
+      const leaveStartDate = parseReportThaiDate(r[2]);
+      const filterEndDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+      return leaveStartDate <= filterEndDate;
+    }
+    return true;
+  });
+
+  const typeMap = {
+    'Annual': 'ลาพักร้อน',
+    'Sick': 'ลาป่วย',
+    'Personal': 'ลากิจได้รับค่าจ้าง',
+    'Maternity': 'ลาคลอด',
+    'Study': 'ลาศึกษา',
+    'Military': 'ลาทหาร',
+    'Other': 'อื่นๆ'
+  };
+  const statusMap = {
+    'Pending': 'รออนุมัติ',
+    'Approved': 'อนุมัติ',
+    'Rejected': 'ไม่อนุมัติ'
+  };
+
+  const wsData = [
+    ['รหัสคำขอ','พนักงาน','ประเภท','วันที่เริ่ม','วันที่สิ้นสุด','จำนวน(วัน)','เหตุผล','สถานะ']
+  ];
+  
+  toExport.forEach(r => {
+    const user = getSearchUsers(r[4]) || {};
+    const start = r[2];
+    const end   = r[3];
+    const duration = r[12] || 'F';
+    const days = calculateActualLeaveDays(start, end, duration);
+    const dayDisplay = days % 1 === 0 ? days : days.toFixed(1);
+
+    wsData.push([
+      r[0],
+      user.fullname || '',
+      typeMap[r[6]] || r[6],
+      start,
+      end,
+      dayDisplay,
+      r[1],
+      statusMap[r[7]] || r[7]
+    ]);
+  });
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  XLSX.utils.book_append_sheet(wb, ws, 'Report');
+  
+  // แปลงวันที่สำหรับใส่ในชื่อไฟล์
+  const formatDateForFilename = (dateStr) => {
+    if (!dateStr) return 'ทั้งหมด';
+    const [year, month, day] = dateStr.split('-');
+    return `${day}-${month}-${year}`;
+  };
+  
+  const startDateFormatted = formatDateForFilename(startVal);
+  const endDateFormatted = formatDateForFilename(endVal);
+  const fname = `รายงานการลา_${startDateFormatted}_ถึง_${endDateFormatted}.xlsx`;
+  
+  XLSX.writeFile(wb, fname);
+};
+</script>

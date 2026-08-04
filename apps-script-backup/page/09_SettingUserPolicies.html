@@ -1,0 +1,329 @@
+<div class="bg-[var(--bg-secondary)] p-6 rounded-2xl shadow-[var(--shadow)] fade-in">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+    <h3 class="font-bold text-lg">จัดการวันลาพนักงาน</h3>
+    
+    <div class="flex items-center gap-2 max-w-md w-full sm:w-auto">
+      <div class="relative flex-1">
+        <input type="search" id="searchPolicies" class="form-input" placeholder="ค้นหาข้อมูล..." oninput="filterPolicies()">
+        <i class="fas fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--text-secondary)] pointer-events-none"></i>
+      </div>
+      <button class="px-4 py-3 text-white bg-green-500 hover:bg-green-600 rounded-lg whitespace-nowrap" onclick="openPoliciesModal()">
+        เพิ่มข้อมูล
+      </button>
+    </div>
+  </div>
+  <div class="overflow-x-auto">
+      <table class="min-w-full text-sm divide-y divide-gray-200">
+          <thead class="border-b border-[var(--border-color)]">
+              <tr>
+                  <th class="px-4 py-2 text-center whitespace-nowrap">รหัส</th>
+                  <th class="px-4 py-2 text-center whitespace-nowrap">พนักงาน</th>
+                  <th class="px-4 py-2 text-center whitespace-nowrap">ประเภท</th>
+                  <th class="px-4 py-2 text-center whitespace-nowrap">จำนวน</th>
+                  <th class="px-4 py-2 text-center whitespace-nowrap">จัดการ</th>
+              </tr>
+          </thead>
+          <tbody id="tablePolicies"></tbody>
+      </table>
+  </div>
+  <div class="p-4 mt-4 px-4 py-3 rounded-t-xl rounded-b-xl mt-3">
+    <div class="flex flex-col items-center justify-between gap-2 text-sm">
+      <div id="paginationPoliciesInfo" class="text-center"></div>
+      <div id="paginationPolicies" class="text-center w-full overflow-x-auto py-2"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let filteredUserPolicies = [];
+let currentUserPolicies = 1;
+let itemsPerUserPolicies = 10;
+
+const renderUserPolicies = (data) => {
+  const table = document.getElementById('tablePolicies');
+  table.innerHTML = '';
+
+  const startIndex = (currentUserPolicies - 1) * itemsPerUserPolicies;
+  const endIndex = startIndex + itemsPerUserPolicies;
+  const pageData = data.slice(startIndex, endIndex);
+  const totalRows = data.length;
+
+  const startRow = startIndex + 1;
+  const endRow = startIndex + pageData.length;
+
+  document.getElementById('paginationPoliciesInfo').innerText = `แสดง ${startRow} ถึง ${endRow} จาก ${totalRows} แถว`;
+
+  if (pageData.length === 0) {
+    const row = table.insertRow();
+    row.innerHTML = `
+      <td colspan="5" class="text-center text-[var(--text-secondary)] py-6 text-base">
+        ไม่พบข้อมูล! 😓
+      </td>`;
+    return;
+  }
+
+  pageData.forEach((rowIndex) => {
+    const userData = getSearchUsers(rowIndex[1]);
+
+    const leaveTypeText = {
+      'Annual': '<span class="status-badge status-approved"><i class="fa-solid fa-plane-up"></i> ลาพักร้อน</span>',
+      'Sick': '<span class="status-badge status-rejected"><i class="fa-solid fa-user-injured"></i> ลาป่วย</span>',
+      'Personal': '<span class="status-badge status-pending"><i class="fa-solid fa-person-walking-luggage"></i> ลากิจได้รับค่าจ้าง</span>',
+      'Maternity': '<span class="status-badge status-info"><i class="fa-solid fa-baby-carriage"></i> ลาคลอด</span>',
+      'Study': '<span class="status-badge status-info"><i class="fa-solid fa-graduation-cap"></i> ลาศึกษา</span>',
+      'Military': '<span class="status-badge status-info"><i class="fa-solid fa-person-military-rifle"></i> ลาทหาร</span>',
+      'Other': '<span class="status-badge status-info"><i class="fa-solid fa-circle-question"></i> อื่นๆ</span>'
+    }[rowIndex[2]] || `<span class="status-badge status-info"><i class="fa-solid fa-circle-question"></i> ${rowIndex[2]}</span>`;
+
+    const row = table.insertRow();
+    row.className = 'transition duration-200 ease-in-out';
+    row.onmouseover = () => row.style.backgroundColor = 'var(--hover-bg-color)';
+    row.onmouseout = () => row.style.backgroundColor = '';
+
+    row.innerHTML = `
+    <td class="px-4 py-3 text-sm whitespace-nowrap text-center text-[var(--text-primary)]">${rowIndex[0]}</td>
+     <td class="px-4 py-3 text-sm whitespace-nowrap">
+       <div class="flex items-center gap-3">
+         <img src="${userData.profile || 'https://placehold.co/100x100/eeeeee/black?text=NO_PIC'}" alt="Profile" class="w-8 h-8 rounded-full object-cover border border-[var(--border-color)]">
+         <div>
+           <div class="font-medium text-[var(--text-primary)]">${userData.fullname || 'ไม่ระบุ'}</div>
+           <div class="text-xs text-[var(--text-secondary)]">${userData.agency || '-'} | ${userData.department || ''}s</div>
+         </div>
+       </div>
+     </td>
+     <td class="px-4 py-3 text-sm whitespace-nowrap text-center">${leaveTypeText}</td>
+     <td class="px-4 py-3 text-sm whitespace-nowrap text-center text-[var(--text-primary)]">จำนวน ${rowIndex[3]} วัน</td>
+      <td class="px-4 py-3 text-center text-sm whitespace-nowrap">
+        <button class="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-medium transition duration-200 ease-in-out shadow-sm hover:shadow-md mr-1"
+          onclick="editPolicies('${rowIndex[0]}')">
+          <i class="fa-solid fa-pen-to-square"></i>
+        </button>
+        <button class="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition duration-200 ease-in-out shadow-sm hover:shadow-md"
+          onclick="delPolicies('${rowIndex[0]}')">
+          <i class="fa-solid fa-trash-can"></i>
+        </button>
+      </td>
+    `;
+  });
+
+  renderPageUserPolicies(totalRows);
+};
+
+const renderPageUserPolicies = (totalItems) => {
+  const totalPages = Math.ceil(totalItems / itemsPerUserPolicies);
+  const paginationContainer = document.getElementById('paginationPolicies');
+  paginationContainer.innerHTML = '';
+
+  const ul = document.createElement('ul');
+  ul.className = "custom-pagination";
+
+  const createPageButton = (htmlContent, page, isDisabled = false, isActive = false) => {
+    const li = document.createElement('li');
+    if (isDisabled) li.classList.add('disabled');
+    if (isActive) li.classList.add('active');
+
+    const button = document.createElement('button');
+    button.innerHTML = htmlContent;
+    button.addEventListener('click', () => {
+      if (!isDisabled) {
+        currentUserPolicies = page;
+        const dataToRender = filteredUserPolicies.length ? filteredUserPolicies : allDataUserPolicies;
+        renderUserPolicies(dataToRender);
+      }
+    });
+    li.appendChild(button);
+    return li;
+  };
+
+  ul.appendChild(createPageButton('<i class="fa-solid fa-angles-left"></i>', 1, currentUserPolicies === 1));
+  ul.appendChild(createPageButton('<i class="fa-solid fa-angle-left"></i>', currentUserPolicies - 1, currentUserPolicies === 1));
+
+  let startPage, endPage;
+  if (totalPages <= 3) {
+    startPage = 1;
+    endPage = totalPages;
+  } else {
+    if (currentUserPolicies <= 2) {
+      startPage = 1;
+      endPage = 3;
+    } else if (currentUserPolicies + 1 >= totalPages) {
+      startPage = totalPages - 2;
+      endPage = totalPages;
+    } else {
+      startPage = currentUserPolicies - 1;
+      endPage = currentUserPolicies + 1;
+    }
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    ul.appendChild(createPageButton(i, i, false, currentUserPolicies === i));
+  }
+
+  ul.appendChild(createPageButton('<i class="fa-solid fa-angle-right"></i>', currentUserPolicies + 1, currentUserPolicies === totalPages));
+  ul.appendChild(createPageButton('<i class="fa-solid fa-angles-right"></i>', totalPages, currentUserPolicies === totalPages));
+
+  paginationContainer.appendChild(ul);
+}
+
+const filterPolicies = () => {
+  const query = document.getElementById('searchPolicies').value.toLowerCase();
+
+  filteredUserPolicies = allDataUserPolicies.filter(row => {
+    return query === '' || row.some(column => column.toLowerCase().includes(query));
+  });
+
+  currentUserPolicies = 1;
+  renderUserPolicies(filteredUserPolicies);
+};
+
+const openPoliciesModal = () => {
+  document.getElementById('policiesModal').classList.remove('hidden');
+}
+
+const closePoliciesModal = () => {
+  document.getElementById('policiesModal').classList.add('hidden');
+  $("#modalPoliciesTitle").text('เพิ่มวันลาพนักงานใหม่');
+  $("#policiesDataKye").val('');
+  $("#policiesData1").val('');
+  $("#policiesData2").val('');
+  $("#policiesData3").val('');
+
+  document.getElementById('selectedUserProfile').classList.add('hidden');
+  document.getElementById('selectedUserImg').src = '';
+  document.getElementById('selectedUserName').innerText = '';
+}
+
+const openUserPicker = () => {
+  renderUserPickerList();
+  document.getElementById("userPickerModal").classList.remove("hidden");
+};
+
+const toggleUserPickerModal = () => {
+  document.getElementById("policiesModal").classList.add("hidden");
+  renderUserPickerList();
+  document.getElementById("userPickerModal").classList.remove("hidden");
+}
+
+const closeUserPicker = () => {
+  document.getElementById("userPickerModal").classList.add("hidden");
+  document.getElementById("policiesModal").classList.remove("hidden");
+}
+
+const renderUserPickerList = () => {
+  const container = document.getElementById("userPickerList");
+  const searchText = (document.getElementById("userSearchInput")?.value || "").toLowerCase();
+  container.innerHTML = "";
+
+  allDataUsers.forEach(user => {
+    const [uid, username, , fullname, , , role, , profileUrl, , status] = user;
+    if (status === "TRUE" && fullname.toLowerCase().includes(searchText)) {
+      const div = document.createElement("div");
+      div.className = "flex items-center p-3 rounded-lg hover:bg-[var(--hover-bg-color)] transition cursor-pointer";
+      div.onclick = () => selectUser(uid, fullname, profileUrl);
+      div.innerHTML = `
+        <img src="${profileUrl}" class="w-10 h-10 rounded-full object-cover mr-3" alt="profile">
+        <div>
+          <div class="font-medium">${fullname}</div>
+          <div class="text-sm text-[var(--text-secondary)]">${role}</div>
+        </div>`;
+      container.appendChild(div);
+    }
+  });
+};
+
+const selectUser = (uid, name, imgUrl) => {
+  document.getElementById("policiesData1").value = uid;
+  document.getElementById("selectedUserProfile").classList.remove("hidden");
+  document.getElementById("selectedUserName").innerText = name;
+  document.getElementById("selectedUserImg").src = imgUrl;
+  closeUserPicker();
+}
+
+const submitModalPolicies = () => {
+  event.preventDefault();
+  $("#customLoader").show();
+
+  const obj = {
+    datakey: document.getElementById('policiesDataKye').value,
+    data1: document.getElementById('policiesData1').value,
+    data2: document.getElementById('policiesData2').value,
+    data3: document.getElementById('policiesData3').value       
+  };
+
+  if (!obj.data1 || !obj.data2 || !obj.data3) {
+    showToast("กรุณากรอกข้อมูลให้ครบถ้วน", "warning");
+    $("#customLoader").hide();
+    return;
+  }
+
+  if (!obj.datakey) {
+    google.script.run.withSuccessHandler(async (res) => {
+      closePoliciesModal();
+      await updateSpecificDataUserPolicies();
+      showChart();
+      $("#customLoader").hide();
+      showToast("บันทึกข้อมูลสำเร็จ", "success");
+    }).addUserPolicies(obj);
+  } else {
+    google.script.run.withSuccessHandler(async (res) => {
+      closePoliciesModal();
+      await updateSpecificDataUserPolicies();
+      showChart();
+      $("#customLoader").hide();
+      showToast("แก้ไขข้อมูลสำเร็จ", "success");
+    }).upUserPolicies(obj);
+  }
+}
+
+const editPolicies = (codeID) => {
+  const rowIndex = allDataUserPolicies.find(row => row[0].trim() === codeID.trim());
+
+  if (!rowIndex) {
+    showToast("ไม่พบข้อมูลที่เลือกในระบบ", "warning");
+    return;
+  }
+
+  openPoliciesModal();
+  $("#modalPoliciesTitle").text('แก้ไขวันลาพนักงาน');
+  $('#policiesDataKye').val(rowIndex[0]);
+  $('#policiesData1').val(rowIndex[1]);
+  $('#policiesData2').val(rowIndex[2]);
+  $('#policiesData3').val(rowIndex[3]);
+
+  const user = allDataUsers.find(u => u[0] === rowIndex[1]);
+  if (user && user[10] === "TRUE") {
+    const fullname = user[3];
+    const profileUrl = user[8];
+    document.getElementById('selectedUserProfile').classList.remove('hidden');
+    document.getElementById('selectedUserName').innerText = fullname;
+    document.getElementById('selectedUserImg').src = profileUrl;
+  }
+}
+
+const delPolicies = (codeID) => {
+  let rowIndex = allDataUserPolicies.find(row => row[0].trim() === codeID.trim());
+  
+  if (!rowIndex) {
+    showToast("ไม่พบข้อมูลที่เลือกในระบบ", "warning");
+    return;
+  }
+
+  if (rowIndex) {
+    $('#confirmBtnDel').off('click').on('click', function() {
+      document.getElementById('DelDataModal').classList.add('hidden');
+      $("#customLoader").show();
+      google.script.run.withSuccessHandler(async (res) => {
+        rowIndex = allDataUserPolicies.filter(row => row[0] !== codeID);
+        await updateSpecificDataUserPolicies();
+        showChart();
+        $("#customLoader").hide();
+        showToast("ลบข้อมูลสำเร็จ", "success");
+      }).delDataUserPolicies(codeID);
+    });
+    $('#xDelconfirmData').off('click').on('click', function() {
+      document.getElementById('DelDataModal').classList.add('hidden');
+    });
+    document.getElementById('DelDataModal').classList.remove('hidden');
+  }
+}
+</script>

@@ -1,0 +1,301 @@
+<div class="bg-[var(--bg-secondary)] p-6 rounded-2xl shadow-[var(--shadow)] fade-in">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+    <h3 class="font-bold text-lg">ประชาสัมพันธ์</h3>
+    
+    <div class="flex items-center gap-2 max-w-md w-full sm:w-auto">
+      <div class="relative flex-1">
+        <input type="search" id="searchAnnouncements" class="form-input" placeholder="ค้นหาข้อมูล..." oninput="filterAnnouncements()">
+        <i class="fas fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--text-secondary)] pointer-events-none"></i>
+      </div>
+      <button class="px-4 py-3 text-white bg-green-500 hover:bg-green-600 rounded-lg whitespace-nowrap" onclick="openAnnouncementsModal()">
+        เพิ่มข้อมูล
+      </button>
+    </div>
+  </div>
+  <div class="overflow-x-auto">
+      <table class="min-w-full text-sm divide-y divide-gray-200">
+          <thead class="border-b border-[var(--border-color)]">
+              <tr>
+                  <th class="px-4 py-2 text-center whitespace-nowrap">รหัส</th>
+                  <th class="px-4 py-2 text-center whitespace-nowrap">พนักงาน</th>
+                  <th class="px-4 py-2 text-center whitespace-nowrap">รายละเอียด</th>
+                  <th class="px-4 py-2 text-center whitespace-nowrap">วันที่</th>
+                  <th class="px-4 py-2 text-center whitespace-nowrap">จัดการ</th>
+              </tr>
+          </thead>
+          <tbody id="tableAnnouncements"></tbody>
+      </table>
+  </div>
+  <div class="p-4 mt-4 px-4 py-3 rounded-t-xl rounded-b-xl mt-3">
+    <div class="flex flex-col items-center justify-between gap-2 text-sm">
+      <div id="paginationAnnouncementsInfo" class="text-center"></div>
+      <div id="paginationAnnouncements" class="text-center w-full overflow-x-auto py-2"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let filteredAnnouncement = [];
+let currentAnnouncement = 1;
+let itemsPerAnnouncement = 10;
+
+const rederAnnouncement = (data) => {
+  const table = document.getElementById('tableAnnouncements');
+  table.innerHTML = '';
+
+  const startIndex = (currentAnnouncement - 1) * itemsPerAnnouncement;
+  const endIndex = startIndex + itemsPerAnnouncement;
+  const pageData = data.slice(startIndex, endIndex);
+  const totalRows = data.length;
+
+  const startRow = startIndex + 1;
+  const endRow = startIndex + pageData.length;
+
+  document.getElementById('paginationAnnouncementsInfo').innerText = `แสดง ${startRow} ถึง ${endRow} จาก ${totalRows} แถว`;
+
+  if (pageData.length === 0) {
+    const row = table.insertRow();
+    row.innerHTML = `
+      <td colspan="6" class="text-center text-[var(--text-secondary)] py-6 text-base">
+        ไม่พบข้อมูล! 😓
+      </td>`;
+    return;
+  }
+
+  pageData.forEach((rowIndex) => {
+    const userData = getSearchUsers(rowIndex[1]);
+
+    const row = table.insertRow();
+    row.className = 'transition duration-200 ease-in-out';
+    row.onmouseover = () => row.style.backgroundColor = 'var(--hover-bg-color)';
+    row.onmouseout = () => row.style.backgroundColor = '';
+
+    row.innerHTML = `
+      <td class="px-4 py-3 text-sm whitespace-nowrap text-center text-[var(--text-primary)]">${rowIndex[0]}</td>
+      <td class="px-4 py-3 text-sm whitespace-nowrap">
+        <div class="flex items-center gap-3">
+          <img src="${userData.profile || 'https://placehold.co/100x100/eeeeee/black?text=NO_PIC'}" alt="Profile" class="w-8 h-8 rounded-full object-cover border border-[var(--border-color)]">
+          <div>
+            <div class="font-medium text-[var(--text-primary)]">${userData.fullname || 'ไม่ระบุ'}</div>
+            <div class="text-xs text-[var(--text-secondary)]">${userData.agency || '-'} | ${userData.department || ''}s</div>
+          </div>
+        </div>
+      </td>
+      <td class="px-4 py-3 text-sm text-left text-[var(--text-primary)] max-w-xs break-words whitespace-normal">${rowIndex[2]}</td>
+      <td class="px-4 py-3 text-sm whitespace-nowrap text-center text-[var(--text-primary)]">${rowIndex[3]}</td>
+      <td class="px-4 py-3 text-center text-sm whitespace-nowrap">
+        <button class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition duration-200 ease-in-out shadow-sm hover:shadow-md mr-1"
+          onclick="openFilePreview('${rowIndex[4]}', '${rowIndex[0]}')">
+          <i class="fa-solid fa-download"></i>
+        </button>
+        <button class="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-medium transition duration-200 ease-in-out shadow-sm hover:shadow-md mr-1"
+          onclick="editAnnouncements('${rowIndex[0]}')">
+          <i class="fa-solid fa-pen-to-square"></i>
+        </button>
+        <button class="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition duration-200 ease-in-out shadow-sm hover:shadow-md"
+          onclick="delAnnouncements('${rowIndex[0]}')">
+          <i class="fa-solid fa-trash-can"></i>
+        </button>
+      </td>
+    `;
+  });
+
+  renderPageAnnouncements(totalRows);
+}
+
+const renderPageAnnouncements = (totalItems) => {
+  const totalPages = Math.ceil(totalItems / itemsPerAnnouncement);
+  const paginationContainer = document.getElementById('paginationAnnouncements');
+  paginationContainer.innerHTML = '';
+
+  const ul = document.createElement('ul');
+  ul.className = "custom-pagination";
+
+  const createPageButton = (htmlContent, page, isDisabled = false, isActive = false) => {
+    const li = document.createElement('li');
+    if (isDisabled) li.classList.add('disabled');
+    if (isActive) li.classList.add('active');
+
+    const button = document.createElement('button');
+    button.innerHTML = htmlContent;
+    button.addEventListener('click', () => {
+      if (!isDisabled) {
+        currentAnnouncement = page;
+        const dataToRender = filteredAnnouncement.length ? filteredAnnouncement : allDataManagerDB;
+        rederAnnouncement(dataToRender);
+      }
+    });
+    li.appendChild(button);
+    return li;
+  };
+
+  ul.appendChild(createPageButton('<i class="fa-solid fa-angles-left"></i>', 1, currentAnnouncement === 1));
+  ul.appendChild(createPageButton('<i class="fa-solid fa-angle-left"></i>', currentAnnouncement - 1, currentAnnouncement === 1));
+
+  let startPage, endPage;
+  if (totalPages <= 3) {
+    startPage = 1;
+    endPage = totalPages;
+  } else {
+    if (currentAnnouncement <= 2) {
+      startPage = 1;
+      endPage = 3;
+    } else if (currentAnnouncement + 1 >= totalPages) {
+      startPage = totalPages - 2;
+      endPage = totalPages;
+    } else {
+      startPage = currentAnnouncement - 1;
+      endPage = currentAnnouncement + 1;
+    }
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    ul.appendChild(createPageButton(i, i, false, currentAnnouncement === i));
+  }
+
+  ul.appendChild(createPageButton('<i class="fa-solid fa-angle-right"></i>', currentAnnouncement + 1, currentAnnouncement === totalPages));
+  ul.appendChild(createPageButton('<i class="fa-solid fa-angles-right"></i>', totalPages, currentAnnouncement === totalPages));
+
+  paginationContainer.appendChild(ul);
+}
+
+const filterAnnouncements = () => {
+  const query = document.getElementById('searchAnnouncements').value.toLowerCase();
+
+  filteredAnnouncement = allDataManagerDB.filter(row => {
+    return query === '' || row.some(column => column.toLowerCase().includes(query));
+  });
+
+  currentAnnouncement = 1;
+  rederAnnouncement(filteredAnnouncement);
+};
+
+const openAnnouncementsModal = () => {
+  document.getElementById('announcementsModal').classList.remove('hidden');
+
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('annoData2').value = today;
+};
+
+
+const closeAnnouncementsModal = () => {
+  document.getElementById('announcementsModal').classList.add('hidden');
+  $("#modalAnnouncementsTitle").text('เพิ่มประชาสัมพันธ์ใหม่');
+  $("#annoDataKye").val('');
+  $("#annoData1").val('');
+  $("#annoData2").val('');
+  $("#annoData3").val('');
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('annoData2').value = today;
+}
+
+const toBase64 = (file) => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.readAsDataURL(file);
+  reader.onload = () => resolve(reader.result);
+  reader.onerror = (error) => reject(error);
+});
+
+const submitModalAnnouncements = async () => {
+  event.preventDefault();
+  $("#customLoader").show();
+
+  const userId = document.getElementById('user-show0').innerText;
+  const files = document.getElementById('annoData3').files;
+  const uploadedFiles = [];
+
+  if (files.length > 0) {
+    for (let file of files) {
+      const base64 = await toBase64(file);
+      uploadedFiles.push({
+        filename: file.name,
+        filetype: file.type,
+        imageDataUrl: base64
+      });
+    }
+  }
+
+  const obj = {
+    datakey: document.getElementById('annoDataKye').value,
+    data1: document.getElementById('annoData1').value,
+    data2: document.getElementById('annoData2').value,
+    data3: document.getElementById('annoData3').value,
+    userId: userId,
+    uploadedFiles: uploadedFiles
+  };
+
+  if (!obj.data1 || !obj.data2) {
+    showToast("กรุณากรอกข้อมูลให้ครบถ้วน", "warning");
+    $("#customLoader").hide();
+    return;
+  }
+
+  const successHandler = async (res) => {
+    closeAnnouncementsModal();
+    await updateSpecificDataManagerDB();
+    $("#customLoader").hide();
+    showToast(obj.datakey ? "แก้ไขข้อมูลสำเร็จ" : "บันทึกข้อมูลสำเร็จ", "success");
+  };
+
+  if (!obj.datakey) {
+    google.script.run.withSuccessHandler(successHandler).addAnnouncements(obj);
+  } else {
+    google.script.run.withSuccessHandler(successHandler).upAnnouncements(obj);
+  }
+};
+
+const editAnnouncements = (codeID) => {
+  const rowIndex = allDataManagerDB.find(row => row[0].trim() === codeID.trim());
+
+  openAnnouncementsModal();
+
+  const formatDateForInput = (rawDate) => {
+    if (!rawDate || typeof rawDate !== 'string') return '';
+    const [day, month, year] = rawDate.split('/');
+    if (!day || !month || !year) return '';
+    const paddedDay = day.padStart(2, '0');
+    const paddedMonth = month.padStart(2, '0');
+    return `${year}-${paddedMonth}-${paddedDay}`;
+  };
+
+  if (!rowIndex) {
+    showToast("ไม่พบข้อมูลที่เลือกในระบบ", "warning");
+    return;
+  }
+  $("#modalAnnouncementsTitle").text('แก้ไขประชาสัมพันธ์');
+  $('#annoDataKye').val(rowIndex[0]);
+  $('#annoData1').val(rowIndex[2]);
+  const datePost = formatDateForInput(rowIndex[3]);
+  if (!datePost) {
+    showToast("วันที่ไม่ถูกต้องหรือไม่พบวันที่", "warning");
+  } else {
+    $('#annoData2').val(datePost);
+  }
+}
+
+const delAnnouncements = (codeID) => {
+  let rowIndex = allDataManagerDB.find(row => row[0].trim() === codeID.trim());
+  
+  if (!rowIndex) {
+    showToast("ไม่พบข้อมูลที่เลือกในระบบ", "warning");
+    return;
+  }
+
+  if (rowIndex) {
+    $('#confirmBtnDel').off('click').on('click', function() {
+      document.getElementById('DelDataModal').classList.add('hidden');
+      $("#customLoader").show();
+      google.script.run.withSuccessHandler(async (res) => {
+        rowIndex = allDataManagerDB.filter(row => row[0] !== codeID);
+        await updateSpecificDataManagerDB();
+        $("#customLoader").hide();
+        showToast("ลบข้อมูลสำเร็จ", "success");
+      }).delDataAnnouncements(codeID);
+    });
+    $('#xDelconfirmData').off('click').on('click', function() {
+      document.getElementById('DelDataModal').classList.add('hidden');
+    });
+    document.getElementById('DelDataModal').classList.remove('hidden');
+  }
+}
+</script>

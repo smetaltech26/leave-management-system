@@ -1,0 +1,79 @@
+<div class="bg-[var(--bg-secondary)] p-6 rounded-2xl shadow-[var(--shadow)] fade-in">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+    <h3 class="font-bold text-lg">จัดการวันทำงาน</h3>
+  </div>
+  <div class="overflow-x-auto">
+      <table class="min-w-full text-sm divide-y divide-gray-200">
+          <thead class="border-b border-[var(--border-color)]">
+              <tr>
+                  <th class="px-4 py-2 text-center whitespace-nowrap">#</th>
+                  <th class="px-4 py-2 text-center whitespace-nowrap">รายการ</th>
+                  <th class="px-4 py-2 text-center whitespace-nowrap">ปิด/เปิด</th>
+              </tr>
+          </thead>
+          <tbody id="tableDayOfWeek"></tbody>
+      </table>
+  </div>
+</div>
+
+<script>
+const thaiDayName = (engDay) => {
+  const map = {
+    Monday: 'จันทร์',
+    Tuesday: 'อังคาร',
+    Wednesday: 'พุธ',
+    Thursday: 'พฤหัสบดี',
+    Friday: 'ศุกร์',
+    Saturday: 'เสาร์',
+    Sunday: 'อาทิตย์'
+  };
+  return map[engDay] || engDay;
+};
+
+const renderDayOfWeek = (data) => {
+  const table = document.getElementById('tableDayOfWeek');
+  table.innerHTML = '';
+
+  if (data.length === 0) {
+    const row = table.insertRow();
+    row.innerHTML = `
+      <td colspan="3" class="text-center text-[var(--text-secondary)] py-6 text-base">
+        ไม่พบข้อมูล! 😓
+      </td>`;
+    return;
+  }
+
+  data.forEach((rowIndex, index) => {
+    const engDay = rowIndex[0];
+    const isWorking = rowIndex[1].toUpperCase() === "TRUE";
+
+    const row = table.insertRow();
+    row.className = 'transition duration-200 ease-in-out';
+    row.onmouseover = () => row.style.backgroundColor = 'var(--hover-bg-color)';
+    row.onmouseout = () => row.style.backgroundColor = '';
+
+    row.innerHTML = `
+      <td class="px-4 py-3 text-sm whitespace-nowrap text-center text-[var(--text-primary)]">${index + 1}</td>
+      <td class="px-4 py-3 text-sm whitespace-nowrap text-center text-[var(--text-primary)]">${thaiDayName(engDay)}</td>
+      <td class="px-4 py-3 text-center text-sm whitespace-nowrap">
+        <label class="toggle-switch">
+          <input type="checkbox"
+            ${isWorking ? 'checked' : ''}
+            id="switch-${engDay.toLowerCase()}"
+            onchange="updateWorkingDay('${engDay}', this.checked)">
+          <span class="toggle-slider"></span>
+        </label>
+      </td>
+    `;
+  });
+};
+
+const updateWorkingDay = (dayName, isWorking) => {
+  $("#customLoader").show();
+  google.script.run.withSuccessHandler(async (res) => {
+    $("#customLoader").hide();
+    showToast(`ตั้งค่าวัน${thaiDayName(dayName)}เป็น${isWorking ? 'วันทำงาน' : 'วันหยุด'}เรียบร้อย`, 1);
+    await updateSpecificDataHolidays();
+  }).setWorkingDayStatus(dayName, isWorking);
+};
+</script>

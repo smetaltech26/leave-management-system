@@ -1,0 +1,2053 @@
+<div class="bg-[var(--bg-secondary)] p-6 rounded-2xl shadow-[var(--shadow)] mb-6 fade-in">
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="font-bold text-lg text-[var(--text-primary)]">สรุปการใช้วันลา</h3>
+    <div class="text-sm text-[var(--text-secondary)]">ประจำปี</div>
+  </div>
+  <div class="hidden lg:grid lg:grid-cols-1 xl:grid-cols-4 2xl:grid-cols-4 3xl:grid-cols-4 gap-4" id="leave-summary-grid"></div>
+  <div class="flex gap-4 overflow-x-auto pb-2 lg:hidden" id="leave-summary-scroll"></div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 fade-in">
+  <div class="bg-[var(--bg-secondary)] p-6 rounded-2xl shadow-[var(--shadow)]" style="height: 400px;">
+    <h3 class="font-bold text-lg mb-4">สถิติประเภทการลา</h3>
+    <div style="height: 300px;">
+        <canvas id="leaveTypeChart"></canvas>
+    </div>
+  </div>
+
+  <div class="bg-[var(--bg-secondary)] p-6 rounded-2xl shadow-[var(--shadow)]" style="height: 400px;">
+    <h3 class="font-bold text-lg mb-4">สัดส่วนการลา</h3>
+    <div style="height: 300px;">
+        <canvas id="leaveProportionChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<div class="bg-[var(--bg-secondary)] p-6 rounded-2xl shadow-[var(--shadow)] fade-in">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+    <h3 class="font-bold text-lg">รายการคำขอลาทั้งหมด</h3>
+
+    <div class="flex items-center gap-2 max-w-md w-full sm:w-auto">
+      <div class="relative flex-1">
+        <input type="search" id="searchLeaveRequests" class="form-input" placeholder="ค้นหาคำขอลา..." oninput="filterLeaveRequests()">
+        <i class="fas fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--text-secondary)] pointer-events-none"></i>
+      </div>
+      <button class="px-4 py-3 text-white bg-green-500 hover:bg-green-600 rounded-lg whitespace-nowrap" onclick="openLeaveRequestsModal()">
+        ขออนุญาตลา
+      </button>
+    </div>
+  </div>
+  <div class="overflow-x-auto">
+      <table class="min-w-full text-sm divide-y divide-gray-200">
+          <thead class="border-b border-[var(--border-color)]">
+              <tr>
+                  <th class="px-4 py-2 text-center whitespace-nowrap">รหัสคำขอ</th>
+                  <th class="px-4 py-2 text-center whitespace-nowrap">พนักงาน</th>
+                  <th class="px-4 py-2 text-center whitespace-nowrap">ประเภท</th>
+                  <th class="px-4 py-2 text-center whitespace-nowrap">วันที่เริ่ม - สิ้นสุด</th>
+                  <th class="px-4 py-2 text-center whitespace-nowrap">จำนวน</th>
+                  <th class="px-4 py-2 text-center whitespace-nowrap">เหตุผล</th>
+                  <th class="px-4 py-2 text-center whitespace-nowrap">สถานะ</th>
+                  <th class="px-4 py-2 text-center whitespace-nowrap">จัดการ</th>
+              </tr>
+          </thead>
+          <tbody id="leaveRequestsTable"></tbody>
+      </table>
+  </div>
+  <div class="p-4 mt-4 fade-in px-4 py-3 rounded-t-xl rounded-b-xl mt-3">
+    <div class="flex flex-col items-center justify-between gap-2 text-sm">
+      <div id="paginationLeaveRequestsInfo" class="text-center"></div>
+      <div id="paginationLeaveRequests" class="text-center w-full overflow-x-auto py-2"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const calculateActualLeaveDays = (startDateStr, endDateStr, leaveDuration = 'F') => {
+  const parseDate = (dateStr) => {
+      const [day, month, year] = dateStr.split('/');
+      return new Date(year, month - 1, day);
+  };
+
+  const startDate = parseDate(startDateStr);
+  const endDate = parseDate(endDateStr);
+  
+  const holidays = new Set();
+  if (typeof allDataHolidays !== 'undefined' && allDataHolidays) {
+      allDataHolidays.forEach(holiday => {
+          holidays.add(holiday[1]);
+      });
+  }
+  
+  const workingDays = new Map();
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  
+  if (typeof allDataDayOfWeek !== 'undefined' && allDataDayOfWeek) {
+      allDataDayOfWeek.forEach(dayData => {
+          const dayName = dayData[0];
+          const isWorking = dayData[1] === 'TRUE';
+          workingDays.set(dayName, isWorking);
+      });
+  } else {
+      dayNames.forEach((day, index) => {
+          workingDays.set(day, index >= 1 && index <= 5);
+      });
+  }
+  
+  let actualLeaveDays = 0;
+  let currentDate = new Date(startDate);
+  
+  let dailyLeaveValue = 1;
+  if (leaveDuration === 'AM' || leaveDuration === 'PM') {
+      dailyLeaveValue = 0.5;
+  }
+  
+  while (currentDate <= endDate) {
+      const dayOfWeek = dayNames[currentDate.getDay()];
+      const dateStr = String(currentDate.getDate()).padStart(2, '0') + '/' + 
+                      String(currentDate.getMonth() + 1).padStart(2, '0') + '/' + 
+                      currentDate.getFullYear();
+      
+      const isWorkingDay = workingDays.get(dayOfWeek) || false;
+      const isHoliday = holidays.has(dateStr);
+      
+      if (isWorkingDay && !isHoliday) {
+          actualLeaveDays += dailyLeaveValue;
+      }
+      
+      currentDate.setDate(currentDate.getDate() + 1);
+  }
+  
+  return actualLeaveDays;
+};
+
+const calculateLeaveDaysWithDetail = (startDateStr, endDateStr, leaveDuration = 'F') => {
+  const parseDate = (dateStr) => {
+      const [day, month, year] = dateStr.split('/');
+      return new Date(year, month - 1, day);
+  };
+
+  const startDate = parseDate(startDateStr);
+  const endDate = parseDate(endDateStr);
+  
+  const holidays = new Set();
+  if (typeof allDataHolidays !== 'undefined' && allDataHolidays) {
+      allDataHolidays.forEach(holiday => {
+          holidays.add(holiday[1]);
+      });
+  }
+  
+  const workingDays = new Map();
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const dayNamesThui = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+  
+  if (typeof allDataDayOfWeek !== 'undefined' && allDataDayOfWeek) {
+      allDataDayOfWeek.forEach(dayData => {
+          const dayName = dayData[0];
+          const isWorking = dayData[1] === 'TRUE';
+          workingDays.set(dayName, isWorking);
+      });
+  } else {
+      dayNames.forEach((day, index) => {
+          workingDays.set(day, index >= 1 && index <= 5);
+      });
+  }
+  
+  let actualLeaveDays = 0;
+  let currentDate = new Date(startDate);
+  let details = [];
+  
+  let dailyLeaveValue = 1;
+  let durationText = 'เต็มวัน';
+  if (leaveDuration === 'AM') {
+      dailyLeaveValue = 0.5;
+      durationText = 'ครึ่งวัน (เช้า)';
+  } else if (leaveDuration === 'PM') {
+      dailyLeaveValue = 0.5;
+      durationText = 'ครึ่งวัน (บ่าย)';
+  }
+  
+  while (currentDate <= endDate) {
+      const dayOfWeek = dayNames[currentDate.getDay()];
+      const dayOfWeekThai = dayNamesThui[currentDate.getDay()];
+      const dateStr = String(currentDate.getDate()).padStart(2, '0') + '/' + 
+                      String(currentDate.getMonth() + 1).padStart(2, '0') + '/' + 
+                      currentDate.getFullYear();
+      
+      const isWorkingDay = workingDays.get(dayOfWeek) || false;
+      const isHoliday = holidays.has(dateStr);
+      
+      let status = '';
+      if (!isWorkingDay) {
+          status = 'วันหยุดประจำสัปดาห์';
+      } else if (isHoliday) {
+          status = 'วันหยุดนักขัตฤกษ์';
+      } else {
+          status = `นับเป็นวันลา (${durationText})`;
+          actualLeaveDays += dailyLeaveValue;
+      }
+      
+      details.push({
+          date: dateStr,
+          dayOfWeek: dayOfWeekThai,
+          status: status,
+          counted: isWorkingDay && !isHoliday,
+          leaveValue: isWorkingDay && !isHoliday ? dailyLeaveValue : 0
+      });
+      
+      currentDate.setDate(currentDate.getDate() + 1);
+  }
+  
+  return {
+      totalDays: actualLeaveDays,
+      details: details
+  };
+};
+
+const calculateUserTotalLeave = (userId, leaveType, leaveRequests) => {
+  const userApprovedLeaves = leaveRequests.filter(request => 
+      request[4] === userId && 
+      request[6] === leaveType && 
+      request[7] === 'Approved'
+  );
+  
+  let totalLeave = 0;
+  const leaveDetails = {};
+  
+  userApprovedLeaves.forEach(request => {
+      const leaveDuration = request[12] || 'F';
+      const dayCount = calculateActualLeaveDays(request[2], request[3], leaveDuration);
+      totalLeave += dayCount;
+      
+      leaveDetails[request[0]] = {
+          startDate: request[2],
+          endDate: request[3],
+          duration: leaveDuration,
+          days: dayCount,
+          description: request[1]
+      };
+  });
+  
+  return {
+      totalDays: totalLeave,
+      details: leaveDetails
+  };
+};
+
+let filteredLeaveRequests = [];
+let currentLeaveRequests = 1;
+let itemsPerLeaveRequests = 10;
+
+const renderLeaveRequests = (data) => {
+  const table = document.getElementById('leaveRequestsTable');
+  table.innerHTML = '';
+
+  const currentUserUid = localStorage.getItem('uiduser');
+  
+  const userLeaveRequests = data.filter(request => request[4] === currentUserUid);
+
+  if (!userLeaveRequests || userLeaveRequests.length === 0) {
+      table.innerHTML = `
+          <tr>
+              <td colspan="8" class="text-center text-[var(--text-secondary)] py-6 text-base">
+                  คุณยังไม่มีคำขอลาใดๆ 😓
+              </td>
+          </tr>
+      `;
+      document.getElementById('paginationLeaveRequestsInfo').innerText = 'แสดง 0 ถึง 0 จาก 0 รายการ';
+      document.getElementById('paginationLeaveRequests').innerHTML = '';
+      return;
+  }
+
+  const startIndex = (currentLeaveRequests - 1) * itemsPerLeaveRequests;
+  const endIndex = startIndex + itemsPerLeaveRequests;
+  const dataRequests = userLeaveRequests.slice(startIndex, endIndex);
+  const totalRows = userLeaveRequests.length;
+
+  dataRequests.forEach((request) => {   
+    const leaveTypeText = {
+        'Annual': '<span class="status-badge status-approved"><i class="fa-solid fa-plane-up"></i> ลาพักร้อน</span>',
+        'Sick': '<span class="status-badge status-rejected"><i class="fa-solid fa-user-injured"></i> ลาป่วย</span>',
+        'Personal': '<span class="status-badge status-pending"><i class="fa-solid fa-person-walking-luggage"></i> ลากิจได้รับค่าจ้าง</span>',
+        'Maternity': '<span class="status-badge status-info"><i class="fa-solid fa-baby-carriage"></i> ลาคลอด</span>',
+        'Study': '<span class="status-badge status-info"><i class="fa-solid fa-graduation-cap"></i> ลาศึกษา</span>',
+        'Military': '<span class="status-badge status-info"><i class="fa-solid fa-person-military-rifle"></i> ลาทหาร</span>',
+        'Other': '<span class="status-badge status-info"><i class="fa-solid fa-circle-question"></i> อื่นๆ</span>'
+    }[request[6]] || `<span class="status-badge status-info"><i class="fa-solid fa-circle-question"></i> ${request[6]}</span>`;
+
+    const statusBadge = {
+        'Pending': '<span class="status-badge status-pending"><i class="fas fa-clock"></i> รออนุมัติ</span>',
+        'Approved': '<span class="status-badge status-approved"><i class="fas fa-check-circle"></i> อนุมัติ</span>',
+        'Rejected': '<span class="status-badge status-rejected"><i class="fas fa-times-circle"></i> ไม่อนุมัติ</span>'
+    }[request[7]] || `<span class="status-badge status-info"><i class="fas fa-info-circle"></i> ${request[7]}</span>`;
+
+    const leaveDuration = request[12] || 'F';
+    const dayCount = calculateActualLeaveDays(request[2], request[3], leaveDuration);
+    
+    let durationDisplay = `${dayCount} วัน`;
+    if (leaveDuration === 'AM') {
+        durationDisplay += ' (ครึ่งเช้า)';
+    } else if (leaveDuration === 'PM') {
+        durationDisplay += ' (ครึ่งบ่าย)';
+    }
+
+    const row = table.insertRow();
+    row.className = 'transition duration-200 ease-in-out';
+    row.onmouseover = () => row.style.backgroundColor = 'var(--hover-bg-color)';
+    row.onmouseout = () => row.style.backgroundColor = '';
+    const userData = getSearchUsers(request[4]);
+    
+    row.innerHTML = `
+        <td class="px-4 py-3 text-sm whitespace-nowrap text-center text-[var(--text-primary)]">${request[0]}</td>
+        <td class="px-4 py-3 text-sm whitespace-nowrap">
+            <div class="flex items-center gap-3">
+                <img src="${userData.profile || 'https://placehold.co/100x100/eeeeee/black?text=NO_PIC'}" alt="Profile" class="w-8 h-8 rounded-full object-cover border border-[var(--border-color)]">
+                <div>
+                    <div class="font-medium text-[var(--text-primary)]">${userData.fullname || 'ไม่ระบุ'}</div>
+                    <div class="text-xs text-[var(--text-secondary)]">${userData.agency || '-'} | ${userData.department || ''}</div>
+                </div>
+            </div>
+        </td>
+        <td class="px-4 py-3 text-sm whitespace-nowrap text-center">${leaveTypeText}</td>
+        <td class="px-4 py-3 text-sm whitespace-nowrap text-center text-[var(--text-primary)]">
+            ${request[2]}<br>
+            <span class="text-[var(--text-secondary)]">ถึง</span><br>
+            ${request[3]}
+        </td>
+        <td class="px-4 py-3 text-sm whitespace-nowrap text-center text-[var(--text-primary)] font-medium">${durationDisplay}</td>
+        <td class="px-4 py-3 text-sm whitespace-nowrap text-[var(--text-primary)]" title="${request[1]}">
+            ${request[1].length > 30 ? request[1].substring(0, 30) + '...' : request[1]}
+        </td>
+        <td class="px-4 py-3 text-sm whitespace-nowrap text-center">${statusBadge}</td>
+        <td class="px-4 py-3 text-center text-sm whitespace-nowrap">
+        <button class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition duration-200 ease-in-out shadow-sm hover:shadow-md mr-1"
+          onclick="openLeaveModal('${request[0]}')">
+          <i class="fa-regular fa-eye"></i>
+        </button>
+          <button class="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-medium transition duration-200 ease-in-out shadow-sm hover:shadow-md mr-1" onclick="editLeaveRequest('${request[0]}')"><i class="fa-solid fa-pen-to-square"></i></button>
+          <button class="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition duration-200 ease-in-out shadow-sm hover:shadow-md" onclick="delLeaveRequest('${request[0]}')"><i class="fa-solid fa-trash-can"></i></button>
+        </td>
+    `;
+  });
+
+  document.getElementById('paginationLeaveRequestsInfo').innerText = `แสดง ${startIndex + 1} ถึง ${Math.min(endIndex, totalRows)} จาก ${totalRows} รายการ`;
+
+  renderPageLeaveRequests(totalRows);
+};
+
+const renderPageLeaveRequests = (totalItems) => {
+  const totalPages = Math.ceil(totalItems / itemsPerLeaveRequests);
+  const paginationContainer = document.getElementById('paginationLeaveRequests');
+  paginationContainer.innerHTML = '';
+
+  const ul = document.createElement('ul');
+  ul.className = "custom-pagination";
+
+  const createPageButton = (htmlContent, page, isDisabled = false, isActive = false) => {
+    const li = document.createElement('li');
+    if (isDisabled) li.classList.add('disabled');
+    if (isActive) li.classList.add('active');
+
+    const button = document.createElement('button');
+    button.innerHTML = htmlContent;
+    button.addEventListener('click', () => {
+      if (!isDisabled) {
+        currentLeaveRequests = page;
+        const dataToRender = filteredLeaveRequests.length ? filteredLeaveRequests : allDataLeaveRequests;
+        renderLeaveRequests(dataToRender);
+      }
+    });
+    li.appendChild(button);
+    return li;
+  };
+
+  ul.appendChild(createPageButton('<i class="fa-solid fa-angles-left"></i>', 1, currentLeaveRequests === 1));
+  ul.appendChild(createPageButton('<i class="fa-solid fa-angle-left"></i>', currentLeaveRequests - 1, currentLeaveRequests === 1));
+
+  let startPage, endPage;
+  if (totalPages <= 3) {
+      startPage = 1;
+      endPage = totalPages;
+  } else {
+      if (currentLeaveRequests <= 2) {
+          startPage = 1;
+          endPage = 3;
+      } else if (currentLeaveRequests + 1 >= totalPages) {
+          startPage = totalPages - 2;
+          endPage = totalPages;
+      } else {
+          startPage = currentLeaveRequests - 1;
+          endPage = currentLeaveRequests + 1;
+      }
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+      ul.appendChild(createPageButton(i, i, false, currentLeaveRequests === i));
+  }
+
+  ul.appendChild(createPageButton('<i class="fa-solid fa-angle-right"></i>', currentLeaveRequests + 1, currentLeaveRequests === totalPages));
+  ul.appendChild(createPageButton('<i class="fa-solid fa-angles-right"></i>', totalPages, currentLeaveRequests === totalPages));
+
+  paginationContainer.appendChild(ul);
+};
+
+const filterLeaveRequests = () => {
+  const query = document.getElementById('searchLeaveRequests').value.toLowerCase();
+  const currentUserUid = localStorage.getItem('uiduser');
+
+  const userLeaveRequests = allDataLeaveRequests.filter(row => row[4] === currentUserUid);
+  
+  filteredLeaveRequests = userLeaveRequests.filter(row => {
+      return query === '' || row.some(column => column.toLowerCase().includes(query));
+  });
+
+  currentLeaveRequests = 1;
+  renderLeaveRequests(filteredLeaveRequests.length > 0 ? filteredLeaveRequests : userLeaveRequests);
+};
+
+const renderLeaveSummary = () => {
+  const currentUserUid = localStorage.getItem('uiduser');
+  
+  if (!allDataLeaveRequests || !allDataUserPolicies || !currentUserUid) {
+      return;
+  }
+  
+  const userPolicies = allDataUserPolicies.filter(policy => policy[1] === currentUserUid);
+  const leaveQuotas = {};
+  const leaveUsage = {};
+  
+  userPolicies.forEach(policy => {
+      const leaveType = policy[2];
+      const quota = parseFloat(policy[3]);
+      leaveQuotas[leaveType] = quota;
+      leaveUsage[leaveType] = 0;
+  });
+  
+  const userApprovedLeaves = allDataLeaveRequests.filter(request => 
+      request[4] === currentUserUid && request[7] === 'Approved'
+  );
+  
+  userApprovedLeaves.forEach(request => {
+      const leaveDuration = request[12] || 'F';
+      const dayCount = calculateActualLeaveDays(request[2], request[3], leaveDuration);
+      const leaveType = request[6];
+      
+      if (leaveUsage[leaveType] !== undefined) {
+          leaveUsage[leaveType] += dayCount;
+      }
+  });
+  
+  const summary = [];
+  const leaveTypeMapping = {
+      'Annual': { 
+          name: 'ลาพักร้อน', 
+          icon: 'fa-solid fa-plane-up',
+          iconColor: 'text-yellow-600 dark:text-yellow-400'
+      },
+      'Sick': { 
+          name: 'ลาป่วย', 
+          icon: 'fa-solid fa-user-injured',
+          iconColor: 'text-blue-600 dark:text-blue-400'
+      },
+      'Personal': { 
+          name: 'ลากิจได้รับค่าจ้าง', 
+          icon: 'fa-solid fa-person-walking-luggage',
+          iconColor: 'text-orange-600 dark:text-orange-400'
+      },
+      'Other': { 
+          name: 'อื่นๆ', 
+          icon: 'fa-solid fa-circle-question',
+          iconColor: 'text-gray-600 dark:text-gray-400'
+      },
+      'Maternity': { 
+          name: 'ลาคลอด', 
+          icon: 'fa-solid fa-baby-carriage',
+          iconColor: 'text-pink-600 dark:text-pink-400'
+      },
+      'Study': { 
+          name: 'ลาศึกษา', 
+          icon: 'fa-solid fa-graduation-cap',
+          iconColor: 'text-purple-600 dark:text-purple-400'
+      },
+      'Military': { 
+          name: 'ลาทหาร', 
+          icon: 'fa-solid fa-person-military-rifle',
+          iconColor: 'text-green-600 dark:text-green-400'
+      }
+  };
+  
+  Object.keys(leaveQuotas).forEach(leaveType => {
+      const typeInfo = leaveTypeMapping[leaveType] || { 
+          name: leaveType, 
+          icon: 'fas fa-calendar',
+          iconColor: 'text-gray-600 dark:text-gray-400'
+      };
+      const used = leaveUsage[leaveType] || 0;
+      const total = leaveQuotas[leaveType];
+      const remaining = total - used;
+      const percent = total > 0 ? (used / total) * 100 : 0;
+      
+      summary.push({
+          type: leaveType,
+          name: typeInfo.name,
+          icon: typeInfo.icon,
+          iconColor: typeInfo.iconColor,
+          used: used,
+          total: total,
+          remaining: remaining,
+          percent: percent
+      });
+  });
+  
+  const gridContainer = document.getElementById("leave-summary-grid");
+  const scrollContainer = document.getElementById("leave-summary-scroll");
+  if (!gridContainer || !scrollContainer) return;
+  
+  gridContainer.innerHTML = '';
+  scrollContainer.innerHTML = '';
+  
+  summary.forEach(({ type, name, icon, iconColor, used, total, remaining, percent }) => {
+      let progressColor = 'bg-[var(--bs-green)]';
+      let textColor = 'text-[var(--bs-green)]';
+      
+      if (percent >= 81) {
+          progressColor = 'bg-[var(--bs-red)]';
+          textColor = 'text-[var(--bs-red)]';
+      } else if (percent >= 51) {
+          progressColor = 'bg-[var(--bs-yellow)]';
+          textColor = 'text-[var(--bs-yellow)]';
+      } else if (percent >= 31) {
+          progressColor = 'bg-[var(--bs-purple)]';
+          textColor = 'text-[var(--bs-purple)]';
+      }
+      
+      const usedDisplay = used % 1 === 0 ? used.toString() : used.toFixed(1);
+      const remainingDisplay = remaining % 1 === 0 ? remaining.toString() : remaining.toFixed(1);
+      
+      const cardHTML = `
+          <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-3">
+                  <div class="p-3 rounded-full ${iconColor}">
+                      <i class="${icon} text-lg"></i>
+                  </div>
+                  <span class="font-semibold text-[var(--text-primary)] text-base">${name}</span>
+              </div>
+              <span class="text-sm ${textColor} font-bold bg-opacity-10 py-1 px-3 rounded-full">${percent.toFixed(1)}%</span>
+          </div>
+          <div class="flex justify-between text-sm text-[var(--text-secondary)] mb-2 font-medium">
+              <span>ใช้ได้: <span class="font-bold text-[var(--text-primary)]">${total}</span> วัน</span>
+              <span>คงเหลือ: <span class="font-bold text-[var(--text-primary)]">${remainingDisplay}</span> วัน</span>
+          </div>
+          <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden">
+              <div class="${progressColor} h-2.5 rounded-full transition-all duration-500 ease-out" style="width: ${percent}%"></div>
+          </div>
+      `;
+      
+      const gridCard = document.createElement("div");
+      gridCard.className = "bg-gradient-to-br from-[var(--bg-secondary)] to-[var(--bg-primary)] p-5 rounded-xl shadow-[var(--shadow)] transform hover:scale-105 transition-all duration-300 ease-in-out cursor-pointer";
+      gridCard.innerHTML = cardHTML;
+      gridContainer.appendChild(gridCard);
+      
+      const scrollCard = document.createElement("div");
+      scrollCard.className = "bg-gradient-to-br from-[var(--bg-secondary)] to-[var(--bg-primary)] p-5 rounded-xl shadow-[var(--shadow)] transform hover:scale-105 transition-all duration-300 ease-in-out cursor-pointer min-w-[280px] flex-shrink-0";
+      scrollCard.innerHTML = cardHTML;
+      scrollContainer.appendChild(scrollCard);
+  });
+};
+
+const renderLeaveTypeChart = () => {
+  const currentUserUid = localStorage.getItem('uiduser');
+  
+  if (!allDataLeaveRequests || !allDataUserPolicies || !currentUserUid) {
+      return;
+  }
+  
+  const userPolicies = allDataUserPolicies.filter(policy => policy[1] === currentUserUid);
+  const leaveQuotas = {};
+  const leaveUsage = {};
+  
+  userPolicies.forEach(policy => {
+      const leaveType = policy[2];
+      const quota = parseFloat(policy[3]);
+      leaveQuotas[leaveType] = quota;
+      leaveUsage[leaveType] = 0;
+  });
+  
+  const userApprovedLeaves = allDataLeaveRequests.filter(request => 
+      request[4] === currentUserUid && request[7] === 'Approved'
+  );
+  
+  userApprovedLeaves.forEach(request => {
+      const leaveDuration = request[12] || 'F'; // ใช้คอลัมน์ leaveDuration
+      const dayCount = calculateActualLeaveDays(request[2], request[3], leaveDuration);
+      const leaveType = request[6];
+      
+      if (leaveUsage[leaveType] !== undefined) {
+          leaveUsage[leaveType] += dayCount;
+      }
+  });
+  
+  const labels = [];
+  const usedData = [];
+  const remainingData = [];
+  
+  const leaveTypeMapping = {
+      'Annual': 'ลาพักร้อน',
+      'Sick': 'ลาป่วย',
+      'Personal': 'ลากิจได้รับค่าจ้าง',
+      'Other': 'อื่นๆ',
+      'Maternity': 'ลาคลอด',
+      'Study': 'ลาศึกษา',
+      'Military': 'ลาทหาร'
+  };
+  
+  Object.keys(leaveQuotas).forEach(leaveType => {
+      const displayName = leaveTypeMapping[leaveType] || leaveType;
+      const used = leaveUsage[leaveType] || 0;
+      const remaining = leaveQuotas[leaveType] - used;
+      
+      labels.push(displayName);
+      usedData.push(used);
+      remainingData.push(remaining);
+  });
+  
+  const canvas = document.getElementById('leaveTypeChart');
+  const existingChart = Chart.getChart(canvas);
+  if (existingChart) existingChart.destroy();
+  
+  new Chart(canvas, {
+      type: 'bar',
+      data: {
+          labels,
+          datasets: [
+              {
+                  label: 'ใช้ไปแล้ว',
+                  data: usedData,
+                  backgroundColor: 'rgba(239, 83, 80, 0.8)',
+                  borderColor: 'rgba(239, 83, 80, 1)',
+                  borderWidth: 1
+              },
+              {
+                  label: 'คงเหลือ',
+                  data: remainingData,
+                  backgroundColor: 'rgba(5, 190, 138, 0.8)',
+                  borderColor: 'rgba(5, 190, 138, 1)',
+                  borderWidth: 1
+              }
+          ]
+      },
+      options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+              legend: {
+                  position: 'top',
+                  labels: {
+                      font: { family: 'Prompt', size: 12 }
+                  }
+              },
+              tooltip: {
+                  callbacks: {
+                      label: function(context) {
+                          const value = context.parsed.y;
+                          const displayValue = value % 1 === 0 ? value.toString() : value.toFixed(1);
+                          return `${context.dataset.label}: ${displayValue} วัน`;
+                      }
+                  }
+              }
+          },
+          scales: {
+              x: {
+                  grid: { display: false },
+                  ticks: { font: { family: 'Prompt', size: 11 } }
+              },
+              y: {
+                  beginAtZero: true,
+                  ticks: {
+                      font: { family: 'Prompt', size: 11 },
+                      callback: function(value) {
+                          const displayValue = value % 1 === 0 ? value.toString() : value.toFixed(1);
+                          return displayValue + ' วัน';
+                      }
+                  }
+              }
+          }
+      }
+  });
+};
+
+const renderLeaveProportionChart = () => {
+  const currentUserUid = localStorage.getItem('uiduser');
+  
+  if (!allDataLeaveRequests || !currentUserUid) {
+      return;
+  }
+  
+  const userApprovedLeaves = allDataLeaveRequests.filter(request => 
+      request[4] === currentUserUid && request[7] === 'Approved'
+  );
+  
+  const leaveUsage = {};
+  
+  userApprovedLeaves.forEach(request => {
+      const leaveDuration = request[12] || 'F'; // ใช้คอลัมน์ leaveDuration
+      const dayCount = calculateActualLeaveDays(request[2], request[3], leaveDuration);
+      const leaveType = request[6];
+      
+      leaveUsage[leaveType] = (leaveUsage[leaveType] || 0) + dayCount;
+  });
+  
+  const labels = [];
+  const data = [];
+  const colors = [
+      'rgba(79, 70, 229, 0.8)',
+      'rgba(16, 185, 129, 0.8)',
+      'rgba(239, 68, 68, 0.8)',
+      'rgba(255, 193, 7, 0.8)',
+      'rgba(0, 123, 255, 0.8)',
+      'rgba(108, 117, 125, 0.8)'
+  ];
+  
+  const leaveTypeMapping = {
+      'Annual': 'ลาพักร้อน',
+      'Sick': 'ลาป่วย',
+      'Personal': 'ลากิจได้รับค่าจ้าง',
+      'Other': 'อื่นๆ',
+      'Maternity': 'ลาคลอด',
+      'Study': 'ลาศึกษา',
+      'Military': 'ลาทหาร'
+  };
+  
+  Object.keys(leaveUsage).forEach(leaveType => {
+      if (leaveUsage[leaveType] > 0) {
+          const displayName = leaveTypeMapping[leaveType] || leaveType;
+          labels.push(displayName);
+          data.push(leaveUsage[leaveType]);
+      }
+  });
+  
+  if (data.length === 0) {
+      labels.push('ยังไม่มีการลา');
+      data.push(1);
+      colors.splice(0, colors.length, 'rgba(108, 117, 125, 0.3)');
+  }
+  
+  const canvas = document.getElementById('leaveProportionChart');
+  const existingChart = Chart.getChart(canvas);
+  if (existingChart) existingChart.destroy();
+  
+  new Chart(canvas, {
+      type: 'doughnut',
+      data: {
+          labels,
+          datasets: [{
+              data,
+              backgroundColor: colors.slice(0, data.length),
+              borderColor: colors.slice(0, data.length).map(color => color.replace('0.8', '1')),
+              borderWidth: 2,
+              hoverOffset: 10
+          }]
+      },
+      options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '60%',
+          plugins: {
+              legend: {
+                  position: 'bottom',
+                  labels: {
+                      padding: 20,
+                      font: { family: 'Prompt', size: 12 }
+                  }
+              },
+              tooltip: {
+                  callbacks: {
+                      label: function(context) {
+                          const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                          const percentage = ((context.parsed / total) * 100).toFixed(1);
+                          const value = context.parsed;
+                          const displayValue = value % 1 === 0 ? value.toString() : value.toFixed(1);
+                          return `${context.label}: ${displayValue} วัน (${percentage}%)`;
+                      }
+                  }
+              }
+          }
+      }
+  });
+};
+
+const showChart = () => {
+  renderLeaveSummary();
+  renderLeaveTypeChart();
+  renderLeaveProportionChart();
+};
+
+let selectedApprovers = [];
+let tempSelectedApprovers = [];
+let currentEditData = null;
+let existingAttachments = []; 
+
+const openLeaveRequestsModal = () => {
+  document.getElementById("leaveRequestsModal").classList.remove("hidden");
+  const uid = localStorage.getItem("uiduser");
+  renderLeaveTypesForUser(uid);
+  renderLeaveDurations();
+};
+
+const closeLeaveRequestsModal = () => {
+  document.getElementById('leaveRequestsModal').classList.add('hidden');
+  $("#modalLeaveTitle").text('ขออนุญาตลางาน');
+
+  document.getElementById('leaveDataKey').value = '';
+  document.getElementById('leaveDescription').value = '';
+  document.getElementById('leaveStart').value = '';
+  document.getElementById('leaveEnd').value = '';
+
+  document.querySelectorAll('input[name="leaveType"]').forEach(radio => {
+    radio.checked = false;
+    const policyId = radio.getAttribute('data-policy-id');
+    const card = document.querySelector(`[data-card-id="${policyId}"]`);
+    if (card) {
+      card.classList.remove('border-[var(--bs-blue)]', 'bg-[var(--hover-bg-color)]');
+      card.classList.add('border-[var(--border-color)]');
+      const checkmark = card.querySelector('.checkmark-indicator');
+      if (checkmark) {
+        checkmark.classList.remove('opacity-100', 'scale-100');
+        checkmark.classList.add('opacity-0', 'scale-75');
+      }
+    }
+  });
+
+  document.querySelectorAll('input[name="leaveDuration"]').forEach(radio => {
+    radio.checked = false;
+    const card = document.querySelector(`[data-card-id="leaveDuration-${radio.value}"]`);
+    if (card) {
+      card.classList.remove('border-[var(--bs-blue)]', 'bg-[var(--hover-bg-color)]');
+      card.classList.add('border-[var(--border-color)]');
+      const check = card.querySelector('.checkmark-indicator');
+      if (check) {
+        check.classList.remove('opacity-100', 'scale-100');
+        check.classList.add('opacity-0', 'scale-75');
+      }
+    }
+  });
+
+  const defaultRadio = document.querySelector('input[name="leaveDuration"][value="F"]');
+  const defaultCard = document.querySelector('[data-card-id="leaveDuration-F"]');
+  if (defaultRadio && defaultCard) {
+    defaultRadio.checked = true;
+    defaultCard.classList.add('border-[var(--bs-blue)]', 'bg-[var(--hover-bg-color)]');
+    defaultCard.classList.remove('border-[var(--border-color)]');
+    const check = defaultCard.querySelector('.checkmark-indicator');
+    if (check) {
+      check.classList.remove('opacity-0', 'scale-75');
+      check.classList.add('opacity-100', 'scale-100');
+    }
+  }
+
+  selectedApprovers = [];
+  tempSelectedApprovers = [];
+  renderSelectedApproverChips();
+
+  clearFileUploads();
+
+  currentEditData = null;
+  existingAttachments = [];
+};
+
+const renderLeaveTypesForUser = (uid) => {
+  const container = document.getElementById("leaveTypeContainer");
+  container.innerHTML = '';
+
+  const leaveTypeMap = {
+    'Annual': 'ลาพักร้อน',
+    'Sick': 'ลาป่วย',
+    'Personal': 'ลากิจได้รับค่าจ้าง',
+    'Other': 'อื่นๆ',
+    'Maternity': 'ลาคลอด',
+    'Study': 'ลาศึกษา',
+    'Military': 'ลาทหาร'
+  };
+
+  const policies = allDataUserPolicies.filter(row => row[1] === uid);
+
+  if (policies.length === 0) {
+    container.innerHTML = `<p class="text-red-500 font-medium p-3 rounded-lg bg-red-100 dark:bg-red-900 dark:text-red-300 text-sm">ไม่พบสิทธิ์การลาสำหรับผู้ใช้งานนี้</p>`;
+    return;
+  }
+
+  const cardGrid = document.createElement('div');
+  cardGrid.className = 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 mb-4';
+
+  policies.forEach((row) => {
+    const policyId = row[0];
+    const userId = row[1];
+    const leaveType = row[2];
+    const quota = row[3];
+    const labelTH = leaveTypeMap[leaveType] || 'อื่นๆ';
+    const id = `leaveType-${policyId}`;
+
+    const containerDiv = document.createElement('div');
+    containerDiv.className = 'relative';
+
+    const radioInput = document.createElement('input');
+    radioInput.id = id;
+    radioInput.name = 'leaveType';
+    radioInput.type = 'radio';
+    radioInput.value = leaveType;
+    radioInput.setAttribute('data-policy-id', policyId);
+    radioInput.className = 'hidden';
+
+    const cardDiv = document.createElement('div');
+    cardDiv.setAttribute('data-card-id', policyId);
+    cardDiv.className = `
+      relative flex flex-col items-center justify-center p-3 rounded-lg shadow-sm cursor-pointer w-full
+      bg-[var(--bg-secondary)] border-2 border-[var(--border-color)]
+      transition-all duration-300 ease-in-out
+      hover:border-[var(--bs-blue)] hover:shadow-md hover:scale-105
+      dark:bg-[var(--bg-secondary)] dark:border-[var(--border-color)]
+      dark:hover:border-[var(--bs-blue)]
+      min-h-[110px]
+    `;
+
+    cardDiv.innerHTML = `
+      <div class="flex flex-col items-center text-center">
+        <div class="
+          w-10 h-10 rounded-full flex items-center justify-center text-lg mb-2
+          bg-[var(--bg-primary)] text-[var(--bs-blue)]
+          transition-all duration-300 ease-in-out
+        ">
+          ${getLeaveIcon(leaveType)}
+        </div>
+        <label for="${id}" class="
+          text-sm font-semibold text-[var(--text-primary)] mb-1 leading-tight
+          transition-colors duration-200 ease-in-out cursor-pointer
+        ">${labelTH}</label>
+        <p class="text-xs text-[var(--text-secondary)]">(${quota} วัน)</p>
+      </div>
+      <div class="absolute top-2 right-2 w-5 h-5 rounded-full border-2 flex items-center justify-center
+        border-[var(--bs-blue)] bg-[var(--bs-blue)]
+        opacity-0 transition-all duration-200 scale-75 checkmark-indicator
+        dark:bg-[var(--bs-blue)] dark:border-[var(--bs-blue)]
+      ">
+        <svg class="h-2.5 w-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+        </svg>
+      </div>
+    `;
+
+    const updateCardState = (isSelected) => {
+      updateCardStateForCard(cardDiv, isSelected);
+    };
+
+    const updateCardStateForCard = (targetCard, isSelected) => {
+      if (isSelected) {
+        targetCard.classList.add('border-[var(--bs-blue)]', 'bg-[var(--hover-bg-color)]');
+        targetCard.classList.remove('border-[var(--border-color)]');
+        const checkmark = targetCard.querySelector('.checkmark-indicator');
+        if (checkmark) {
+          checkmark.classList.remove('opacity-0', 'scale-75');
+          checkmark.classList.add('opacity-100', 'scale-100');
+        }
+      } else {
+        targetCard.classList.remove('border-[var(--bs-blue)]', 'bg-[var(--hover-bg-color)]');
+        targetCard.classList.add('border-[var(--border-color)]');
+        const checkmark = targetCard.querySelector('.checkmark-indicator');
+        if (checkmark) {
+          checkmark.classList.remove('opacity-100', 'scale-100');
+          checkmark.classList.add('opacity-0', 'scale-75');
+        }
+      }
+    };
+
+    cardDiv.addEventListener('click', () => {
+      document.querySelectorAll('input[name="leaveType"]').forEach(radio => {
+        radio.checked = false;
+        const otherPolicyId = radio.getAttribute('data-policy-id');
+        const otherCard = document.querySelector(`[data-card-id="${otherPolicyId}"]`);
+        if (otherCard) {
+          updateCardStateForCard(otherCard, false);
+        }
+      });
+      
+      radioInput.checked = true;
+      updateCardState(true);
+      
+      radioInput.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    radioInput.addEventListener('change', () => {
+      updateCardState(radioInput.checked);
+    });
+
+    containerDiv.appendChild(radioInput);
+    containerDiv.appendChild(cardDiv);
+    cardGrid.appendChild(containerDiv);
+  });
+
+  container.appendChild(cardGrid);
+
+  function getLeaveIcon (leaveType) {
+    switch (leaveType) {
+      case 'Annual':
+        return '<i class="fa-solid fa-plane-up"></i>';
+      case 'Sick':
+        return '<i class="fa-solid fa-user-injured"></i>';
+      case 'Personal':
+        return '<i class="fa-solid fa-person-walking-luggage"></i>';
+      case 'Maternity':
+        return '<i class="fa-solid fa-baby-carriage"></i>';
+      case 'Study':
+        return '<i class="fa-solid fa-graduation-cap"></i>';
+      case 'Military':
+        return '<i class="fa-solid fa-person-military-rifle"></i>';
+      default:
+        return '<i class="fa-solid fa-circle-question"></i>';
+    }
+  }
+};
+
+let filesStore = new DataTransfer();
+
+const triggerFileInput = () => {
+  document.getElementById('fileInput').click();
+};
+
+const handleDragOver = (event) => {
+  event.preventDefault();
+  document.getElementById('dropzone').classList.add('drag-over');
+};
+
+const handleDragLeave = () => {
+  document.getElementById('dropzone').classList.remove('drag-over');
+};
+
+const handleDrop = (event) => {
+  event.preventDefault();
+  document.getElementById('dropzone').classList.remove('drag-over');
+  const files = event.dataTransfer.files;
+  addFiles(files);
+};
+
+const handleFileInputChange = () => {
+  const fileInput = document.getElementById('fileInput');
+  addFiles(fileInput.files);
+};
+
+const addFiles = (newFiles) => {
+  Array.from(newFiles).forEach(file => {
+    if (file.size > 10 * 1024 * 1024) {
+      alert(`ไฟล์ ${file.name} มีขนาดใหญ่เกิน 10MB`);
+      return;
+    }
+    
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    if (!allowedTypes.includes(file.type)) {
+      alert(`ไฟล์ ${file.name} ไม่ใช่ประเภทที่อนุญาต`);
+      return;
+    }
+    
+    if (!Array.from(filesStore.files).some(f => f.name === file.name && f.size === file.size)) {
+      filesStore.items.add(file);
+    }
+  });
+  
+  const fileInput = document.getElementById('fileInput');
+  fileInput.files = filesStore.files;
+  renderFileList();
+};
+
+const renderFileList = () => {
+  const fileList = document.getElementById('fileList');
+  fileList.innerHTML = '';
+  
+  if (existingAttachments && existingAttachments.length > 0) {
+    existingAttachments.forEach((file, index) => {
+      const fileItem = document.createElement('div');
+      fileItem.className = 'file-item';
+      fileItem.innerHTML = `
+        <div class="flex items-center">
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--text-secondary);">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+          </svg>
+          <span class="text-sm truncate mr-4" style="color: var(--text-primary);">${file.fileName}</span>
+          <span class="file-badge-existing">(ไฟล์เดิม)</span>
+        </div>
+        <div class="flex items-center gap-4">
+          <button type="button" onclick="openFilePreview('${file.fileUrl}', '${file.fileName}')" class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition duration-200 ease-in-out shadow-sm hover:shadow-md">เปิด</button>
+          <button type="button" onclick="removeExistingFile(${index})" class="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition duration-200 ease-in-out shadow-sm hover:shadow-md">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+      `;
+      fileList.appendChild(fileItem);
+    });
+  }
+  
+  Array.from(filesStore.files).forEach((file, index) => {
+    const fileItem = document.createElement('div');
+    fileItem.className = 'file-item';
+    fileItem.innerHTML = `
+      <div class="flex items-center">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--text-secondary);">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+        </svg>
+        <span class="text-sm truncate mr-4" style="color: var(--text-primary);">${file.name}</span>
+        <span class="file-badge-new">(ไฟล์ใหม่)</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <span class="text-xs" style="color: var(--text-secondary);">${(file.size / 1024).toFixed(2)} KB</span>
+        <button type="button" onclick="removeFile(${index})" class="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition duration-200 ease-in-out shadow-sm hover:shadow-md">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+    `;
+    fileList.appendChild(fileItem);
+  });
+};
+
+const removeFile = (index) => {
+  const newFiles = new DataTransfer();
+  const currentFiles = Array.from(filesStore.files);
+  currentFiles.splice(index, 1);
+  currentFiles.forEach(file => newFiles.items.add(file));
+  filesStore = newFiles;
+  document.getElementById('fileInput').files = filesStore.files;
+  renderFileList();
+};
+
+const removeExistingFile = (index) => {
+  existingAttachments.splice(index, 1);
+  renderFileList();
+};
+
+const fileToBase64 = (file) => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.readAsDataURL(file);
+  });
+};
+
+const clearFileUploads = () => {
+  filesStore = new DataTransfer();
+  existingAttachments = [];
+  document.getElementById('fileInput').files = filesStore.files;
+  renderFileList();
+};
+
+const openApproverModal = () => {
+  const approverModal = document.getElementById('approverModal');
+  tempSelectedApprovers = [...selectedApprovers];
+  populateApproverModal();
+  approverModal.classList.remove('hidden');
+}
+
+const closeApproverModal = () => {
+  const approverModal = document.getElementById('approverModal');
+  approverModal.classList.add('hidden');
+}
+
+const populateApproverModal = () => {
+  const container = document.getElementById('approver-list-container');
+  container.innerHTML = '';
+
+  const currentUser = {
+    agency: localStorage.getItem('agency'),
+    department: localStorage.getItem('department'),
+    role: localStorage.getItem('role')
+  };
+
+  let filteredUsers = [];
+
+  if (currentUser.role === 'Admin' || currentUser.role === 'SuperAdmin') {
+    // Admin และ SuperAdmin เห็นทั้งหมด
+    filteredUsers = allDataUsers.filter(row => {
+      const role = row[6];
+      return role === 'SuperAdmin' || role === 'Admin' || role === 'SuperUser';
+    });
+  } else {
+    // User ธรรมดาเห็น:
+    // 1. หัวหน้าฝ่ายตัวเอง (SuperUser ที่มี agency และ department ตรงกัน)
+    // 2. Admin และ SuperAdmin ทุกคน
+    filteredUsers = allDataUsers.filter(row => {
+      const userAgency = row[4];
+      const userDepartment = row[5];
+      const role = row[6];
+      
+      // หัวหน้าฝ่ายตัวเอง
+      if (role === 'SuperUser' && 
+          userAgency === currentUser.agency && 
+          userDepartment === currentUser.department) {
+        return true;
+      }
+      
+      // Admin และ SuperAdmin ทุกคน
+      if (role === 'Admin' || role === 'SuperAdmin') {
+        return true;
+      }
+      
+      return false;
+    });
+  }
+
+  // แยกผู้ใช้ตาม role
+  const superUsers = filteredUsers.filter(row => row[6] === 'SuperUser');
+  const admins = filteredUsers.filter(row => row[6] === 'Admin');
+  const superAdmins = filteredUsers.filter(row => row[6] === 'SuperAdmin');
+
+  // 1. แสดงหัวหน้าฝ่าย (SuperUser) - แยกตามฝ่าย
+  if (superUsers.length > 0) {
+    const groupedSuperUsers = superUsers.reduce((acc, row) => {
+      const agencyId = row[4];
+      const deptId = row[5];
+      const agencyInfo = getSearchAgency(agencyId);
+      const deptInfo = getSearchDepartments(deptId);
+      const groupKey = `${agencyId}-${deptId}`;
+      
+      if (!acc[groupKey]) {
+        acc[groupKey] = {
+          agencyName: agencyInfo.agencyname || agencyId,
+          deptName: deptInfo.deptname || deptId,
+          users: []
+        };
+      }
+      acc[groupKey].users.push(row);
+      return acc;
+    }, {});
+
+    // แสดงหัวหน้าแต่ละฝ่าย
+    for (const groupKey in groupedSuperUsers) {
+      const groupData = groupedSuperUsers[groupKey];
+      
+      const groupHeader = document.createElement('h3');
+      groupHeader.className = 'text-lg font-semibold mt-6 mb-4 first:mt-0';
+      groupHeader.style.color = 'var(--text-primary)';
+      groupHeader.textContent = `หัวหน้า${groupData.agencyName} - ${groupData.deptName}`;
+      container.appendChild(groupHeader);
+
+      createUserGrid(container, groupData.users);
+    }
+  }
+
+  // 2. แสดงผู้จัดการ (Admin) - รวมกันไม่แยกฝ่าย
+  if (admins.length > 0) {
+    const adminHeader = document.createElement('h3');
+    adminHeader.className = 'text-lg font-semibold mt-6 mb-4';
+    adminHeader.style.color = 'var(--text-primary)';
+    adminHeader.textContent = 'ผู้จัดการ (Admin)';
+    container.appendChild(adminHeader);
+
+    createUserGrid(container, admins);
+  }
+
+  // 3. แสดง HR (SuperAdmin) - รวมกันไม่แยกฝ่าย
+  if (superAdmins.length > 0) {
+    const superAdminHeader = document.createElement('h3');
+    superAdminHeader.className = 'text-lg font-semibold mt-6 mb-4';
+    superAdminHeader.style.color = 'var(--text-primary)';
+    superAdminHeader.textContent = 'HR (SuperAdmin)';
+    container.appendChild(superAdminHeader);
+
+    createUserGrid(container, superAdmins);
+  }
+
+  // แสดงข้อความเมื่อไม่พบผู้อนุมัติ
+  if (filteredUsers.length === 0) {
+    const emptyState = document.createElement('div');
+    emptyState.className = 'text-center py-12';
+    emptyState.style.color = 'var(--text-secondary)';
+    
+    const icon = document.createElement('i');
+    icon.className = 'fas fa-users text-5xl mb-4 opacity-50';
+    
+    const title = document.createElement('p');
+    title.className = 'text-base font-medium mb-2';
+    title.textContent = 'ไม่พบผู้อนุมัติ';
+    
+    const subtitle = document.createElement('p');
+    subtitle.className = 'text-sm opacity-75';
+    subtitle.textContent = 'ไม่มีผู้อนุมัติที่สามารถเลือกได้ในขณะนี้';
+    
+    emptyState.appendChild(icon);
+    emptyState.appendChild(title);
+    emptyState.appendChild(subtitle);
+    container.appendChild(emptyState);
+  }
+};
+
+// ฟังก์ชันสำหรับสร้าง Grid ผู้ใช้ (เหมือนเดิม)
+const createUserGrid = (container, users) => {
+  const userList = document.createElement('div');
+  userList.className = 'user-grid grid grid-cols-1 md:grid-cols-2 gap-3 mb-6';
+
+  users.forEach(row => {
+    const uid = row[0];
+    const userData = getSearchUsers(uid);
+    const isSelected = tempSelectedApprovers.includes(uid);
+
+    const userItem = document.createElement('div');
+    userItem.className = `user-item flex items-center p-3 border rounded-lg cursor-pointer transition-all duration-200 ${isSelected ? 'user-item-selected' : ''}`;
+    userItem.style.backgroundColor = 'var(--bg-secondary)';
+    userItem.style.borderColor = isSelected ? 'var(--bs-green)' : 'var(--border-color)';
+    userItem.style.color = 'var(--text-primary)';
+    userItem.dataset.uid = uid;
+
+    const firstLetter = userData.fullname ? userData.fullname.charAt(0) : '?';
+    const placeholderUrl = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(firstLetter) + '&background=e0e7ff&color=3730a3&size=40';
+    const profileImage = userData.profile || placeholderUrl;
+
+    const img = document.createElement('img');
+    img.src = profileImage;
+    img.className = 'user-avatar w-10 h-10 rounded-full mr-4 object-cover';
+    img.style.border = '2px solid var(--border-color)';
+
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'flex-1';
+
+    const nameDiv = document.createElement('div');
+    nameDiv.className = 'user-name font-medium';
+    nameDiv.style.color = 'var(--text-primary)';
+    nameDiv.textContent = userData.fullname;
+
+    // แสดงทั้งตำแหน่งและหน่วยงาน-ฝ่าย สำหรับ Admin และ SuperAdmin
+    const roleDiv = document.createElement('div');
+    roleDiv.className = 'user-role text-sm';
+    roleDiv.style.color = 'var(--text-secondary)';
+    
+    if (userData.role === 'SuperUser') {
+      roleDiv.textContent = userData.role;
+    } else {
+      // สำหรับ Admin และ SuperAdmin แสดงข้อมูลเพิ่มเติม
+      roleDiv.textContent = `${userData.role} - ${userData.agency} - ${userData.department}`;
+    }
+
+    contentDiv.appendChild(nameDiv);
+    contentDiv.appendChild(roleDiv);
+
+    userItem.appendChild(img);
+    userItem.appendChild(contentDiv);
+
+    if (isSelected) {
+      const checkIcon = document.createElement('i');
+      checkIcon.className = 'fas fa-check-circle text-lg';
+      checkIcon.style.color = 'var(--bs-green)';
+      userItem.appendChild(checkIcon);
+    }
+    
+    userItem.addEventListener('click', () => toggleUserSelection(uid, userItem));
+    
+    userItem.addEventListener('mouseenter', () => {
+      if (!isSelected) {
+        userItem.style.backgroundColor = 'var(--hover-bg-color)';
+        userItem.style.borderColor = 'var(--bs-blue)';
+      }
+    });
+    
+    userItem.addEventListener('mouseleave', () => {
+      if (!isSelected) {
+        userItem.style.backgroundColor = 'var(--bg-secondary)';
+        userItem.style.borderColor = 'var(--border-color)';
+      }
+    });
+
+    userList.appendChild(userItem);
+  });
+
+  container.appendChild(userList);
+};
+
+const toggleUserSelection = (uid, userItem) => {
+  const index = tempSelectedApprovers.indexOf(uid);
+  
+  if (index > -1) {
+    tempSelectedApprovers.splice(index, 1);
+    userItem.classList.remove('user-item-selected');
+    userItem.style.backgroundColor = 'var(--bg-secondary)';
+    userItem.style.borderColor = 'var(--border-color)';
+    
+    const checkIcon = userItem.querySelector('i.fa-check-circle');
+    if (checkIcon) {
+      checkIcon.remove();
+    }
+    
+    const avatar = userItem.querySelector('.user-avatar');
+    if (avatar) {
+      avatar.style.borderColor = 'var(--border-color)';
+    }
+  } else {
+    tempSelectedApprovers.push(uid);
+    userItem.classList.add('user-item-selected');
+    userItem.style.backgroundColor = 'rgba(5, 190, 138, 0.2)';
+    userItem.style.borderColor = 'var(--bs-green)';
+    
+    const checkIcon = document.createElement('i');
+    checkIcon.className = 'fas fa-check-circle text-lg';
+    checkIcon.style.color = 'var(--bs-green)';
+    userItem.appendChild(checkIcon);
+    
+    const avatar = userItem.querySelector('.user-avatar');
+    if (avatar) {
+      avatar.style.borderColor = 'var(--bs-green)';
+    }
+  }
+};
+
+const confirmApproverSelection = () => {
+  selectedApprovers = [...tempSelectedApprovers];
+  renderSelectedApproverChips();
+  closeApproverModal();
+}
+
+const renderSelectedApproverChips = () => {
+  const container = document.getElementById('selected-approvers');
+  container.innerHTML = '';
+
+  if (selectedApprovers.length === 0) {
+    const noApproversText = document.createElement('p');
+    noApproversText.className = 'no-approvers-text text-sm italic';
+    noApproversText.style.color = 'var(--text-secondary)';
+    noApproversText.textContent = 'ยังไม่ได้เลือกผู้อนุมัติ';
+    container.appendChild(noApproversText);
+    return;
+  }
+
+  selectedApprovers.forEach(uid => {
+    const userData = getSearchUsers(uid);
+    if (userData.uid) {
+      const chip = document.createElement('div');
+      chip.className = 'approver-chip inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium transition-all duration-200 m-1';
+      chip.style.backgroundColor = 'rgba(116, 90, 242, 0.1)';
+      chip.style.color = 'var(--bs-purple)';
+      chip.style.border = '1px solid rgba(116, 90, 242, 0.2)';
+
+      const firstLetter = userData.fullname ? userData.fullname.charAt(0) : '?';
+      const placeholderUrl = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(firstLetter) + '&background=745af2&color=ffffff&size=16';
+      const profileImage = userData.profile || placeholderUrl;
+
+      const img = document.createElement('img');
+      img.src = profileImage;
+      img.alt = userData.fullname;
+      img.className = 'w-4 h-4 rounded-full object-cover';
+      img.style.border = '1px solid rgba(116, 90, 242, 0.3)';
+
+      const span = document.createElement('span');
+      span.textContent = userData.fullname;
+
+      const removeIcon = document.createElement('i');
+      removeIcon.className = 'remove-btn fas fa-times-circle cursor-pointer opacity-70 hover:opacity-100 transition-opacity';
+      removeIcon.onclick = () => removeApprover(userData.uid);
+
+      chip.appendChild(img);
+      chip.appendChild(span);
+      chip.appendChild(removeIcon);
+
+      chip.addEventListener('mouseenter', () => {
+        chip.style.backgroundColor = 'rgba(116, 90, 242, 0.15)';
+      });
+      
+      chip.addEventListener('mouseleave', () => {
+        chip.style.backgroundColor = 'rgba(116, 90, 242, 0.1)';
+      });
+
+      container.appendChild(chip);
+    }
+  });
+};
+
+const removeApprover = (uidToRemove) => {
+  selectedApprovers = selectedApprovers.filter(uid => uid !== uidToRemove);
+  renderSelectedApproverChips();
+}
+
+const renderLeaveDurations = () => {
+  const container = document.getElementById("leaveDurationContainer");
+  container.innerHTML = '';
+
+  const options = [
+    { value: "F", label: "เต็มวัน", icon: "fa-solid fa-calendar-day" },
+    { value: "AM", label: "ครึ่งวันเช้า", icon: "fa-solid fa-cloud-sun" },
+    { value: "PM", label: "ครึ่งวันบ่าย", icon: "fa-solid fa-cloud-moon" },
+  ];
+
+  const cardGrid = document.createElement('div');
+  cardGrid.className = 'grid grid-cols-3 gap-3 mb-4';
+
+  options.forEach(opt => {
+    const id = `leaveDuration-${opt.value}`;
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'relative';
+
+    const input = document.createElement('input');
+    input.id = id;
+    input.name = 'leaveDuration';
+    input.type = 'radio';
+    input.value = opt.value;
+    input.className = 'hidden';
+
+    const card = document.createElement('div');
+    card.setAttribute('data-card-id', id);
+    card.className = `
+      relative flex flex-col items-center justify-center p-4 rounded-lg shadow-sm cursor-pointer
+      bg-[var(--bg-secondary)] border-2 border-[var(--border-color)]
+      hover:border-[var(--bs-blue)] hover:shadow-md hover:scale-105
+      transition duration-300 ease-in-out min-h-[100px]
+    `;
+
+    card.innerHTML = `
+      <div class="w-10 h-10 mb-2 flex items-center justify-center rounded-full bg-[var(--bg-primary)] text-[var(--bs-blue)]">
+        <i class="${opt.icon}"></i>
+      </div>
+      <label for="${id}" class="text-sm font-semibold text-[var(--text-primary)] cursor-pointer">${opt.label}</label>
+      <div class="absolute top-2 right-2 w-5 h-5 rounded-full border-2 flex items-center justify-center
+        border-[var(--bs-blue)] bg-[var(--bs-blue)]
+        opacity-0 scale-75 transition-all duration-200 checkmark-indicator
+      ">
+        <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+        </svg>
+      </div>
+    `;
+
+    card.addEventListener('click', () => {
+      document.querySelectorAll('input[name="leaveDuration"]').forEach(radio => {
+        radio.checked = false;
+        const otherId = radio.id;
+        const otherCard = document.querySelector(`[data-card-id="${otherId}"]`);
+        if (otherCard) {
+          otherCard.classList.remove('border-[var(--bs-blue)]', 'bg-[var(--hover-bg-color)]');
+          otherCard.classList.add('border-[var(--border-color)]');
+          otherCard.querySelector('.checkmark-indicator').classList.add('opacity-0', 'scale-75');
+          otherCard.querySelector('.checkmark-indicator').classList.remove('opacity-100', 'scale-100');
+        }
+      });
+
+      input.checked = true;
+      card.classList.add('border-[var(--bs-blue)]', 'bg-[var(--hover-bg-color)]');
+      card.classList.remove('border-[var(--border-color)]');
+      const check = card.querySelector('.checkmark-indicator');
+      check.classList.remove('opacity-0', 'scale-75');
+      check.classList.add('opacity-100', 'scale-100');
+    });
+
+    wrapper.appendChild(input);
+    wrapper.appendChild(card);
+    cardGrid.appendChild(wrapper);
+  });
+
+  container.appendChild(cardGrid);
+
+  setTimeout(() => {
+    const defaultInput = document.querySelector('input[name="leaveDuration"][value="F"]');
+    if (defaultInput) {
+      defaultInput.checked = true;
+      document.querySelector(`[data-card-id="leaveDuration-F"]`).click();
+    }
+  }, 50);
+};
+
+const submitRequest = async () => {
+  event.preventDefault();
+  $("#customLoader").show();
+
+  const requestKey = document.getElementById('leaveDataKey').value;
+  const description = document.getElementById('leaveDescription').value;
+  const dateStart = document.getElementById('leaveStart').value;
+  const endStart = document.getElementById('leaveEnd').value;
+  const userId = document.getElementById('user-show0').innerText;
+
+  const selectedLeaveTypeRadio = document.querySelector('input[name="leaveType"]:checked');
+  if (!selectedLeaveTypeRadio) {
+    showToast("กรุณาเลือกประเภทการลา", "warning");
+    $("#customLoader").hide();
+    return;
+  }
+
+  const policyId = selectedLeaveTypeRadio.getAttribute('data-policy-id');
+  const leaveType = selectedLeaveTypeRadio.value;
+
+  const leaveDuration = document.querySelector('input[name="leaveDuration"]:checked');
+  if (!leaveDuration) {
+    showToast("กรุณาเลือกช่วงเวลาที่ลา", "warning");
+    $("#customLoader").hide();
+    return;
+  }
+
+  const formatDateForCalculation = (inputDate) => {
+    if (!inputDate) return '';
+    const [year, month, day] = inputDate.split('-');
+    return `${day}/${month}/${year}`;
+  };
+
+  const formattedDateStart = formatDateForCalculation(dateStart);
+  const formattedEndStart = formatDateForCalculation(endStart);
+
+  if (!formattedDateStart || !formattedEndStart) {
+    showToast("กรุณาเลือกวันที่เริ่มต้นและสิ้นสุดการลา", "warning");
+    $("#customLoader").hide();
+    return;
+  }
+
+  const quotaRow = allDataUserPolicies.find(row =>
+    row[0] === policyId && row[1] === userId && row[2] === leaveType
+  );
+  if (!quotaRow) {
+    showToast("ไม่พบสิทธิ์การลาสำหรับผู้ใช้งานนี้", "warning");
+    $("#customLoader").hide();
+    return;
+  }
+
+  const quota = parseFloat(quotaRow[3]);
+  
+  const approvedLeaves = allDataLeaveRequests.filter(r =>
+    r[4] === userId &&
+    r[6] === leaveType &&
+    r[7] === 'Approved' &&
+    (!requestKey || r[0] !== requestKey)
+  );
+
+  let usedDays = 0;
+  approvedLeaves.forEach(r => {
+    const duration = r[12] || 'F';
+    usedDays += calculateActualLeaveDays(r[2], r[3], duration);
+  });
+
+  const newLeaveDays = calculateActualLeaveDays(formattedDateStart, formattedEndStart, leaveDuration.value);
+  const totalAfterRequest = usedDays + newLeaveDays;
+
+  // console.log('=== การตรวจสอบโควต้า ===');
+  // console.log('ผู้ใช้:', userId);
+  // console.log('ประเภทการลา:', leaveType);
+  // console.log('โควต้าทั้งหมด:', quota, 'วัน');
+  // console.log('ใช้ไปแล้ว:', usedDays, 'วัน');
+  // console.log('ลาครั้งนี้:', newLeaveDays, 'วัน');
+  // console.log('รวมหลังการลา:', totalAfterRequest, 'วัน');
+  // console.log('วันที่เริ่ม:', formattedDateStart);
+  // console.log('วันที่สิ้นสุด:', formattedEndStart);
+
+  if (totalAfterRequest > quota) {
+    const available = (quota - usedDays).toFixed(1);
+    showToast(`สิทธิ์วันลาเกินกำหนด! คุณมีโควต้า ${quota} วัน ใช้ไปแล้ว ${usedDays} วัน คงเหลือ ${available} วัน แต่คุณขอลา ${newLeaveDays} วัน`, "error");
+    $("#customLoader").hide();
+    return;
+  }
+
+  if (!description || !dateStart || !endStart || !policyId || !leaveType) {
+    showToast("กรุณากรอกข้อมูลให้ครบถ้วน", "warning");
+    $("#customLoader").hide();
+    return;
+  }
+
+  // ตรวจสอบจำนวนผู้อนุมัติ
+  if (selectedApprovers.length === 0) {
+    showToast("กรุณาเลือกผู้อนุมัติ", "warning");
+    $("#customLoader").hide();
+    return;
+  }
+
+  // ตรวจสอบว่าต้องเลือกผู้อนุมัติครบ 3 คน
+  if (selectedApprovers.length !== 3) {
+    showToast(`กรุณาเลือกผู้อนุมัติครบ 3 คน (ปัจจุบันเลือกแล้ว ${selectedApprovers.length} คน)`, "warning");
+    $("#customLoader").hide();
+    return;
+  }
+
+  // ตรวจสอบว่าผู้อนุมัติแต่ละคนมี role ที่ถูกต้องและเรียงลำดับถูกต้อง
+  const approverValidation = validateApproversOrder(selectedApprovers);
+  if (!approverValidation.isValid) {
+    showToast(approverValidation.message, "warning");
+    $("#customLoader").hide();
+    return;
+  }
+
+  const uploadedFiles = await Promise.all(
+    Array.from(filesStore.files).map(async (file) => ({
+      filename: file.name,
+      filetype: file.type,
+      imageDataUrl: await fileToBase64(file)
+    }))
+  );
+
+  const obj = {
+    datakey: requestKey,
+    description: description,
+    dateStart: dateStart,
+    endStart: endStart,
+    userId: userId,
+    policyId: policyId,
+    leaveType: leaveType,
+    leaveDuration: leaveDuration.value,
+    approvers: selectedApprovers,
+    currentStep: selectedApprovers.length,
+    uploadedFiles: uploadedFiles,
+    editData: currentEditData,
+    existingAttachments: existingAttachments || [],
+    isEdit: !!requestKey
+  };
+
+  const callback = async (res) => {
+    closeLeaveRequestsModal();
+    await updateSpecificDataLeaveRequests();
+    await updateSpecificDataApprovalSteps();
+    await updateSpecificDataAttachments();
+    showChart();
+    renderCalendar();
+    filteredLeaveRequests = [];
+    renderLeaveRequests(allDataLeaveRequests);
+    $("#customLoader").hide();
+    showToast(obj.isEdit ? "แก้ไขข้อมูลสำเร็จ" : "บันทึกข้อมูลสำเร็จ", "success");
+  };
+
+  if (!obj.isEdit) {
+    google.script.run.withSuccessHandler(callback).addRequest(obj);
+  } else {
+    google.script.run.withSuccessHandler(callback).upRequest(obj);
+  }
+};
+
+// const submitRequest = async () => {
+//   event.preventDefault();
+//   $("#customLoader").show();
+
+//   const requestKey = document.getElementById('leaveDataKey').value;
+//   const description = document.getElementById('leaveDescription').value;
+//   const dateStart = document.getElementById('leaveStart').value;
+//   const endStart = document.getElementById('leaveEnd').value;
+//   const userId = document.getElementById('user-show0').innerText;
+
+//   const selectedLeaveTypeRadio = document.querySelector('input[name="leaveType"]:checked');
+//   if (!selectedLeaveTypeRadio) {
+//     showToast("กรุณาเลือกประเภทการลา", "warning");
+//     $("#customLoader").hide();
+//     return;
+//   }
+
+//   const policyId = selectedLeaveTypeRadio.getAttribute('data-policy-id');
+//   const leaveType = selectedLeaveTypeRadio.value;
+
+//   const leaveDuration = document.querySelector('input[name="leaveDuration"]:checked');
+//   if (!leaveDuration) {
+//     showToast("กรุณาเลือกช่วงเวลาที่ลา", "warning");
+//     $("#customLoader").hide();
+//     return;
+//   }
+
+//   if (!description || !dateStart || !endStart || !policyId || !leaveType) {
+//     showToast("กรุณากรอกข้อมูลให้ครบถ้วน", "warning");
+//     $("#customLoader").hide();
+//     return;
+//   }
+
+//   // ตรวจสอบจำนวนผู้อนุมัติ
+//   if (selectedApprovers.length === 0) {
+//     showToast("กรุณาเลือกผู้อนุมัติ", "warning");
+//     $("#customLoader").hide();
+//     return;
+//   }
+
+//   // ตรวจสอบว่าต้องเลือกผู้อนุมัติครบ 3 คน
+//   if (selectedApprovers.length !== 3) {
+//     showToast(`กรุณาเลือกผู้อนุมัติครบ 3 คน (ปัจจุบันเลือกแล้ว ${selectedApprovers.length} คน)`, "warning");
+//     $("#customLoader").hide();
+//     return;
+//   }
+
+//   // ตรวจสอบว่าผู้อนุมัติแต่ละคนมี role ที่ถูกต้องและเรียงลำดับถูกต้อง
+//   const approverValidation = validateApproversOrder(selectedApprovers);
+//   if (!approverValidation.isValid) {
+//     showToast(approverValidation.message, "warning");
+//     $("#customLoader").hide();
+//     return;
+//   }
+
+//   const uploadedFiles = await Promise.all(
+//     Array.from(filesStore.files).map(async (file) => ({
+//       filename: file.name,
+//       filetype: file.type,
+//       imageDataUrl: await fileToBase64(file)
+//     }))
+//   );
+
+//   const obj = {
+//     datakey: requestKey,
+//     description: description,
+//     dateStart: dateStart,
+//     endStart: endStart,
+//     userId: userId,
+//     policyId: policyId,
+//     leaveType: leaveType,
+//     leaveDuration: leaveDuration.value,
+//     approvers: selectedApprovers,
+//     currentStep: selectedApprovers.length,
+//     uploadedFiles: uploadedFiles,
+//     editData: currentEditData,
+//     existingAttachments: existingAttachments || [],
+//     isEdit: !!requestKey
+//   };
+
+//   const callback = async (res) => {
+//     closeLeaveRequestsModal();
+//     await updateSpecificDataLeaveRequests();
+//     await updateSpecificDataApprovalSteps();
+//     await updateSpecificDataAttachments();
+//     showChart();
+//     renderCalendar();
+//     filteredLeaveRequests = [];
+//     renderLeaveRequests(allDataLeaveRequests);
+//     $("#customLoader").hide();
+//     showToast(obj.isEdit ? "แก้ไขข้อมูลสำเร็จ" : "บันทึกข้อมูลสำเร็จ", "success");
+//   };
+
+//   if (!obj.isEdit) {
+//     google.script.run.withSuccessHandler(callback).addRequest(obj);
+//   } else {
+//     google.script.run.withSuccessHandler(callback).upRequest(obj);
+//   }
+// };
+
+// ฟังก์ชันตรวจสอบลำดับผู้อนุมัติ
+const validateApproversOrder = (approverIds) => {
+  if (approverIds.length !== 3) {
+    return {
+      isValid: false,
+      message: "ต้องเลือกผู้อนุมัติครบ 3 คน"
+    };
+  }
+
+  // ตรวจสอบไม่ให้เลือกคนเดียวกันซ้ำ
+  const uniqueApprovers = new Set(approverIds);
+  if (uniqueApprovers.size !== 3) {
+    return {
+      isValid: false,
+      message: "ไม่สามารถเลือกผู้อนุมัติคนเดียวกันซ้ำได้"
+    };
+  }
+
+  return {
+    isValid: true,
+    message: "ลำดับผู้อนุมัติถูกต้อง"
+  };
+};
+
+const editLeaveRequest = (codeID) => {
+  const requestData = allDataLeaveRequests.find(row => row[0].trim() === codeID.trim());
+
+  if (!requestData) {
+    showToast("ไม่พบข้อมูลคำขอลาที่เลือกในระบบ", "warning");
+    return;
+  }
+
+  const userRole = localStorage.getItem('role');
+  const uiduser = localStorage.getItem('uiduser');
+  const isAdmin = userRole === 'SuperAdmin' || userRole === 'Admin';
+
+  const [leaveId, description, startDate, endDate, userId, policyId, leaveType, status, currentStep, rejectedReason, submitDate, updatedDate, leaveDuration] = requestData;
+
+  if (!isAdmin && userId !== uiduser) {
+    showToast("คุณไม่มีสิทธิ์แก้ไขคำขอลาของผู้อื่น", "error");
+    return;
+  }
+
+  const approvalSteps = allDataApprovalSteps.filter(row => row[1] === codeID);
+  const hasProcessedStep = approvalSteps.some(step =>
+    step[6] === 'Approved' || step[6] === 'Rejected'
+  );
+
+  if (!isAdmin && hasProcessedStep) {
+    showToast("ไม่สามารถแก้ไขได้ เนื่องจากคำขอลานี้อยู่ระหว่างการพิจารณาหรือดำเนินการแล้ว", "warning");
+    return;
+  }
+
+  if (!isAdmin && (status === 'Approved' || status === 'Rejected')) {
+    showToast("ไม่สามารถแก้ไขได้ เนื่องจากคำขอลานี้ได้รับการอนุมัติหรือถูกปฏิเสธแล้ว", "warning");
+    return;
+  }
+
+  const attachments = allDataAttachments.filter(row => row[1] === leaveId);
+  const editData = {
+    leaveId: leaveId,
+    policyId: policyId,
+    leaveType: leaveType,
+    approvalSteps: approvalSteps.map(step => ({
+      stepId: step[0],
+      stepOrder: step[2],
+      approverId: step[3],
+      status: step[6],
+      comment: step[7]
+    })),
+    attachments: attachments.map(file => ({
+      fileId: file[0],
+      fileUrl: file[2],
+      uploadedBy: file[3],
+      uploadedAt: file[4]
+    }))
+  };
+
+  currentEditData = editData;
+
+  document.getElementById('leaveDataKey').value = leaveId;
+  document.getElementById('leaveDescription').value = description;
+
+  const formatDateForInput = (dateStr) => {
+    if (!dateStr) return '';
+    const parts = dateStr.split('/');
+    if (parts.length === 3) {
+      const [day, month, year] = parts;
+      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
+    return dateStr;
+  };
+
+  document.getElementById('leaveStart').value = formatDateForInput(startDate);
+  document.getElementById('leaveEnd').value = formatDateForInput(endDate);
+
+  const uid = localStorage.getItem("uiduser");
+  renderLeaveTypesForUser(uid);
+  renderLeaveDurations();
+
+  setTimeout(() => {
+    const policyRadio = document.querySelector(`input[name="leaveType"][data-policy-id="${policyId}"]`);
+    if (policyRadio) {
+      document.querySelectorAll('input[name="leaveType"]').forEach(radio => {
+        radio.checked = false;
+        const otherCard = document.querySelector(`[data-card-id="${radio.getAttribute('data-policy-id')}"]`);
+        if (otherCard) updateCardStateForEdit(otherCard, false);
+      });
+
+      policyRadio.checked = true;
+      const card = document.querySelector(`[data-card-id="${policyId}"]`);
+      if (card) updateCardStateForEdit(card, true);
+    }
+
+    const durationInput = document.querySelector(`input[name="leaveDuration"][value="${leaveDuration}"]`);
+    if (durationInput) {
+      durationInput.checked = true;
+      const card = document.querySelector(`[data-card-id="leaveDuration-${leaveDuration}"]`);
+      if (card) card.click();
+    }
+  }, 100);
+
+  const approverIds = approvalSteps
+    .sort((a, b) => a[2] - b[2])
+    .map(step => step[3]);
+
+  selectedApprovers = [...approverIds];
+  renderSelectedApproverChips();
+
+  populateAttachmentsForLeaveEdit(attachments);
+
+  $("#modalLeaveTitle").text('แก้ไขคำขอลา');
+  document.getElementById("leaveRequestsModal").classList.remove("hidden");
+
+  showToast("โหลดข้อมูลคำขอลาสำเร็จ", "success");
+};
+
+const updateCardStateForEdit = (targetCard, isSelected) => {
+  if (isSelected) {
+    targetCard.classList.add('border-[var(--bs-blue)]', 'bg-[var(--hover-bg-color)]');
+    targetCard.classList.remove('border-[var(--border-color)]');
+    const checkmark = targetCard.querySelector('.checkmark-indicator');
+    if (checkmark) {
+      checkmark.classList.remove('opacity-0', 'scale-75');
+      checkmark.classList.add('opacity-100', 'scale-100');
+    }
+  } else {
+    targetCard.classList.remove('border-[var(--bs-blue)]', 'bg-[var(--hover-bg-color)]');
+    targetCard.classList.add('border-[var(--border-color)]');
+    const checkmark = targetCard.querySelector('.checkmark-indicator');
+    if (checkmark) {
+      checkmark.classList.remove('opacity-100', 'scale-100');
+      checkmark.classList.add('opacity-0', 'scale-75');
+    }
+  }
+};
+
+const populateAttachmentsForLeaveEdit = (attachments) => {
+  filesStore = new DataTransfer();
+  
+  existingAttachments = attachments.map(file => ({
+    fileId: file.fileId || file[0],
+    fileName: getLeaveFileDisplayName(file.fileId || file[0]),
+    fileUrl: file.fileUrl || file[2],
+    uploadedBy: file.uploadedBy || file[3],
+    uploadedAt: file.uploadedAt || file[4],
+    isExisting: true
+  }));
+  
+  renderFileList();
+};
+
+const getLeaveFileDisplayName = (fileId) => {
+  return fileId.replace('FILE-', 'เอกสารแนบ-');
+};
+
+const viewLeaveFile = (fileUrl) => {
+  window.open(fileUrl, '_blank');
+};
+
+const delLeaveRequest = (codeID) => {
+  if (!codeID || !codeID.trim()) {
+    showToast("รหัสคำขอไม่ถูกต้อง", "warning");
+    return;
+  }
+
+  const requestData = allDataLeaveRequests.find(row => row[0].trim() === codeID.trim());
+  if (!requestData) {
+    showToast("ไม่พบข้อมูลคำขอในระบบ", "warning");
+    return;
+  }
+
+  const [leaveId, , , , userId, , , status] = requestData;
+  const userRole = localStorage.getItem('role');
+  const uiduser = localStorage.getItem('uiduser');
+  const isAdmin = userRole === 'SuperAdmin' || userRole === 'Admin';
+
+  if (!isAdmin && userId !== uiduser) {
+    showToast("คุณไม่มีสิทธิ์ลบคำขอของผู้อื่น", "error");
+    return;
+  }
+
+  if (status !== 'Pending') {
+    showToast("ไม่สามารถลบได้ เนื่องจากสถานะคำขอไม่ใช่ 'รออนุมัติ'", "warning");
+    return;
+  }
+
+  const approvalSteps = allDataApprovalSteps.filter(row => row[1] === codeID);
+  const hasProcessedStep = approvalSteps.some(step =>
+    step[6] === 'Approved' || step[6] === 'Rejected'
+  );
+
+  if (hasProcessedStep) {
+    showToast("ไม่สามารถลบได้ เนื่องจากคำขอนี้มีการอนุมัติหรือปฏิเสธแล้ว", "warning");
+    return;
+  }
+
+  $('#confirmBtnDel').off('click').on('click', function () {
+    document.getElementById('DelDataModal').classList.add('hidden');
+    $("#customLoader").show();
+
+    google.script.run.withSuccessHandler(async (res) => {
+      await updateSpecificDataLeaveRequests();
+      await updateSpecificDataApprovalSteps();
+      await updateSpecificDataAttachments();
+      showChart();
+      renderCalendar();
+      filteredLeaveRequests = [];
+      renderLeaveRequests(allDataLeaveRequests);
+      $("#customLoader").hide();
+      showToast("ลบข้อมูลสำเร็จ", "success");
+    }).delDataLeaveRequests(codeID);
+  });
+
+  $('#xDelconfirmData').off('click').on('click', function () {
+    document.getElementById('DelDataModal').classList.add('hidden');
+  });
+
+  document.getElementById('DelDataModal').classList.remove('hidden');
+};
+</script>

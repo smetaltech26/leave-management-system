@@ -1,0 +1,296 @@
+<div class="bg-[var(--bg-secondary)] p-6 rounded-2xl shadow-[var(--shadow)] fade-in">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+    <h3 class="font-bold text-lg">อนุมัติการลาพนักงาน</h3>
+    <div class="flex items-center gap-2 max-w-md w-full sm:w-auto">
+      <div class="relative flex-1">
+        <input type="search" id="searchApproval" class="form-input" placeholder="ค้นหาข้อมูล..." oninput="filterApproval()">
+        <i class="fas fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--text-secondary)] pointer-events-none"></i>
+      </div>
+      <button class="px-4 py-3 text-white bg-blue-500 hover:bg-blue-600 rounded-lg whitespace-nowrap" onclick="refreshLeaveApprovals()">
+        <i class="fa-solid fa-repeat mr-1"></i>รีโหลด
+      </button>
+    </div>
+  </div>
+  <div>
+    <div id="leave-approval-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-4"></div>
+  </div>
+</div>
+
+<script>
+const refreshLeaveApprovals = async () => {
+  $("#customLoader").show();
+  await updateSpecificDataLeaveRequests();
+  await updateSpecificDataApprovalSteps();
+  renderApprovalSteps();
+  showChart();
+  renderCalendar();
+  $("#customLoader").hide();
+  showToast("โหลดข้อมูลใหม่เรียบร้อย", "success");
+};
+
+const getStatusClass = (status) => {
+  const s = status.toLowerCase();
+  if (s === 'approved') return 'status-badge status-approved';
+  if (s === 'rejected') return 'status-badge status-rejected';
+  if (s === 'pending') return 'status-badge status-pending';
+  return 'status-badge status-info';
+};
+
+const translateStatus = (status) => {
+  const s = status.toLowerCase();
+  if (s === 'approved') return 'อนุมัติแล้ว';
+  if (s === 'rejected') return 'ไม่อนุมัติ';
+  if (s === 'pending') return 'รออนุมัติ';
+  return 'ไม่ทราบสถานะ';
+};
+
+const translateLeaveType = (type) => {
+  const map = {
+    'Annual': '<span class="status-badge status-approved"><i class="fa-solid fa-plane-up"></i> ลาพักร้อน</span>',
+    'Sick': '<span class="status-badge status-rejected"><i class="fa-solid fa-user-injured"></i> ลาป่วย</span>',
+    'Personal': '<span class="status-badge status-pending"><i class="fa-solid fa-person-walking-luggage"></i> ลากิจได้รับค่าจ้าง</span>',
+    'Maternity': '<span class="status-badge status-info"><i class="fa-solid fa-baby-carriage"></i> ลาคลอด</span>',
+    'Study': '<span class="status-badge status-info"><i class="fa-solid fa-graduation-cap"></i> ลาศึกษา</span>',
+    'Military': '<span class="status-badge status-info"><i class="fa-solid fa-person-military-rifle"></i> ลาทหาร</span>',
+    'Other': '<span class="status-badge status-info"><i class="fa-solid fa-circle-question"></i> อื่นๆ</span>'
+  };
+  return map[type] || `<span class="status-badge status-info"><i class="fa-solid fa-circle-question"></i> ${type}</span>`;
+};
+
+const renderCardHtml = (request) => {
+  const [leave_id, description, startDate, endDate, userId, policyId, leaveType, status, currentStep, rejectedReason, submitDate, updatedDate, leaveDuration] = request;
+  const user = getSearchUsers(userId);
+  const name = user?.fullname || '-';
+  const agency = user?.agency || '-';
+  const department = user?.department || '-';
+  const profileImage = user?.profile || '';
+  const statusClass = getStatusClass(status);
+
+  const uid = localStorage.getItem('uiduser');
+  const steps = allDataApprovalSteps.filter(s => s[1] === leave_id);
+  const myStep = steps.find(s => s[3] === uid && s[6] === 'Pending');
+  const stepId = myStep ? myStep[0] : '';
+
+  return `
+    <div class="leave-approval-card animate-fadeIn">
+      <div class="leave-approval-card-header flex justify-between items-start">
+        <div>
+          <h3 class="text-lg font-semibold text-[var(--text-primary)]">${leave_id}</h3>
+          <p class="text-sm">${translateLeaveType(leaveType)}</p>
+        </div>
+        <span class="${statusClass}">${translateStatus(status)}</span>
+      </div>
+      <div class="leave-approval-card-body">
+        <p class="text-sm font-medium mb-1 text-[var(--text-primary)]">
+          <i class="fa-regular fa-calendar-alt mr-1"></i>
+          วันที่ลา: ${startDate} - ${endDate}
+        </p>
+        <p class="text-sm text-[var(--text-secondary)]">
+          <i class="fa-solid fa-file-alt mr-1"></i>
+          รายละเอียด: ${description}
+        </p>
+        <p class="text-sm text-[var(--text-secondary)] mt-1">
+          <i class="fa-solid fa-clock mr-1"></i>
+          ระยะเวลา: ${leaveDuration === 'F' ? 'เต็มวัน' : 'ครึ่งวัน'}
+        </p>
+        ${status.toLowerCase() === 'rejected' && rejectedReason ? `
+        <p class="text-xs mt-2 text-red-500 font-medium">
+          <i class="fa-solid fa-circle-exclamation mr-1"></i>
+          เหตุผลการไม่อนุมัติ: ${rejectedReason}
+        </p>` : ''}
+        <div class="mt-4 flex items-center text-sm">
+          ${profileImage
+            ? `<img src="${profileImage}" alt="${name}" class="w-8 h-8 rounded-full mr-3 object-cover border border-[var(--border-color)]" />`
+            : '<div class="w-8 h-8 rounded-full mr-3 bg-gray-300 flex items-center justify-center text-gray-600"><i class="fa-solid fa-user"></i></div>'}
+          <div>
+            <div class="font-medium text-[var(--text-primary)]">${name}</div>
+            <div class="text-xs text-[var(--text-secondary)]">${agency} • ${department}</div>
+          </div>
+        </div>
+        <p class="text-xs mt-2 text-[var(--text-secondary)]">ยื่นคำขอเมื่อ: ${submitDate}</p>
+      </div>
+      <div class="leave-approval-card-footer flex flex-col sm:flex-row sm:flex-wrap sm:justify-center gap-2">
+        <button class="w-full sm:w-auto px-3 py-2 text-nowrap bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium" onclick="approveLeaveRequest('${stepId}')">
+          <i class="fa-solid fa-check mr-1"></i> อนุมัติ
+        </button>
+        <button class="w-full sm:w-auto px-3 py-2 text-nowrap bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium" onclick="rejectLeaveRequest('${stepId}')">
+          <i class="fa-solid fa-times mr-1"></i> ไม่อนุมัติ
+        </button>
+        <button class="w-full sm:w-auto px-3 py-2 text-nowrap bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium" onclick="openLeaveModal('${leave_id}')">
+          <i class="fa-solid fa-eye mr-1"></i> ดูรายละเอียด
+        </button>
+      </div>
+    </div>
+  `;
+};
+
+const filterLeaveApprovalSteps = (allRequests, allSteps, currentUid) => {
+  return allRequests.filter(request => {
+    const leave_id = request[0];
+    const requestStatus = request[7];
+    
+    if (requestStatus !== 'Pending') return false;
+    
+    const steps = allSteps.filter(s => s[1] === leave_id);
+    const myStep = steps.find(s => s[3] === currentUid);
+    if (!myStep) return false;
+
+    const stepOrder = parseInt(myStep[2]);
+    const previousSteps = steps.filter(s => parseInt(s[2]) < stepOrder);
+    const allPreviousApproved = previousSteps.every(step => step[6] === 'Approved');
+    
+    return allPreviousApproved && myStep[6] === 'Pending';
+  });
+};
+
+const renderApprovalSteps = () => {
+  const container = document.getElementById('leave-approval-container');
+  container.innerHTML = '';
+  const uid = localStorage.getItem('uiduser');
+  const filtered = filterLeaveApprovalSteps(allDataLeaveRequests, allDataApprovalSteps, uid);
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<div class="flex justify-center items-center h-60">
+    <div class="text-center text-gray-500 text-base font-medium">
+      ไม่มีรายการคำขอลาที่รออนุมัติในขณะนี้ 😊
+    </div>
+  </div>`;
+    return;
+  }
+
+  filtered.forEach(req => container.innerHTML += renderCardHtml(req));
+};
+
+const filterApproval = () => {
+  const keyword = document.getElementById("searchApproval").value.trim().toLowerCase();
+  const uid = localStorage.getItem('uiduser');
+
+  const filtered = filterLeaveApprovalSteps(allDataLeaveRequests, allDataApprovalSteps, uid);
+
+  const matched = filtered.filter(row => {
+    const [leave_id, description,, , userId,, leaveType, status] = row;
+    const user = getSearchUsers(userId);
+    const name = user?.fullname?.toLowerCase() || '';
+    const desc = description?.toLowerCase() || '';
+    const type = translateLeaveType(leaveType).toLowerCase();
+    const stat = translateStatus(status).toLowerCase();
+
+    return (
+      leave_id?.toLowerCase().includes(keyword) ||
+      name.includes(keyword) ||
+      desc.includes(keyword) ||
+      type.includes(keyword) ||
+      stat.includes(keyword)
+    );
+  });
+
+  const container = document.getElementById('leave-approval-container');
+  container.innerHTML = matched.length
+    ? matched.map(renderCardHtml).join('')
+    : `<div class="flex justify-center items-center h-60">
+    <div class="text-center text-gray-500 text-base font-medium">
+      ไม่พบข้อมูลที่ตรงกับคำค้นหา 😓
+    </div>
+  </div>`;
+};
+
+let currentLeaveActionStepId = null;
+let currentLeaveActionType = null;
+
+const approveLeaveRequest = (stepId) => {
+  currentLeaveActionStepId = stepId;
+  currentLeaveActionType = 'approve';
+  
+  document.getElementById('leaveActionModalTitle').textContent = 'อนุมัติคำขอลา';
+  document.getElementById('leaveActionComment').placeholder = 'ระบุเหตุผลการอนุมัติ (จำเป็นต้องระบุ)';
+  
+  document.getElementById('leaveApproveButton').classList.remove('hidden');
+  document.getElementById('leaveRejectButton').classList.add('hidden');
+  
+  document.getElementById('leaveActionComment').value = '';
+  
+  document.getElementById('leaveActionModal').classList.remove('hidden');
+};
+
+const rejectLeaveRequest = (stepId) => {
+  currentLeaveActionStepId = stepId;
+  currentLeaveActionType = 'reject';
+  
+  document.getElementById('leaveActionModalTitle').textContent = 'ไม่อนุมัติคำขอลา';
+  document.getElementById('leaveActionComment').placeholder = 'ระบุเหตุผลการไม่อนุมัติ (จำเป็นต้องระบุ)';
+
+  document.getElementById('leaveRejectButton').classList.remove('hidden');
+  document.getElementById('leaveApproveButton').classList.add('hidden');
+  
+  document.getElementById('leaveActionComment').value = '';
+  
+  document.getElementById('leaveActionModal').classList.remove('hidden');
+};
+
+const closeLeaveActionModal = () => {
+  document.getElementById('leaveActionModal').classList.add('hidden');
+  currentLeaveActionStepId = null;
+  currentLeaveActionType = null;
+  document.getElementById('leaveActionComment').value = '';
+};
+
+const confirmLeaveApprove = () => {
+  if (!currentLeaveActionStepId) return;
+  $("#customLoader").show();
+  const comment = document.getElementById('leaveActionComment').value.trim();
+
+  if (!comment) {
+    showToast("กรุณาระบุเหตุผลการอนุมัติ", "warning");
+    $("#customLoader").hide();
+    return;
+  }
+
+  const obj = { stepId: currentLeaveActionStepId, action: 'Approved', comment: comment || 'อนุมัติ'};
+
+  google.script.run.withSuccessHandler(async (res) => {
+    closeLeaveActionModal();
+    await updateSpecificDataLeaveRequests();
+    await updateSpecificDataApprovalSteps();
+    showChart();
+    renderCalendar();
+    filteredLeaveRequests = [];
+    renderLeaveRequests(allDataLeaveRequests);
+    $("#customLoader").hide();
+    showToast("อนุมัติคำขอลาสำเร็จ", "success");
+    renderApprovalSteps();
+  }).withFailureHandler((error) => {
+    $("#customLoader").hide();
+    showToast("เกิดข้อผิดพลาด: " + error.message, "error");
+  }).setConfirmLeaveApprove(obj);
+};
+
+const confirmLeaveReject = () => {
+  if (!currentLeaveActionStepId) return;
+  $("#customLoader").show();
+  const comment = document.getElementById('leaveActionComment').value.trim();
+  
+  if (!comment) {
+    showToast("กรุณาระบุเหตุผลการไม่อนุมัติ", "warning");
+    $("#customLoader").hide();
+    return;
+  }
+  
+  const obj = { stepId: currentLeaveActionStepId, action: 'Rejected', comment: comment};
+
+  google.script.run.withSuccessHandler(async (res) => {
+    closeLeaveActionModal();
+    await updateSpecificDataLeaveRequests();
+    await updateSpecificDataApprovalSteps();
+    showChart();
+    renderCalendar();
+    filteredLeaveRequests = [];
+    renderLeaveRequests(allDataLeaveRequests);
+    $("#customLoader").hide();
+    showToast("ปฏิเสธคำขอลาสำเร็จ", "success");
+    renderApprovalSteps();
+  }).withFailureHandler((error) => {
+    $("#customLoader").hide();
+    showToast("เกิดข้อผิดพลาด: " + error.message, "error");
+  }).setConfirmLeaveApprove(obj); 
+};
+</script>

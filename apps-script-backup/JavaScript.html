@@ -1,0 +1,1298 @@
+<!-- jquery -->
+<script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+
+<!-- chart -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.0.0/dist/chart.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    const dashboard = document.querySelector('.admin-dashboard');
+    const sidebarOverlay = document.querySelector('.sidebar-overlay');
+
+    if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', () => {
+            dashboard.classList.remove('sidebar-mobile-show');
+        });
+    }
+
+    window.addEventListener('resize', () => {
+        if (dashboard) {
+            if (window.innerWidth <= 992) {
+                dashboard.classList.remove('sidebar-collapsed');
+                dashboard.classList.remove('sidebar-mobile-show');
+            } else {
+                dashboard.classList.remove('sidebar-mobile-show');
+                if (localStorage.getItem('sidebarState') === 'collapsed') {
+                    dashboard.classList.add('sidebar-collapsed');
+                }
+            }
+            updateCollapsedState();
+        }
+    });
+
+    document.querySelectorAll('.sidebar-menu-list a').forEach(link => {
+        link.addEventListener('click', (e) => {
+            const parentMenuItem = link.closest('.sidebar-menu-item');
+            if (parentMenuItem && !parentMenuItem.classList.contains('has-submenu') && 
+                dashboard && dashboard.classList.contains('sidebar-mobile-show')) {
+                dashboard.classList.remove('sidebar-mobile-show');
+            }
+        });
+    });
+
+    const allSideMenuItems = document.querySelectorAll('.sidebar-menu-list > .sidebar-menu-item');
+    const allSubmenuToggleLinks = document.querySelectorAll('.sidebar-menu-list .has-submenu .sidebar-menu-item-link');
+    const allSubmenus = document.querySelectorAll('.submenu');
+    const allSubmenuArrows = document.querySelectorAll('.submenu-arrow');
+
+    allSubmenuToggleLinks.forEach((link, index) => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const submenu = allSubmenus[index];
+            const arrow = allSubmenuArrows[index];
+
+            allSubmenus.forEach((sm, smIndex) => {
+                if (sm !== submenu) {
+                    sm.classList.remove('show');
+                    allSubmenuArrows[smIndex].classList.remove('rotated');
+                }
+            });
+
+            submenu.classList.toggle('show');
+            arrow.classList.toggle('rotated');
+        });
+    });
+
+    allSideMenuItems.forEach((item) => {
+        const link = item.querySelector('.sidebar-menu-item-link');
+        if (link && !item.classList.contains('has-submenu')) {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const menuId = item.id;
+                const pageNumber = menuId.replace('sidebarManu', '');
+                if (pageNumber && typeof changePage === 'function') {
+                    changePage(parseInt(pageNumber));
+                }
+            });
+        }
+    });
+
+    if (localStorage.getItem('sidebarState') === 'collapsed' && window.innerWidth > 992 && dashboard) {
+        dashboard.classList.add('sidebar-collapsed');
+    }
+    updateCollapsedState();
+
+    document.querySelectorAll('.notification-item').forEach(item => {
+        item.addEventListener('click', () => {
+            item.classList.remove('unread');
+            if (typeof updateNotificationBadge === 'function') {
+                updateNotificationBadge();
+            }
+        });
+    });
+
+    const updateAllThemes = (isDark) => {
+        if (isDark) {
+            document.body.classList.add('dark');
+        } else {
+            document.body.classList.remove('dark');
+        }
+        
+        document.querySelectorAll('.dark-mode-switch .slider i, .dark-mode-toggle .slider i').forEach(icon => {
+            if (isDark) {
+                icon.classList.remove('bxs-sun');
+                icon.classList.add('bxs-moon');
+            } else {
+                icon.classList.remove('bxs-moon');
+                icon.classList.add('bxs-sun');
+            }
+        });
+    };
+
+    const savedTheme = localStorage.getItem('theme');
+    updateAllThemes(savedTheme === 'dark');
+
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'theme') {
+            updateAllThemes(e.newValue === 'dark');
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        const dropdown = document.querySelector('.notification-dropdown');
+        if (dropdown && !dropdown.contains(e.target)) {
+            dropdown.classList.remove('active');
+        }
+    });
+
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'theme') {
+            if (e.newValue === 'dark') {
+                document.body.classList.add('dark');
+            } else {
+                document.body.classList.remove('dark');
+            }
+            document.querySelectorAll('.dark-mode-toggle .slider i, .dark-mode-switch .slider i').forEach(icon => {
+                if (document.body.classList.contains('dark')) {
+                    icon.classList.remove('bxs-sun');
+                    icon.classList.add('bxs-moon');
+                } else {
+                    icon.classList.remove('bxs-moon');
+                    icon.classList.add('bxs-sun');
+                }
+            });
+        }
+    });
+
+});
+
+const toggleDarkMode = () => {
+  document.body.classList.toggle('dark');
+  
+  document.querySelectorAll('.dark-mode-toggle .slider i, .dark-mode-switch .slider i').forEach(icon => {
+      if (document.body.classList.contains('dark')) {
+          icon.classList.remove('bxs-sun');
+          icon.classList.add('bxs-moon');
+          localStorage.setItem('theme', 'dark');
+      } else {
+          icon.classList.remove('bxs-moon');
+          icon.classList.add('bxs-sun');
+          localStorage.setItem('theme', 'light');
+      }
+  });
+}
+
+const toggleSidebar = () => {
+  const dashboard = document.querySelector('.admin-dashboard');
+  if (dashboard) {
+      dashboard.classList.toggle('sidebar-collapsed');
+      updateCollapsedState();
+  }
+}
+
+const showMobileSidebar = () => {
+  const dashboard = document.querySelector('.admin-dashboard');
+  if (dashboard) {
+      if (window.innerWidth <= 992) {
+          dashboard.classList.remove('sidebar-collapsed');
+      }
+      dashboard.classList.add('sidebar-mobile-show');
+  }
+}
+
+const toggleNotificationDropdown = (event) => {
+  event.stopPropagation();
+  const dropdown = document.getElementById('notificationBtn').parentElement;
+  dropdown.classList.toggle('active');
+}
+
+const updateCollapsedState = () => {
+  const dashboard = document.querySelector('.admin-dashboard');
+  if (dashboard) {
+      const isCollapsed = dashboard.classList.contains('sidebar-collapsed');
+      localStorage.setItem('sidebarState', isCollapsed ? 'collapsed' : 'expanded');
+  }
+}
+
+let systemData = {};
+
+const updateSystemDisplay = (data) => {
+  systemData = {
+    logoUrl: data[4],
+    nameThai: data[5],
+    nameEng: data[6]
+  };
+
+  $("#textLoginEng").text(systemData.nameEng);
+  $("#textLoginthai").text(systemData.nameThai);
+  $("#logoLogin").attr("src", systemData.logoUrl);
+  $("#textSystemEng").text(systemData.nameEng);
+  $("#textSystemThai").text(systemData.nameThai);
+  $("#logoSystem").attr("src", systemData.logoUrl);
+  $("#loaderLogo").attr("src", systemData.logoUrl);
+};
+
+const setDisPlayMenu = (status, menuItems) => {
+  const allMenuItems = Object.keys(menuItems);
+  allMenuItems.forEach(id => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.style.display = "none";
+    }
+  });
+  for (const item in menuItems) {
+    if (menuItems[item][status]) {
+      const element = document.getElementById(item);
+      if (element) {
+        element.style.display = "block";
+      }
+    }
+  }
+}
+
+const simpleEncrypt = (text) => {
+  return btoa(text);
+};
+
+const simpleDecrypt = (encryptedText) => {
+  try {
+    return atob(encryptedText);
+  } catch {
+    return '';
+  }
+};
+
+const handleRememberMe = (username, password, shouldRemember) => {
+  if (shouldRemember) {
+    localStorage.setItem('rememberUsername', username);
+    localStorage.setItem('rememberPassword', simpleEncrypt(password));
+    localStorage.setItem('rememberMe', 'true');
+  } else {
+    localStorage.removeItem('rememberUsername');
+    localStorage.removeItem('rememberPassword');
+    localStorage.removeItem('rememberMe');
+  }
+};
+
+const loadRememberedData = () => {
+  const rememberedUsername = localStorage.getItem('rememberUsername');
+  const rememberedPassword = localStorage.getItem('rememberPassword');
+  const isRemembered = localStorage.getItem('rememberMe') === 'true';
+
+  if (rememberedUsername) {
+    document.getElementById("loginusername").value = rememberedUsername;
+  }
+  
+  if (rememberedPassword && isRemembered) {
+    document.getElementById("loginpassword").value = simpleDecrypt(rememberedPassword);
+  }
+  
+  if (isRemembered) {
+    document.getElementById("rememberMe").checked = true;
+  }
+};
+
+const setUserSession = (userData) => {
+  const sessionData = {
+    uiduser: userData.uiduser,
+    username: userData.username,
+    fullname: userData.fullname,
+    agency: userData.agency,
+    department: userData.department,
+    role: userData.role,
+    imgUser: userData.imgUser,
+    sigUser: userData.sigUser,
+    status: userData.status,
+    password: userData.password || ''
+  };
+
+  Object.keys(sessionData).forEach(key => {
+    localStorage.setItem(key, sessionData[key]);
+  });
+  
+  localStorage.setItem('isLoggedIn', 'true');
+  localStorage.setItem('loginTime', new Date().getTime());
+};
+
+const clearUserSession = () => {
+  const sessionKeys = [
+    'uiduser', 'username', 'fullname', 'agency', 'department', 
+    'role', 'imgUser', 'sigUser', 'status', 'password',
+    'isLoggedIn', 'loginTime'
+  ];
+  
+  sessionKeys.forEach(key => {
+    localStorage.removeItem(key);
+  });
+};
+
+const isSessionExpired = () => {
+  const loginTime = localStorage.getItem('loginTime');
+  if (!loginTime) return true;
+  
+  const currentTime = new Date().getTime();
+  const sessionDuration = 24 * 60 * 60 * 1000;
+  
+  return (currentTime - parseInt(loginTime)) > sessionDuration;
+};
+
+$(document).ready(function () {
+  $("#customLoader").show();
+  google.script.run.withSuccessHandler(data => {
+    data.forEach((value, index) => {
+      $(`#setData${index + 1}`).val(value);
+    }); 
+    updateSystemDisplay(data);
+    renderNotificationList();
+    updateNotificationBadge();
+    initializeTheme();
+    initializeSidebar();
+  }).getSet();
+  loadingAPI().then(() => {
+    $("#customLoader").hide();
+  });
+});
+
+const addSetting = () => {
+  $("#customLoader").show();
+  let data = {};
+  for (let i = 1; i <= 7; i++) {
+    data[`set${i}`] = document.getElementById(`setData${i}`).value;
+  }
+  google.script.run.withSuccessHandler(response => {
+    google.script.run.withSuccessHandler(data => {
+      updateSystemDisplay(data);
+    }).getSet();
+    $("#customLoader").hide();
+    showToast("บันทึกข้อมูลสำเร็จ", "success");
+  }).settingGS(data);
+};
+
+const loadingAPI = async () => {
+  const isLoggedIn = localStorage.getItem('isLoggedIn');
+  
+  if (isLoggedIn === 'true' && isSessionExpired()) {
+    clearUserSession();
+    showToast("เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่", "warning");
+  }
+  
+  if (localStorage.getItem('isLoggedIn') !== 'true') {
+    $("#pageformLogin").show();
+    $("#dashboardPage").hide();
+    $("#customLoader").hide();
+    return;
+  }
+
+  $("#pageformLogin").hide();
+  $("#dashboardPage").show();
+  $("#customLoader").show();
+
+  try {
+    await Promise.all([
+      await fetchAllData()
+    ]);
+    showChart();
+    updateAllDropdownsFrom();
+    renderCalendar();
+    renderApprovalSteps();
+    setTimeout(() => {
+      checkAllInputs();
+    }, 100);
+    initRealTime();
+    $("#customLoader").hide();
+  } catch (err) {
+    console.error("โหลดข้อมูลบางส่วนล้มเหลว:", err);
+    $("#customLoader").hide();
+    showToast("โหลดข้อมูลล้มเหลว", "error");
+  }
+};
+
+document.addEventListener("DOMContentLoaded", function () {
+  const isLoggedIn = localStorage.getItem('isLoggedIn');
+  
+  if (isLoggedIn !== 'true' || isSessionExpired()) {
+    clearUserSession();
+  } else {
+    let datauser = {
+      uiduser: localStorage.getItem('uiduser'),
+      username: localStorage.getItem('username'),
+      fullname: localStorage.getItem('fullname'),
+      agency: localStorage.getItem('agency'),
+      department: localStorage.getItem('department'),
+      role: localStorage.getItem('role'),
+      imgUser: localStorage.getItem('imgUser'),
+      sigUser: localStorage.getItem('sigUser'),
+      status: localStorage.getItem('status'),
+      password: localStorage.getItem('password')
+    };
+    google.script.run.withSuccessHandler(function(menuItems) {
+      setDisPlayMenu(datauser.role, menuItems);
+    }).getMenuItems();
+    loginUserSuc(datauser);
+  }
+  
+  loadRememberedData();
+});
+
+const loginUsers = async () => {
+  event.preventDefault();
+  $("#customLoader").show();
+  
+  const usernameCheck = $("#loginusername").val().trim();
+  const passwordCheck = $("#loginpassword").val();
+  const rememberMeChecked = document.getElementById("rememberMe").checked;
+
+  if (!usernameCheck || !passwordCheck) {
+    $("#customLoader").hide();
+    showToast("กรุณากรอกชื่อผู้ใช้และรหัสผ่าน", "error");
+    return;
+  }
+
+  google.script.run.withSuccessHandler(function(datauser) {
+    $("#customLoader").hide();
+    
+    if (typeof datauser === 'object' && datauser !== null) {
+      showToast("เข้าสู่ระบบสำเร็จ " + datauser.fullname, "success");
+      
+      handleRememberMe(usernameCheck, passwordCheck, rememberMeChecked);
+      
+      setUserSession(datauser);
+      
+      loadingAPI().then(() => {
+        $("#customLoader").hide();
+      });
+      google.script.run.withSuccessHandler(function(menuItems) {
+        setDisPlayMenu(datauser.role, menuItems);
+      }).getMenuItems();
+      loginUserSuc(datauser);
+      
+    } else {
+      showToast("ไม่พบข้อมูลผู้ใช้งาน กรุณาตรวจสอบอีกครั้ง", "error");
+      $("#pageformLogin").show();
+      $("#dashboardPage").hide();
+    }
+  }).withFailureHandler(function(error) {
+    $("#customLoader").hide();
+    console.error("Login error:", error);
+    showToast("เกิดข้อผิดพลาดในการเข้าสู่ระบบ", "error");
+  }).checkUsers(usernameCheck, passwordCheck);
+};
+
+const loginUserSuc = (datauser) => {
+  $("#pageformLogin").hide();
+  $("#dashboardPage").show();
+
+  $('#user-show0').html(datauser.uiduser);
+  $('#user-show1').html(datauser.username);
+  $('#user-show2').html(datauser.fullname);
+  $('#user-show3').html(datauser.department);
+  $('#user-show4').html(datauser.role);
+  $('#profilePic').attr('src', datauser.imgUser);
+
+  const [firstName, lastName] = datauser.fullname.split(' ');
+
+  $('#editFirstName').val(firstName || '');
+  $('#editLastName').val(lastName || '');
+  $('#editUsername').val(datauser.username);
+  $('#editPassword').val(datauser.password || '');
+
+  if (datauser.imgUser) {
+    $('#editProfilePictureArea').css('background-image', `url(${datauser.imgUser})`)
+      .find('.upload-icon, .upload-text').hide();
+  }
+
+  if (datauser.sigUser) {
+    $('#editSignatureArea').css('background-image', `url(${datauser.sigUser})`)
+      .find('.upload-icon, .upload-text').hide();
+  }
+};
+
+const openLogoutModal = () => {
+  document.getElementById('logoutModal').classList.remove('hidden');
+}
+
+const closeLogoutModal = () => {
+  document.getElementById('logoutModal').classList.add('hidden');
+};
+
+function reLoad() {
+  google.script.run.withSuccessHandler(function(url){
+    window.open(url,'_top');
+  }).getURL();
+}
+
+const logoutUsers = () => {
+  $("#customLoader").show();
+  
+  setTimeout(() => {
+    clearUserSession();
+    closeLogoutModal();
+
+    $("#customLoader").hide();
+    
+    $("#pageformLogin").show();
+    $("#dashboardPage").hide();
+    
+    showToast("ออกจากระบบเรียบร้อย", "success");
+    reLoad();
+  }, 1000);
+};
+
+let apiKey = '';
+let sheetWebAppA = '';
+let sheetWebAppB = ''; 
+
+//sheetWebAppA
+let allDataUsers = null;
+let previousDataUsers = null;
+let allDataMenu = null;
+let previousDataMenu = null;
+let allDataAgency = null;
+let previousDataAgency = null;
+let allDataDepartments = null;
+let previousDataDepartments = null;
+let allDataUserPolicies = null;
+let previousDataUserPolicies = null;
+let allDataHolidays = null;
+let previousDataHolidays = null;
+let allDataDayOfWeek = null;
+let previousDataDayOfWeek = null;
+
+//sheetWebAppB
+let allDataLeaveRequests = null;
+let previousDataLeaveRequests = null;
+let allDataApprovalSteps = null;
+let previousDataApprovalSteps = null;
+let allDataAttachments = null;
+let previousDataAttachments = null;
+let allDataManagerDB = null;
+let previousDataManagerDB = null;
+
+const fetchSettingData = () => {
+  return new Promise((resolve, reject) => {
+    google.script.run.withSuccessHandler(settings => {
+      apiKey = settings.idapi;
+      sheetWebAppA = settings.idsheetA;
+      sheetWebAppB = settings.idsheetB;
+      //console.log('Settings loaded:', settings);
+      resolve();
+    }).withFailureHandler(error => {
+      //console.error('Error fetching settings:', error);
+      reject(error);
+    }).getSettingData();
+  });
+};
+
+async function fetchDataFromAPI(sheetId, sheetName) {
+  if ((!sheetWebAppA || !sheetWebAppB) || !apiKey) {
+    await fetchSettingData();
+  }
+  const apiUrl = "https://sheets.googleapis.com/v4/spreadsheets/" + sheetId + "/values/" + sheetName + "?alt=json&key=" + apiKey;
+  return fetch(apiUrl)
+    .then(response => response.json())
+    .then(data => {
+      return data.values.slice(1);
+    })
+  .catch(error => {
+    alert(`❌ เกิดข้อผิดพลาดในการดึงข้อมูล: ${error.message}`, 0);
+    return [];
+  });
+}
+
+function dataHasChanged(newData, oldData) {
+  if (!oldData || newData.length !== oldData.length) return true;
+  return JSON.stringify(newData) !== JSON.stringify(oldData);
+}
+
+const fetchAllData = async () => {
+  await fetchSettingData();
+  // const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+  try {
+    const [datausers, datamenu, dataagency, datadepartments, datapolicies, dataholidays, datadayofweek, dataleaverequests, dataapprovalsteps, dataattachments, datamanager] = await Promise.all([
+      fetchDataFromAPI(sheetWebAppA, 'Users'),
+      fetchDataFromAPI(sheetWebAppA, 'UsersMenu'),
+      fetchDataFromAPI(sheetWebAppA, 'Agency'),
+      fetchDataFromAPI(sheetWebAppA, 'Departments'),
+      fetchDataFromAPI(sheetWebAppA, 'UserPolicies'),
+      fetchDataFromAPI(sheetWebAppA, 'Holidays'),
+      fetchDataFromAPI(sheetWebAppA, 'DayOfWeek'),
+      fetchDataFromAPI(sheetWebAppB, 'LeaveRequests'),
+      fetchDataFromAPI(sheetWebAppB, 'ApprovalSteps'),
+      fetchDataFromAPI(sheetWebAppB, 'Attachments'),
+      fetchDataFromAPI(sheetWebAppB, 'ManagerDB')
+    ]);
+
+    allDataUsers = datausers;
+    allDataMenu = datamenu;
+    allDataAgency = dataagency;
+    allDataDepartments = datadepartments;
+    allDataUserPolicies = datapolicies;
+    allDataHolidays = dataholidays
+    allDataDayOfWeek = datadayofweek
+
+    allDataLeaveRequests = dataleaverequests;
+    allDataApprovalSteps = dataapprovalsteps;
+    allDataAttachments = dataattachments;
+    allDataManagerDB = datamanager;
+
+    await checkDataUsers(datausers);
+    await checkDataMenu(datamenu);
+    await checkDataAgency(dataagency);
+    await checkDataDepartments(datadepartments);
+    await checkDataUserPolicies(datapolicies);
+    await checkDataHolidays(dataholidays);
+    await checkDataDayOfWeek(datadayofweek);
+
+    await checkDataLeaveRequests(dataleaverequests);
+    await checkDataApprovalSteps(dataapprovalsteps);
+    await checkDataAttachments(dataattachments);
+    await checkDataManagerDB(datamanager);
+
+    return true;
+  } catch (error) {
+    console.error("เกิดข้อผิดพลาดในการดึงข้อมูล", error);
+    alert(`❌ เกิดข้อผิดพลาดในการดึงข้อมูล: ${error.message}`, 0);
+  }
+};
+
+const updateSpecificDataUsers = async () => {
+  if (!sheetWebAppA || !apiKey) await fetchSettingData();
+  const newDataUsers = await fetchDataFromAPI(sheetWebAppA, 'Users');
+  await checkDataUsers(newDataUsers);
+};
+
+async function checkDataUsers(newDataUsers) {
+  const isChanged = dataHasChanged(newDataUsers, previousDataUsers);
+  if (isChanged) previousDataUsers = [...newDataUsers];
+  allDataUsers = newDataUsers;
+  await updateUsersTable();
+}
+
+async function updateUsersTable() {
+  renderUsers(allDataUsers);
+  updateDashboardStats(allDataUsers);
+}
+
+const updateSpecificDataMenu = async () => {
+  if (!sheetWebAppA || !apiKey) await fetchSettingData();
+  const newDataMenu = await fetchDataFromAPI(sheetWebAppA, 'UsersMenu');
+  await checkDataMenu(newDataMenu);
+};
+
+async function checkDataMenu(newDataMenu) {
+  if (dataHasChanged(newDataMenu, previousDataMenu)) {
+    previousDataMenu = [...newDataMenu];
+    allDataMenu = newDataMenu;
+    await updateMenuTable();
+  }
+}
+
+async function updateMenuTable() {
+  renderSetMenu(allDataMenu);
+}
+
+const updateSpecificDataAgency = async () => {
+  if (!sheetWebAppA || !apiKey) await fetchSettingData();
+  const newDataAgency = await fetchDataFromAPI(sheetWebAppA, 'Agency');
+  await checkDataAgency(newDataAgency);
+};
+
+async function checkDataAgency(newDataAgency) {
+  if (dataHasChanged(newDataAgency, previousDataAgency)) {
+    previousDataAgency = [...newDataAgency];
+    allDataAgency = newDataAgency;
+    await updateAgencyTable();
+  }
+}
+
+async function updateAgencyTable() {
+  renderAgency(allDataAgency);
+}
+
+const updateSpecificDataDepartments = async () => {
+  if (!sheetWebAppA || !apiKey) await fetchSettingData();
+  const newDataDepartments = await fetchDataFromAPI(sheetWebAppA, 'Departments');
+  await checkDataDepartments(newDataDepartments);
+};
+
+async function checkDataDepartments(newDataDepartments) {
+  if (dataHasChanged(newDataDepartments, previousDataDepartments)) {
+    previousDataDepartments = [...newDataDepartments];
+    allDataDepartments = newDataDepartments;
+    await updateDepartmentsTable();
+  }
+}
+
+async function updateDepartmentsTable() {
+  renderDepartments(allDataDepartments);
+}
+
+const updateSpecificDataUserPolicies = async () => {
+  if (!sheetWebAppA || !apiKey) await fetchSettingData();
+  const newDataUserPolicies = await fetchDataFromAPI(sheetWebAppA, 'UserPolicies');
+  await checkDataUserPolicies(newDataUserPolicies);
+};
+
+async function checkDataUserPolicies(newDataUserPolicies) {
+  if (dataHasChanged(newDataUserPolicies, previousDataUserPolicies)) {
+    previousDataUserPolicies = [...newDataUserPolicies];
+    allDataUserPolicies = newDataUserPolicies;
+    await updateUserPoliciesTable();
+  }
+}
+
+async function updateUserPoliciesTable() {
+  renderUserPolicies(allDataUserPolicies);
+}
+
+const updateSpecificDataHolidays = async () => {
+  if (!sheetWebAppA || !apiKey) await fetchSettingData();
+  const newDataHolidays = await fetchDataFromAPI(sheetWebAppA, 'Holidays');
+  await checkDataHolidays(newDataHolidays);
+};
+
+async function checkDataHolidays(newDataHolidays) {
+  if (dataHasChanged(newDataHolidays, previousDataHolidays)) {
+    previousDataHolidays = [...newDataHolidays];
+    allDataHolidays = newDataHolidays;
+    await updateHolidaysTable();
+  }
+}
+
+async function updateHolidaysTable() {
+  renderHolidays(allDataHolidays);
+}
+
+const updateSpecificDataDayOfWeek = async () => {
+  if (!sheetWebAppA || !apiKey) await fetchSettingData();
+  const newDataDayOfWeek = await fetchDataFromAPI(sheetWebAppA, 'DayOfWeek');
+  await checkDataDayOfWeek(newDataDayOfWeek);
+};
+
+async function checkDataDayOfWeek(newDataDayOfWeek) {
+  if (dataHasChanged(newDataDayOfWeek, previousDataDayOfWeek)) {
+    previousDataDayOfWeek = [...newDataDayOfWeek];
+    allDataDayOfWeek = newDataDayOfWeek;
+    await updateDayOfWeekTable();
+  }
+}
+
+async function updateDayOfWeekTable() {
+  renderDayOfWeek(allDataDayOfWeek);
+}
+
+const updateSpecificDataLeaveRequests = async () => {
+  if (!sheetWebAppB || !apiKey) await fetchSettingData();
+  const newDataLeaveRequests = await fetchDataFromAPI(sheetWebAppB, 'LeaveRequests');
+  await checkDataLeaveRequests(newDataLeaveRequests);
+};
+
+async function checkDataLeaveRequests(newDataLeaveRequests) {
+  if (dataHasChanged(newDataLeaveRequests, previousDataLeaveRequests)) {
+    previousDataLeaveRequests = [...newDataLeaveRequests];
+    allDataLeaveRequests = newDataLeaveRequests;
+    await updateLeaveRequestsTable();
+  }
+}
+
+async function updateLeaveRequestsTable() {
+  renderLeaveRequests(allDataLeaveRequests);
+  renderReport(allDataLeaveRequests);
+}
+
+const updateSpecificDataApprovalSteps = async () => {
+  if (!sheetWebAppB || !apiKey) await fetchSettingData();
+  const newDataApprovalSteps = await fetchDataFromAPI(sheetWebAppB, 'ApprovalSteps');
+  await checkDataApprovalSteps(newDataApprovalSteps);
+};
+
+async function checkDataApprovalSteps(newDataApprovalSteps) {
+  if (dataHasChanged(newDataApprovalSteps, previousDataApprovalSteps)) {
+    previousDataApprovalSteps = [...newDataApprovalSteps];
+    allDataApprovalSteps = newDataApprovalSteps;
+  }
+}
+
+const updateSpecificDataAttachments = async () => {
+  if (!sheetWebAppB || !apiKey) await fetchSettingData();
+  const newDataAttachments = await fetchDataFromAPI(sheetWebAppB, 'Attachments');
+  await checkDataAttachments(newDataAttachments);
+};
+
+async function checkDataAttachments(newDataAttachments) {
+  if (dataHasChanged(newDataAttachments, previousDataAttachments)) {
+    previousDataAttachments = [...newDataAttachments];
+    allDataAttachments = newDataAttachments;
+  }
+}
+
+const updateSpecificDataManagerDB = async () => {
+  if (!sheetWebAppB || !apiKey) await fetchSettingData();
+  const newDataManagerDB = await fetchDataFromAPI(sheetWebAppB, 'ManagerDB');
+  await checkDataManagerDB(newDataManagerDB);
+};
+
+async function checkDataManagerDB(newDataManagerDB) {
+  if (dataHasChanged(newDataManagerDB, previousDataManagerDB)) {
+    previousDataManagerDB = [...newDataManagerDB];
+    allDataManagerDB = newDataManagerDB;
+    await updateManagerDBTable();
+  }
+}
+
+async function updateManagerDBTable() {
+  renderManagerDB(allDataManagerDB);
+  rederAnnouncement(allDataManagerDB);
+}
+
+const updateDropdowns = (dataSource, valueIndex, labelIndex, selectIds) => {
+  if (!Array.isArray(dataSource) || dataSource.length === 0) return;
+
+  const uniqueOptions = [...new Map(
+    dataSource
+      .filter(row => row[valueIndex] && row[labelIndex])
+      .map(row => [row[valueIndex], row])
+  ).values()];
+
+  selectIds.forEach(selectId => {
+    const selectElement = document.getElementById(selectId);
+    if (selectElement) {
+      selectElement.innerHTML = '';
+
+      const firstOption = document.createElement("option");
+      firstOption.value = '';
+      firstOption.text = 'กรุณาเลือกรายการ';
+      firstOption.disabled = true;
+      firstOption.selected = true;
+      selectElement.appendChild(firstOption);
+
+      uniqueOptions.forEach(row => {
+        const option = document.createElement("option");
+        option.value = row[valueIndex];
+        option.text = row[labelIndex];
+        selectElement.appendChild(option);
+      });
+    }
+  });
+};
+
+const updateAllDropdownsFrom = () => {
+  const dropdownConfigs = [
+    { data: allDataAgency, valueIndex: 0, labelIndex: 1, selectIds: ['modalAgency'] },
+    { data: allDataDepartments, valueIndex: 0, labelIndex: 1, selectIds: ['modalDepartment'] }
+  ];
+
+  dropdownConfigs.forEach(config => {
+    updateDropdowns(config.data, config.valueIndex, config.labelIndex, config.selectIds);
+  });
+};
+
+let toastTimer = null;
+
+const showToast = (message, type = 'info') => {
+  const toast = document.getElementById('toast');
+  const toastIcon = document.getElementById('toastIcon');
+  const toastMessage = document.getElementById('toastMessage');
+
+  if (toastTimer) {
+    clearTimeout(toastTimer);
+  }
+
+  toast.className = 'toast-notification';
+
+  let iconClass = '';
+  let typeClass = '';
+  let bgColor = '';
+
+  switch (type) {
+    case 'success':
+      iconClass = 'bx bx-check-circle';
+      typeClass = 'toast-success';
+      bgColor = 'var(--bs-green)';
+      break;
+    case 'error':
+      iconClass = 'bx bx-x-circle';
+      typeClass = 'toast-error';
+      bgColor = 'var(--bs-red)';
+      break;
+    case 'warning':
+      iconClass = 'bx bx-error';
+      typeClass = 'toast-warning';
+      bgColor = 'var(--bs-yellow)';
+      break;
+    default:
+      iconClass = 'bx bx-info-circle';
+      typeClass = 'toast-info';
+      bgColor = 'var(--bs-purple)';
+      break;
+  }
+
+  toastIcon.className = iconClass;
+  toastMessage.textContent = message;
+  toast.classList.add(typeClass);
+
+  setTimeout(() => {
+    toast.classList.add('show');
+  }, 10);
+
+  toastTimer = setTimeout(() => {
+    hideToast();
+  }, 4000);
+
+  const logEntry = {
+    status: message,
+    timestamp: Date.now(),
+    type: type,
+    name: localStorage.getItem('fullname') || 'ระบบ'
+  };
+
+  const logs = JSON.parse(localStorage.getItem('alertLogs') || '[]');
+  const newLogs = [logEntry, ...logs].slice(0, 50);
+  localStorage.setItem('alertLogs', JSON.stringify(newLogs));
+
+  renderNotificationList();
+  updateNotificationBadge();
+};
+
+const hideToast = () => {
+  const toast = document.getElementById('toast');
+  toast.classList.remove('show');
+
+  if (toastTimer) {
+    clearTimeout(toastTimer);
+    toastTimer = null;
+  }
+};
+
+const renderNotificationList = () => {
+  const container = document.querySelector('.notification-list');
+  container.innerHTML = '';
+
+  const logs = JSON.parse(localStorage.getItem('alertLogs') || '[]');
+
+  if (logs.length === 0) {
+    container.innerHTML = `<div class="p-4 text-center text-gray-500 text-sm">ไม่มีการแจ้งเตือน</div>`;
+  }
+
+  logs.forEach((item) => {
+    const timeText = getRelativeTime(item.timestamp);
+
+    let iconClass = '';
+    let bgColor = '';
+
+    switch (item.type) {
+      case 'success': iconClass = 'bx bx-check-circle'; bgColor = 'var(--bs-green)'; break;
+      case 'error': iconClass = 'bx bx-x-circle'; bgColor = 'var(--bs-red)'; break;
+      case 'warning': iconClass = 'bx bx-error'; bgColor = 'var(--bs-yellow)'; break;
+      default: iconClass = 'bx bx-info-circle'; bgColor = 'var(--bs-purple)'; break;
+    }
+
+    const div = document.createElement('div');
+    div.className = 'notification-item';
+    if (!item.read) div.classList.add('unread');
+
+    div.innerHTML = `
+      <div class="notification-icon" style="background-color: ${bgColor};">
+        <i class="${iconClass}"></i>
+      </div>
+      <div class="notification-content">
+        <div class="notification-message">${item.status}</div>
+        <div class="notification-time" data-timestamp="${item.timestamp}">${timeText}</div>
+      </div>
+    `;
+
+    container.appendChild(div);
+  });
+};
+
+const getRelativeTime = (timestamp) => {
+  const now = Date.now();
+  const diff = Math.floor((now - timestamp) / 1000);
+
+  if (diff < 60) return `${diff} วินาทีที่แล้ว`;
+  if (diff < 3600) return `${Math.floor(diff / 60)} นาทีที่แล้ว`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} ชั่วโมงที่แล้ว`;
+
+  return new Date(timestamp).toLocaleString('th-TH');
+};
+
+const updateNotificationBadge = () => {
+  const unread = document.querySelectorAll('.notification-item.unread').length;
+  const badge = document.querySelector('.notification-badge');
+  if (unread > 0) {
+    badge.textContent = unread;
+    badge.style.display = 'flex';
+  } else {
+    badge.style.display = 'none';
+  }
+};
+
+const markAllAsRead = () => {
+  document.querySelectorAll('.notification-item.unread').forEach(item => {
+    item.classList.remove('unread');
+  });
+
+  const logs = JSON.parse(localStorage.getItem('alertLogs') || '[]');
+  const updatedLogs = logs.map(log => ({ ...log, read: true }));
+  localStorage.setItem('alertLogs', JSON.stringify(updatedLogs));
+
+  updateNotificationBadge();
+};
+
+const clearAllNotifications = () => {
+  localStorage.removeItem('alertLogs');
+  renderNotificationList();
+  updateNotificationBadge();
+}
+
+setInterval(() => {
+  document.querySelectorAll('.notification-time').forEach(el => {
+    const timestamp = el.getAttribute('data-timestamp');
+    if (timestamp) {
+      el.innerText = getRelativeTime(parseInt(timestamp));
+    }
+  });
+}, 10000);
+
+const initializeTheme = () => {
+  const savedTheme = localStorage.getItem('theme');
+  
+  if (savedTheme === 'dark') {
+      document.body.classList.add('dark');
+  }
+  
+  document.querySelectorAll('.dark-mode-toggle .slider i, .dark-mode-switch .slider i').forEach(icon => {
+      if (document.body.classList.contains('dark')) {
+          icon.classList.remove('bxs-sun');
+          icon.classList.add('bxs-moon');
+      } else {
+          icon.classList.remove('bxs-moon');
+          icon.classList.add('bxs-sun');
+      }
+  });
+}
+
+const initializeSidebar = () => {
+  const dashboard = document.querySelector('.admin-dashboard');
+  if (localStorage.getItem('sidebarState') === 'collapsed' && window.innerWidth > 992 && dashboard) {
+      dashboard.classList.add('sidebar-collapsed');
+  }
+}
+
+const changePage = (data) => {
+    localStorage.setItem('currentPage', data);
+    for (let i = 1; i <= 14; i++) {
+        const page = document.getElementById('page' + i);
+        if (page) page.style.display = i === data ? 'block' : 'none';
+    }
+    document.querySelectorAll('.sidebar-menu-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    const activeMenuItem = document.getElementById('sidebarManu' + data);
+    if (activeMenuItem) {
+        activeMenuItem.classList.add('active');
+    }
+    if (window.innerWidth < 768) {
+        const dashboard = document.querySelector('.admin-dashboard');
+        if (dashboard) {
+            dashboard.classList.remove('sidebar-mobile-show');
+        }
+    }
+};
+
+const savedPage = localStorage.getItem('currentPage');
+if (savedPage) {
+    changePage(parseInt(savedPage));
+} else {
+    changePage(1);
+}
+
+let isLoadRequests = true;
+let isLoadApprovals = true;
+let isLoadUsers = true;
+
+const showGetRequests = () => {
+  return new Promise((resolve, reject) => {
+    google.script.run
+      .withSuccessHandler((data) => {
+        const hasPrevious = Array.isArray(previousDataLeaveRequests);
+        const changed = hasPrevious && dataHasChanged(data, previousDataLeaveRequests);
+
+        if (changed) {
+          const updatedIDs = getUpdatedItems(data, previousDataLeaveRequests);
+          const newIDs = getNewItems(data, previousDataLeaveRequests);
+
+          console.log("⏱️ Updated LeaveRequests:", updatedIDs);
+          console.log("🆕 New LeaveRequests:", newIDs);
+
+          if (!isLoadRequests) {
+            updatedIDs.forEach(id => showToast(`รายการ ${id} มีการอัปเดต`, "success"));
+            newIDs.forEach(id => showToast(`รายการ ${id} คำขอใหม่`, "success"));
+          }
+        }
+
+        allDataLeaveRequests = data;
+        previousDataLeaveRequests = JSON.parse(JSON.stringify(data));
+        isLoadRequests = false;
+        resolve();
+      })
+      .withFailureHandler((err) => {
+        console.error("❌ โหลด LeaveRequests ล้มเหลว:", err);
+        reject(err);
+      })
+      .getDataLeaveRequests();
+  });
+};
+
+const showGetApprovals = () => {
+  return new Promise((resolve, reject) => {
+    google.script.run
+      .withSuccessHandler((data) => {
+        const hasPrevious = Array.isArray(previousDataApprovalSteps);
+        const changed = hasPrevious && dataHasChanged(data, previousDataApprovalSteps);
+
+        if (changed) {
+          console.log("🔁 ApprovalSteps เปลี่ยนแปลง");
+        }
+
+        allDataApprovalSteps = data;
+        previousDataApprovalSteps = JSON.parse(JSON.stringify(data));
+        isLoadApprovals = false;
+        resolve();
+      })
+      .withFailureHandler((err) => {
+        console.error("❌ โหลด ApprovalSteps ล้มเหลว:", err);
+        reject(err);
+      })
+      .getDataApprovalSteps();
+  });
+};
+
+const showGetUsers = () => {
+  return new Promise((resolve, reject) => {
+    google.script.run
+      .withSuccessHandler((data) => {
+        const hasPrevious = Array.isArray(previousDataUsers);
+        const changed = hasPrevious && dataHasChanged(data, previousDataUsers);
+
+        if (changed) {
+          const updatedIDs = getUpdatedItems(data, previousDataUsers);
+          const newIDs = getNewItems(data, previousDataUsers);
+
+          console.log("⏱️ Updated Users:", updatedIDs);
+          console.log("🆕 New Users:", newIDs);
+
+          if (!isLoadUsers) {
+            updatedIDs.forEach(id => {
+              showToast(`รายการ ${id} มีการอัปเดต`, "success");
+            });
+
+            newIDs.forEach(id => {
+              showToast(`รายการ ${id} สมัครใหม่`, "success");
+            });
+          }
+        }
+
+        allDataUsers = data;
+        previousDataUsers = JSON.parse(JSON.stringify(data));
+        isLoadUsers = false;
+        resolve();
+      })
+      .withFailureHandler((err) => {
+        console.error("❌ โหลด Users ล้มเหลว:", err);
+        reject(err);
+      })
+      .getDataUsers();
+  });
+};
+
+const getUpdatedItems = (newData, oldData) => {
+  const updatedItems = [];
+  const oldDataMap = new Map();
+  oldData.forEach(item => oldDataMap.set(item[0], item));
+
+  newData.forEach(item => {
+    const oldItem = oldDataMap.get(item[0]);
+    if (!oldItem) return;
+    if (JSON.stringify(item) !== JSON.stringify(oldItem)) {
+      updatedItems.push(item[0]);
+    }
+  });
+
+  return updatedItems;
+}
+
+const getNewItems = (newData, oldData) => {
+  const oldIDs = new Set(oldData.map(item => item[0]));
+  const newItems = [];
+
+  newData.forEach(item => {
+    if (!oldIDs.has(item[0])) {
+      newItems.push(item[0]);
+    }
+  });
+
+  return newItems;
+}
+
+const startRequestsTime = (interval = 10000) => {
+  return setInterval(() => {
+    showGetRequests();
+  }, interval);
+};
+
+const startApprovalsTime = (interval = 10000) => {
+  return setInterval(() => {
+    showGetApprovals();
+    renderApprovalSteps();
+  }, interval);
+};
+
+const startUsersTime = (interval = 10000) => {
+  return setInterval(() => {
+    showGetUsers();
+  }, interval);
+};
+
+let requestsInterval = null;
+let approvalsInterval = null;
+let usersInterval = null;
+let isRealTimeActive = false;
+
+const startRealTime = () => {
+  if (!requestsInterval) requestsInterval = startRequestsTime(10000);
+  if (!approvalsInterval) approvalsInterval = startApprovalsTime(10000);
+  if (!usersInterval) usersInterval = startUsersTime(10000);
+
+  isRealTimeActive = true;
+  localStorage.setItem('realTimeActive', 'true');
+  showToast('เปิดโหมดเรียลไทม์แล้ว', 'success');
+  updateRealtimeToggleUI(true);
+};
+
+const stopRealTime = () => {
+  if (requestsInterval) clearInterval(requestsInterval);
+  if (approvalsInterval) clearInterval(approvalsInterval);
+  if (usersInterval) clearInterval(usersInterval);
+
+  requestsInterval = null;
+  approvalsInterval = null;
+  usersInterval = null;
+
+  isRealTimeActive = false;
+  localStorage.setItem('realTimeActive', 'false');
+  showToast('ปิดโหมดเรียลไทม์แล้ว', 'warning');
+  updateRealtimeToggleUI(false);
+};
+
+const toggleRealTime = () => {
+  const toggle = document.getElementById('realtimeToggle');
+  if (toggle?.checked) {
+    startRealTime();
+  } else {
+    stopRealTime();
+  }
+};
+
+const updateRealtimeToggleUI = (state) => {
+  const toggle = document.getElementById('realtimeToggle');
+  if (toggle) {
+    toggle.checked = state;
+  }
+};
+
+const initRealTime = () => {
+  const savedState = localStorage.getItem('realTimeActive') === 'true';
+  if (savedState) startRealTime();
+  else stopRealTime();
+
+  updateRealtimeToggleUI(savedState);
+};
+</script>

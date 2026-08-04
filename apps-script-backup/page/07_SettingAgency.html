@@ -1,0 +1,237 @@
+<div class="bg-[var(--bg-secondary)] p-6 rounded-2xl shadow-[var(--shadow)] fade-in">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+    <h3 class="font-bold text-lg">จัดการหน่วยงาน</h3>
+    
+    <div class="flex items-center gap-2 max-w-md w-full sm:w-auto">
+      <div class="relative flex-1">
+        <input type="search" id="searchAgency" class="form-input" placeholder="ค้นหาข้อมูล..." oninput="filterAgency()">
+        <i class="fas fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--text-secondary)] pointer-events-none"></i>
+      </div>
+      <button class="px-4 py-3 text-white bg-green-500 hover:bg-green-600 rounded-lg whitespace-nowrap" onclick="openAgencyModal()">
+        เพิ่มข้อมูล
+      </button>
+    </div>
+  </div>
+  <div class="overflow-x-auto">
+      <table class="min-w-full text-sm divide-y divide-gray-200">
+          <thead class="border-b border-[var(--border-color)]">
+              <tr>
+                  <th class="px-4 py-2 text-center whitespace-nowrap">รหัส</th>
+                  <th class="px-4 py-2 text-center whitespace-nowrap">หน่วยงาน</th>
+                  <th class="px-4 py-2 text-center whitespace-nowrap">จัดการ</th>
+              </tr>
+          </thead>
+          <tbody id="tableAgency"></tbody>
+      </table>
+  </div>
+  <div class="p-4 mt-4 px-4 py-3 rounded-t-xl rounded-b-xl mt-3">
+    <div class="flex flex-col items-center justify-between gap-2 text-sm">
+      <div id="paginationAgencyInfo" class="text-center"></div>
+      <div id="paginationAgency" class="text-center w-full overflow-x-auto py-2"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let filteredAgency = [];
+let currentAgency = 1;
+let itemsPerAgency = 10;
+
+const renderAgency = (data) => {
+  const table = document.getElementById('tableAgency');
+  table.innerHTML = '';
+
+  const startIndex = (currentAgency - 1) * itemsPerAgency;
+  const endIndex = startIndex + itemsPerAgency;
+  const pageData = data.slice(startIndex, endIndex);
+  const totalRows = data.length;
+
+  const startRow = startIndex + 1;
+  const endRow = startIndex + pageData.length;
+
+  document.getElementById('paginationAgencyInfo').innerText = `แสดง ${startRow} ถึง ${endRow} จาก ${totalRows} แถว`;
+
+  if (pageData.length === 0) {
+    const row = table.insertRow();
+    row.innerHTML = `
+      <td colspan="3" class="text-center text-[var(--text-secondary)] py-6 text-base">
+        ไม่พบข้อมูล! 😓
+      </td>`;
+    return;
+  }
+
+  pageData.forEach((rowIndex) => {
+
+    const row = table.insertRow();
+    row.className = 'transition duration-200 ease-in-out';
+    row.onmouseover = () => row.style.backgroundColor = 'var(--hover-bg-color)';
+    row.onmouseout = () => row.style.backgroundColor = '';
+
+    row.innerHTML = `
+      <td class="px-4 py-3 text-sm whitespace-nowrap text-center text-[var(--text-primary)]">${rowIndex[0]}</td>
+      <td class="px-4 py-3 text-sm whitespace-nowrap text-center text-[var(--text-primary)]">${rowIndex[1]}</td>
+      <td class="px-4 py-3 text-center text-sm whitespace-nowrap">
+        <button class="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-medium transition duration-200 ease-in-out shadow-sm hover:shadow-md mr-1"
+          onclick="editAgency('${rowIndex[0]}')">
+          <i class="fa-solid fa-pen-to-square"></i>
+        </button>
+        <button class="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition duration-200 ease-in-out shadow-sm hover:shadow-md"
+          onclick="delAgency('${rowIndex[0]}')">
+          <i class="fa-solid fa-trash-can"></i>
+        </button>
+      </td>
+    `;
+  });
+
+  renderPageAgency(totalRows);
+};
+
+const renderPageAgency = (totalItems) => {
+  const totalPages = Math.ceil(totalItems / itemsPerAgency);
+  const paginationContainer = document.getElementById('paginationAgency');
+  paginationContainer.innerHTML = '';
+
+  const ul = document.createElement('ul');
+  ul.className = "custom-pagination";
+
+  const createPageButton = (htmlContent, page, isDisabled = false, isActive = false) => {
+    const li = document.createElement('li');
+    if (isDisabled) li.classList.add('disabled');
+    if (isActive) li.classList.add('active');
+
+    const button = document.createElement('button');
+    button.innerHTML = htmlContent;
+    button.addEventListener('click', () => {
+      if (!isDisabled) {
+        currentAgency = page;
+        const dataToRender = filteredAgency.length ? filteredAgency : allDataAgency;
+        renderAgency(dataToRender);
+      }
+    });
+    li.appendChild(button);
+    return li;
+  };
+
+  ul.appendChild(createPageButton('<i class="fa-solid fa-angles-left"></i>', 1, currentAgency === 1));
+  ul.appendChild(createPageButton('<i class="fa-solid fa-angle-left"></i>', currentAgency - 1, currentAgency === 1));
+
+  let startPage, endPage;
+  if (totalPages <= 3) {
+    startPage = 1;
+    endPage = totalPages;
+  } else {
+    if (currentAgency <= 2) {
+      startPage = 1;
+      endPage = 3;
+    } else if (currentAgency + 1 >= totalPages) {
+      startPage = totalPages - 2;
+      endPage = totalPages;
+    } else {
+      startPage = currentAgency - 1;
+      endPage = currentAgency + 1;
+    }
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    ul.appendChild(createPageButton(i, i, false, currentAgency === i));
+  }
+
+  ul.appendChild(createPageButton('<i class="fa-solid fa-angle-right"></i>', currentAgency + 1, currentAgency === totalPages));
+  ul.appendChild(createPageButton('<i class="fa-solid fa-angles-right"></i>', totalPages, currentAgency === totalPages));
+
+  paginationContainer.appendChild(ul);
+}
+
+const filterAgency = () => {
+  const query = document.getElementById('searchAgency').value.toLowerCase();
+
+  filteredAgency = allDataAgency.filter(row => {
+    return query === '' || row.some(column => column.toLowerCase().includes(query));
+  });
+
+  currentAgency = 1;
+  renderAgency(filteredAgency);
+};
+
+const openAgencyModal = () => {
+  document.getElementById('agencyModal').classList.remove('hidden');
+}
+
+const closeAgencyModal = () => {
+  document.getElementById('agencyModal').classList.add('hidden');
+  $("#modalAgencyTitle").text('เพิ่มหน่วยงานใหม่');
+  $("#agencyDataKye").val('');
+  $("#agencyData1").val('');
+}
+
+const submitModalAgency = () => {
+  event.preventDefault();
+  $("#customLoader").show();
+
+  const obj = {
+    datakey: document.getElementById('agencyDataKye').value,
+    data1: document.getElementById('agencyData1').value       
+  };
+
+  if (!obj.data1) {
+    showToast("กรุณากรอกข้อมูลให้ครบถ้วน", "warning");
+    $("#customLoader").hide();
+    return;
+  }
+
+  if (!obj.datakey) {
+    google.script.run.withSuccessHandler(async (res) => {
+      closeAgencyModal();
+      await updateSpecificDataAgency();
+      $("#customLoader").hide();
+      showToast("บันทึกข้อมูลสำเร็จ", "success");
+    }).addAgency(obj);
+  } else {
+    google.script.run.withSuccessHandler(async (res) => {
+      closeAgencyModal();
+      await updateSpecificDataAgency();
+      $("#customLoader").hide();
+      showToast("แก้ไขข้อมูลสำเร็จ", "success");
+    }).upAgency(obj);
+  }
+}
+
+const editAgency = (codeID) => {
+  const rowIndex = allDataAgency.find(row => row[0].trim() === codeID.trim());
+
+  if (!rowIndex) {
+    showToast("ไม่พบข้อมูลที่เลือกในระบบ", "warning");
+    return;
+  }
+  openAgencyModal();
+  $("#modalAgencyTitle").text('แก้ไขหน่วยงาน');
+  $('#agencyDataKye').val(rowIndex[0]);
+  $('#agencyData1').val(rowIndex[1]);
+}
+
+const delAgency = (codeID) => {
+  let rowIndex = allDataAgency.find(row => row[0].trim() === codeID.trim());
+  
+  if (!rowIndex) {
+    showToast("ไม่พบข้อมูลที่เลือกในระบบ", "warning");
+    return;
+  }
+
+  if (rowIndex) {
+    $('#confirmBtnDel').off('click').on('click', function() {
+      document.getElementById('DelDataModal').classList.add('hidden');
+      $("#customLoader").show();
+      google.script.run.withSuccessHandler(async (res) => {
+        rowIndex = allDataAgency.filter(row => row[0] !== codeID);
+        await updateSpecificDataAgency();
+        $("#customLoader").hide();
+        showToast("ลบข้อมูลสำเร็จ", "success");
+      }).delDataAgency(codeID);
+    });
+    $('#xDelconfirmData').off('click').on('click', function() {
+      document.getElementById('DelDataModal').classList.add('hidden');
+    });
+    document.getElementById('DelDataModal').classList.remove('hidden');
+  }
+}
+</script>

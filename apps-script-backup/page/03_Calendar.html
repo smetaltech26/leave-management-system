@@ -1,0 +1,724 @@
+<!-- ปฏิทินการลา -->
+<div class="bg-[var(--bg-secondary)] p-6 rounded-2xl shadow-[var(--shadow)] mb-6 fade-in">
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="font-bold text-lg text-[var(--text-primary)]">ปฏิทินการลา</h3>
+  </div>
+  <div>
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 text-center">
+      <button id="prevMonth" class="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors shadow-sm hover:shadow">
+        <i class='bx bx-chevron-left'></i> เดือนก่อนหน้า
+      </button>
+      <h2 id="currentMonthYear" class="text-2xl sm:text-3xl font-semibold text-[var(--text-primary)]"></h2>
+      <button id="nextMonth" class="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors shadow-sm hover:shadow">
+          เดือนถัดไป <i class='bx bx-chevron-right'></i>
+      </button>
+    </div>
+    <div id="calendar-days" class="calendar-grid"></div>
+  </div>
+</div>
+
+<!-- Modal สำหรับแสดงกลุ่มคนลาตามแผนก (ตารางสรุป) -->
+<!-- 1. ไนท์เปลี่ยนจาก z-50 เป็น z-[9999] เพื่อให้อยู่บนสุดทับแถบเมนูด้านบน -->
+<div id="showLeaveGroupModal" class="fixed inset-0 bg-black bg-opacity-50 z-[9999] hidden flex items-center justify-center p-4">
+  
+  <!-- 2. ไนท์ปรับ max-h-[90vh] เป็น max-h-[80vh] เพื่อไม่ให้กล่องสูงจนชิดขอบจอเกินไป -->
+  <div class="bg-[var(--bg-secondary)] rounded-2xl shadow-xl w-full max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+    
+    <div class="p-4 border-b border-[var(--border-color)] flex justify-between items-center bg-[var(--bg-primary)]">
+      <h2 id="leaveGroupModalTitle" class="text-xl font-bold text-[var(--text-primary)]">รายละเอียดการลาประจำวัน</h2>
+      <button onclick="closeLeaveGroupModal()" class="text-gray-500 hover:text-red-500 transition-colors">
+        <i class="fas fa-times text-xl"></i>
+      </button>
+    </div>
+    
+    <div id="leaveGroupModalContent" class="p-6 overflow-y-auto custom-scrollbar flex-grow">
+      <!-- เนื้อหาตารางจะถูกใส่ผ่าน JavaScript -->
+    </div>
+    
+  </div>
+</div>
+
+<script>
+const thaiDayNames = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
+const thaiMonthNames = [
+  'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+  'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+];
+
+let currentDisplayedDate = new Date();
+const calendarDaysEl = document.getElementById('calendar-days');
+const currentMonthYearEl = document.getElementById('currentMonthYear');
+const prevMonthBtn = document.getElementById('prevMonth');
+const nextMonthBtn = document.getElementById('nextMonth');
+
+// ฟังก์ชันแปลงวันที่แบบปลอดภัย
+const parseDateCalendar = (dateString) => {
+  if (!dateString) return new Date();
+  const parts = String(dateString).split('/');
+  if (parts.length !== 3) return new Date();
+  const [day, month, year] = parts.map(Number);
+  return new Date(year, month - 1, day);
+};
+
+const formatDate = (date) => {
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
+// เช็ควันหยุดแบบปลอดภัย ป้องกันกรณีข้อมูลยังไม่โหลด
+const isHoliday = (date) => {
+  if (typeof allDataHolidays === 'undefined' || !Array.isArray(allDataHolidays)) return false;
+  const dateStr = formatDate(date);
+  return allDataHolidays.some(h => h[1] === dateStr);
+};
+
+const getHolidayName = (date) => {
+  if (typeof allDataHolidays === 'undefined' || !Array.isArray(allDataHolidays)) return null;
+  const dateStr = formatDate(date);
+  const match = allDataHolidays.find(h => h[1] === dateStr);
+  return match ? match[2] : null;
+};
+
+// เช็ควันเสาร์-อาทิตย์แบบปลอดภัย
+const isWeekend = (date) => {
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const dayOfWeek = dayNames[date.getDay()];
+  if (typeof allDataDayOfWeek === 'undefined' || !Array.isArray(allDataDayOfWeek)) {
+     return (date.getDay() === 0 || date.getDay() === 6);
+  }
+  const dayData = allDataDayOfWeek.find(d => d[0] === dayOfWeek);
+  return dayData ? dayData[1] === 'FALSE' : (date.getDay() === 0 || date.getDay() === 6);
+};
+
+function renderCalendar() {
+  // ใส่ Try-Catch ป้องกันสคริปต์พังจนหน้าจอขาว
+  try {
+    if (!calendarDaysEl) return;
+    calendarDaysEl.innerHTML = '';
+
+    const year = currentDisplayedDate.getFullYear();
+    const month = currentDisplayedDate.getMonth();
+    const today = new Date();
+
+    if (currentMonthYearEl) {
+        currentMonthYearEl.textContent = `${thaiMonthNames[month]} ${year + 543}`;
+    }
+
+    // ดึงข้อมูลการลาอย่างปลอดภัย
+    const leaveData = (typeof allDataLeaveRequests !== 'undefined' && Array.isArray(allDataLeaveRequests)) 
+                      ? allDataLeaveRequests : [];
+
+    const leaveEvents = leaveData.map(leave => ({
+      leave_id: leave[0] || '',
+      description: leave[1] || '',
+      startDate: parseDateCalendar(leave[2]),
+      startDateStr: leave[2] || '',
+      endDate: parseDateCalendar(leave[3]),
+      endDateStr: leave[3] || '',
+      userId: leave[4] || '',
+      policyId: leave[5] || '',
+      leaveType: leave[6] || 'Other',
+      status: leave[7] || 'Pending',
+      currentStep: leave[8] || '',
+      rejectedReason: leave[9] || '',
+      submitDate: leave[10] || '',
+      updatedDate: leave[11] || ''
+    }));
+
+    const firstDayOfMonth = new Date(year, month, 1);
+    const lastDayOfMonth = new Date(year, month + 1, 0);
+    const numDaysInMonth = lastDayOfMonth.getDate();
+    const firstDayOfWeek = firstDayOfMonth.getDay();
+
+    for (let i = 0; i < firstDayOfWeek; i++) {
+      const emptyCell = document.createElement('div');
+      emptyCell.classList.add('calendar-day-cell', 'bg-gray-100', 'opacity-50', 'pointer-events-none', 'dark:bg-gray-800');
+      calendarDaysEl.appendChild(emptyCell);
+    }
+
+    for (let day = 1; day <= numDaysInMonth; day++) {
+      const dayCell = document.createElement('div');
+      dayCell.classList.add('calendar-day-cell');
+
+      const currentDate = new Date(year, month, day);
+      const dayOfWeek = currentDate.getDay();
+
+      if (
+        currentDate.getDate() === today.getDate() &&
+        currentDate.getMonth() === today.getMonth() &&
+        currentDate.getFullYear() === today.getFullYear()
+      ) {
+        dayCell.classList.add('today');
+      }
+
+      if (isWeekend(currentDate)) {
+        dayCell.classList.add('weekend');
+      }
+
+      if (isHoliday(currentDate)) {
+        dayCell.classList.add('holiday');
+        const holidayName = getHolidayName(currentDate);
+        if (holidayName) {
+          const holidayLabel = document.createElement('div');
+          holidayLabel.className = 'text-xs text-center mt-1 text-red-500 font-medium truncate px-1';
+          holidayLabel.textContent = holidayName;
+          dayCell.appendChild(holidayLabel);
+        }
+      }
+
+      const dayHeader = document.createElement('div');
+      dayHeader.classList.add('calendar-day-header');
+      dayHeader.innerHTML = `
+        <div class="calendar-day-date">${day}</div>
+        <div class="calendar-day-name">${thaiDayNames[dayOfWeek]}</div>
+      `;
+      dayCell.appendChild(dayHeader);
+
+      const eventListContainer = document.createElement('div');
+      eventListContainer.classList.add('event-list-container');
+
+      const eventsForThisDay = leaveEvents.filter(event =>
+        currentDate >= event.startDate && currentDate <= event.endDate
+      );
+
+      // 1. Smart Grouping อย่างปลอดภัย ป้องกันตัวแปร null/undefined
+      const groupedByDept = {};
+      eventsForThisDay.forEach(event => {
+        let userData = { fullname: 'ไม่พบข้อมูล', department: 'ไม่ระบุแผนก', profile: 'https://placehold.co/150x150/cccccc/333333?text=N/A', agency: '' };
+        
+        if (typeof getSearchUsers === 'function') {
+          try {
+            const fetchedUser = getSearchUsers(event.userId);
+            if (fetchedUser) {
+              userData.fullname = fetchedUser.fullname || userData.fullname;
+              userData.department = fetchedUser.department || userData.department;
+              userData.profile = fetchedUser.profile || userData.profile;
+              userData.agency = fetchedUser.agency || userData.agency;
+            }
+          } catch (e) {
+            console.warn("ไม่สามารถดึงข้อมูล User ID:", event.userId);
+          }
+        }
+        
+        const deptName = userData.department;
+        if (!groupedByDept[deptName]) {
+          groupedByDept[deptName] = [];
+        }
+        
+        groupedByDept[deptName].push({
+          ...event,
+          userName: userData.fullname,
+          profile: userData.profile,
+          agency: userData.agency
+        });
+      });
+
+      const dateKeyStr = formatDate(currentDate);
+      for (const [deptName, requests] of Object.entries(groupedByDept)) {
+        const eventEl = document.createElement('div');
+        
+        // กำหนดสีคลาสอย่างปลอดภัย ป้องกัน error .toLowerCase()
+        let eventClass = 'other';
+        if(requests.length > 0) {
+            const safeLeaveType = String(requests[0].leaveType || '').toLowerCase();
+            switch (safeLeaveType) {
+              case 'annual': eventClass = 'annual'; break;
+              case 'sick': eventClass = 'sick'; break;
+              case 'personal': eventClass = 'personal'; break;
+            }
+        }
+
+        eventEl.classList.add('calendar-day-event', eventClass);
+        eventEl.innerHTML = `
+          <div class="flex items-center gap-2">
+            <div class="bg-white/30 rounded-full flex items-center justify-center w-6 h-6 min-w-[1.5rem]">
+              <i class="fa-solid fa-users text-current text-xs"></i>
+            </div>
+            <span class="truncate font-medium">${deptName} (${requests.length})</span>
+          </div>
+        `;
+        
+        eventEl.addEventListener('click', () => {
+          openLeaveGroupModal(dateKeyStr, deptName, requests);
+        });
+        eventListContainer.appendChild(eventEl);
+      }
+
+      dayCell.appendChild(eventListContainer);
+      calendarDaysEl.appendChild(dayCell);
+    }
+  } catch (error) {
+    console.error("เกิดข้อผิดพลาดในการวาดปฏิทิน: ", error);
+  }
+}
+
+if (prevMonthBtn) {
+  prevMonthBtn.addEventListener('click', () => {
+    currentDisplayedDate.setMonth(currentDisplayedDate.getMonth() - 1);
+    renderCalendar();
+  });
+}
+
+if (nextMonthBtn) {
+  nextMonthBtn.addEventListener('click', () => {
+    currentDisplayedDate.setMonth(currentDisplayedDate.getMonth() + 1);
+    renderCalendar();
+  });
+}
+
+// 2. หน้าต่างรายละเอียดแบบตาราง (Leave Modal Table)
+function openLeaveGroupModal(dateStr, department, requests) {
+  const modal = document.getElementById('showLeaveGroupModal');
+  const title = document.getElementById('leaveGroupModalTitle');
+  const content = document.getElementById('leaveGroupModalContent');
+
+  if (!modal || !title || !content) return;
+
+  title.textContent = `ข้อมูลการลาประจำวันที่ ${dateStr}`;
+
+  const departmentHeader = document.createElement('div');
+  departmentHeader.className = 'mb-4 p-4 rounded-xl border shadow-sm';
+  departmentHeader.style.cssText = `
+    background: linear-gradient(135deg, var(--bs-blue, #3b82f6) 0%, rgba(60, 140, 243, 0.8) 100%);
+    border-color: var(--border-color);
+    color: white;
+  `;
+  departmentHeader.innerHTML = `
+    <div class="flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-12 h-12 rounded-full bg-white bg-opacity-20 flex items-center justify-center shadow-inner">
+          <i class="fas fa-building text-white text-xl"></i>
+        </div>
+        <div>
+          <h3 class="font-bold text-xl drop-shadow-md">${department}</h3>
+          <p class="text-sm opacity-90 font-medium">พนักงานที่ลาทั้งหมด ${requests.length} รายการ</p>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  content.innerHTML = '';
+  content.appendChild(departmentHeader);
+
+  const tableContainer = document.createElement('div');
+  tableContainer.className = 'overflow-x-auto bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)] shadow-sm';
+
+  const table = document.createElement('table');
+  table.className = 'min-w-full text-sm divide-y divide-[var(--border-color)]';
+
+  const thead = document.createElement('thead');
+  thead.className = 'bg-[var(--bg-primary)]';
+  thead.innerHTML = `
+    <tr>
+      <th class="px-4 py-3 text-left font-semibold text-[var(--text-secondary)] whitespace-nowrap">พนักงาน</th>
+      <th class="px-4 py-3 text-center font-semibold text-[var(--text-secondary)] whitespace-nowrap">ประเภทการลา</th>
+      <th class="px-4 py-3 text-center font-semibold text-[var(--text-secondary)] whitespace-nowrap">ช่วงเวลา</th>
+      <th class="px-4 py-3 text-center font-semibold text-[var(--text-secondary)] whitespace-nowrap">สถานะ</th>
+      <th class="px-4 py-3 text-center font-semibold text-[var(--text-secondary)] whitespace-nowrap">จัดการ</th>
+    </tr>
+  `;
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  tbody.className = 'divide-y divide-[var(--border-color)]';
+
+  const leaveTypeMap = {
+    'Annual': 'ลาพักร้อน', 'Sick': 'ลาป่วย', 'Personal': 'ลากิจ',
+    'Other': 'อื่นๆ', 'Maternity': 'ลาคลอด', 'Study': 'ลาศึกษา', 'Military': 'ลาทหาร'
+  };
+
+  requests.forEach((req) => {
+    // รองรับ Status ทั้งภาษาอังกฤษและไทย
+    const statusBadge = {
+      'Pending': '<span class="px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300 border border-yellow-200"><i class="fas fa-clock mr-1"></i> รออนุมัติ</span>',
+      'Approved': '<span class="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300 border border-green-200"><i class="fas fa-check-circle mr-1"></i> อนุมัติแล้ว</span>',
+      'Rejected': '<span class="px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300 border border-red-200"><i class="fas fa-times-circle mr-1"></i> ไม่อนุมัติ</span>',
+      'รออนุมัติ': '<span class="px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300 border border-yellow-200"><i class="fas fa-clock mr-1"></i> รออนุมัติ</span>',
+      'อนุมัติแล้ว': '<span class="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300 border border-green-200"><i class="fas fa-check-circle mr-1"></i> อนุมัติแล้ว</span>',
+      'ไม่อนุมัติ': '<span class="px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300 border border-red-200"><i class="fas fa-times-circle mr-1"></i> ไม่อนุมัติ</span>'
+    }[req.status] || `<span class="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200"><i class="fas fa-info-circle mr-1"></i> ${req.status}</span>`;
+
+    const row = document.createElement('tr');
+    row.className = 'hover:bg-[var(--bg-primary)] transition-colors duration-150';
+    row.innerHTML = `
+      <td class="px-4 py-3 whitespace-nowrap">
+        <div class="flex items-center gap-3">
+          <img src="${req.profile || 'https://placehold.co/150x150/cccccc/333333?text=N/A'}" onerror="this.onerror=null;this.src='https://placehold.co/150x150/cccccc/333333?text=N/A';" alt="Profile" class="w-10 h-10 rounded-full object-cover border-2 border-[var(--border-color)] shadow-sm">
+          <div>
+            <div class="font-bold text-[var(--text-primary)]">${req.userName}</div>
+            <div class="text-xs text-[var(--text-secondary)]">${req.agency || '-'}</div>
+          </div>
+        </div>
+      </td>
+      <td class="px-4 py-3 whitespace-nowrap text-center font-medium text-[var(--text-primary)]">
+        ${leaveTypeMap[req.leaveType] || req.leaveType}
+      </td>
+      <td class="px-4 py-3 whitespace-nowrap text-center text-sm text-[var(--text-secondary)]">
+        ${req.startDateStr === req.endDateStr ? req.startDateStr : `${req.startDateStr} - ${req.endDateStr}`}
+      </td>
+      <td class="px-4 py-3 whitespace-nowrap text-center">${statusBadge}</td>
+      <td class="px-4 py-3 text-center whitespace-nowrap">
+          <!-- 3. ปุ่มดูรายละเอียดรายบุคคล -->
+          <button class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition duration-200 ease-in-out shadow-sm hover:shadow hover:-translate-y-0.5"
+            onclick="openLeaveModal('${req.leave_id}')">
+            <i class="fa-regular fa-eye mr-1"></i> ดูข้อมูล
+          </button>
+      </td>
+    `;
+    tbody.appendChild(row);
+  });
+
+  table.appendChild(tbody);
+  tableContainer.appendChild(table);
+  content.appendChild(tableContainer);
+
+  modal.classList.remove('hidden');
+
+  requestAnimationFrame(() => {
+    modal.style.animation = 'fadeIn 0.3s ease-out forwards';
+  });
+}
+
+const closeLeaveGroupModal = () => {
+  const modal = document.getElementById('showLeaveGroupModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+// -------------------------------------------------------------
+// ฟังก์ชันเดิมของพี่สำหรับเปิดหน้าต่างรายละเอียดรายบุคคล
+// -------------------------------------------------------------
+const openLeaveModal = (leaveId) => {
+  if (typeof allDataLeaveRequests === 'undefined') return;
+  
+  const leave = allDataLeaveRequests.find(l => l[0] === leaveId);
+  if (!leave) return;
+
+  const uid = leave[4];
+  const currentUserUid = localStorage.getItem('uiduser');
+  const currentUserRole = localStorage.getItem('role');
+  
+  const canViewLeave = (currentUserRole === 'SuperUser' || currentUserRole === 'Admin' || currentUserRole === 'SuperAdmin') || (uid === currentUserUid);
+  
+  if (!canViewLeave) {
+    if (typeof showToast === 'function') {
+      showToast("คุณสามารถดูรายละเอียดได้เฉพาะคำขอลาของตัวเองเท่านั้น", "warning");
+    } else {
+      alert("คุณสามารถดูรายละเอียดได้เฉพาะคำขอลาของตัวเองเท่านั้น");
+    }
+    return;
+  }
+
+  let userData = { fullname: 'ไม่ระบุ', department: 'ไม่ระบุ' };
+  if (typeof getSearchUsers === 'function') {
+    const fetched = getSearchUsers(uid);
+    if(fetched) userData = fetched;
+  }
+
+  const leaveQuotaContainer = document.getElementById('leaveQuotaContainer');
+  if(leaveQuotaContainer) leaveQuotaContainer.innerHTML = '';
+
+  if (typeof allDataUserPolicies !== 'undefined' && leaveQuotaContainer) {
+    const userPolicies = allDataUserPolicies.filter(row => row[1] === uid);
+
+    const leaveUsedMap = {};
+    if (typeof allDataLeaveRequests !== 'undefined') {
+      const userLeaves = allDataLeaveRequests.filter(l => l[4] === uid && l[7] === 'Approved');
+      userLeaves.forEach(l => {
+        const type = l[6];
+        const leaveDuration = l[12] || 'F';
+        const days = typeof calculateActualLeaveDays === 'function' 
+                      ? calculateActualLeaveDays(l[2], l[3], leaveDuration)
+                      : 1;
+        leaveUsedMap[type] = (leaveUsedMap[type] || 0) + days;
+      });
+    }
+
+    const leaveTypes = {
+      'Annual':    { name: 'ลาพักร้อน',  color: 'var(--bs-blue)',     icon: 'fa-solid fa-plane-up' },
+      'Sick':      { name: 'ลาป่วย',     color: 'var(--bs-red)',      icon: 'fa-solid fa-user-injured' },
+      'Personal':  { name: 'ลากิจ',      color: 'var(--bs-purple)',   icon: 'fa-solid fa-person-walking-luggage' },
+      'Other':     { name: 'อื่นๆ',       color: 'var(--bs-yellow)',   icon: 'fa-solid fa-circle-question' },
+      'Maternity': { name: 'ลาคลอด',     color: 'var(--bs-pink)',     icon: 'fa-solid fa-baby-carriage' },
+      'Study':     { name: 'ลาศึกษา',     color: 'var(--bs-orange)',   icon: 'fa-solid fa-graduation-cap' },
+      'Military':  { name: 'ลาทหาร',     color: 'var(--bs-teal)',     icon: 'fa-solid fa-person-military-rifle' }
+    };
+
+    userPolicies.forEach(policy => {
+      const leaveType = policy[2];
+      const quota = parseFloat(policy[3]) || 0;
+      const used = leaveUsedMap[leaveType] || 0;
+      const remaining = Math.max(quota - used, 0);
+      const percentage = quota > 0 ? Math.round((used / quota) * 100) : 0;
+
+      const config = leaveTypes[leaveType] || {
+        name: leaveType,
+        color: 'var(--bs-gray)',
+        icon: 'fas fa-question-circle'
+      };
+
+      const usedDisplay = used % 1 === 0 ? used.toString() : used.toFixed(1);
+      const remainingDisplay = remaining % 1 === 0 ? remaining.toString() : remaining.toFixed(1);
+
+      const card = document.createElement('div');
+      card.className = 'p-4 rounded-xl border transition-all duration-300 hover:shadow-lg';
+      card.style.backgroundColor = `${config.color}15`;
+      card.style.borderColor = config.color;
+
+      card.innerHTML = `
+        <div class="flex items-center justify-between mb-3">
+          <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background-color: ${config.color};">
+            <i class="${config.icon} text-white text-lg"></i>
+          </div>
+          <div class="text-right">
+            <div class="text-2xl font-bold" style="color: ${config.color};">${remainingDisplay}</div>
+            <div class="text-xs" style="color: var(--text-secondary);">คงเหลือ</div>
+          </div>
+        </div>
+        <div class="mb-2">
+          <div class="text-sm font-medium" style="color: var(--text-primary);">${config.name}</div>
+          <div class="text-xs" style="color: var(--text-secondary);">ใช้ไป ${usedDisplay}/${quota} วัน</div>
+        </div>
+        <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+          <div class="h-full rounded-full transition-all duration-500" style="width: ${Math.min(percentage, 100)}%; background-color: ${config.color};"></div>
+        </div>
+        <div class="text-xs mt-1 text-center" style="color: var(--text-secondary);">${percentage}% ใช้ไปแล้ว</div>
+      `;
+
+      leaveQuotaContainer.appendChild(card);
+    });
+  }
+
+  if(document.getElementById('modalLeaveId')) document.getElementById('modalLeaveId').textContent = leave[0];
+  if(document.getElementById('modalUserId')) document.getElementById('modalUserId').textContent = userData.fullname;
+  if(document.getElementById('modalDepartments')) document.getElementById('modalDepartments').textContent = userData.department;
+  if(document.getElementById('modalDescription')) document.getElementById('modalDescription').textContent = leave[1];
+  if(document.getElementById('modalStartDate')) document.getElementById('modalStartDate').textContent = leave[2];
+  if(document.getElementById('modalEndDate')) document.getElementById('modalEndDate').textContent = leave[3];
+  
+  if (userData.profile) {
+    const profileEl = document.getElementById('modalProfileImage');
+    if (profileEl) {
+      profileEl.style.backgroundImage = `url('${userData.profile}')`;
+    }
+  }
+  
+  const leaveDuration = leave[12] || 'F';
+  const leaveDays = typeof calculateActualLeaveDays === 'function'
+    ? calculateActualLeaveDays(leave[2], leave[3], leaveDuration)
+    : 1;
+  
+  let leaveDaysDisplay = '';
+  const leaveDaysValue = leaveDays % 1 === 0 ? leaveDays.toString() : leaveDays.toFixed(1);
+  
+  if (leaveDuration === 'AM') {
+    leaveDaysDisplay = `${leaveDaysValue} วัน (ครึ่งเช้า)`;
+  } else if (leaveDuration === 'PM') {
+    leaveDaysDisplay = `${leaveDaysValue} วัน (ครึ่งบ่าย)`;
+  } else {
+    leaveDaysDisplay = `${leaveDaysValue} วัน (เต็มวัน)`;
+  }
+  
+  if(document.getElementById('modalLeaveDays')) document.getElementById('modalLeaveDays').textContent = leaveDaysDisplay;
+
+  const leaveTypeMap = {
+    'Annual': 'ลาพักร้อน',
+    'Sick': 'ลาป่วย',
+    'Personal': 'ลากิจ',
+    'Other': 'อื่นๆ',
+    'Maternity': 'ลาคลอด',
+    'Study': 'ลาศึกษา',
+    'Military': 'ลาทหาร'
+  };
+  if(document.getElementById('modalLeaveType')) document.getElementById('modalLeaveType').textContent = leaveTypeMap[leave[6]] || leave[6];
+
+  const statusMap = {
+    'Approved': ['อนุมัติแล้ว', 'text-green-600 dark:text-green-400'],
+    'Pending': ['รออนุมัติ', 'text-yellow-600 dark:text-yellow-400'],
+    'Rejected': ['ปฏิเสธ', 'text-red-600 dark:text-red-400'],
+    'อนุมัติแล้ว': ['อนุมัติแล้ว', 'text-green-600 dark:text-green-400'],
+    'รออนุมัติ': ['รออนุมัติ', 'text-yellow-600 dark:text-yellow-400'],
+    'ไม่อนุมัติ': ['ปฏิเสธ', 'text-red-600 dark:text-red-400']
+  };
+  const [statusText, statusClass] = statusMap[leave[7]] || [leave[7], 'text-gray-600 dark:text-gray-400'];
+  const statusEl = document.getElementById('modalStatus');
+  if(statusEl) {
+      statusEl.textContent = statusText;
+      statusEl.className = `font-semibold ${statusClass}`;
+  }
+
+  const reason = leave[9];
+  const reasonWrap = document.getElementById('modalRejectedReason');
+  const reasonLabel = document.getElementById('reasonLabel');
+  const reasonText = document.getElementById('rejectedReasonText');
+
+  if (reasonWrap && reasonLabel && reasonText) {
+    if (reason) {
+        reasonText.textContent = reason;
+        
+        if (leave[7] === 'Approved' || leave[7] === 'อนุมัติแล้ว') {
+            reasonLabel.innerHTML = '<b>เหตุผลที่อนุมัติ:</b>';
+            reasonLabel.className = 'text-green-600 dark:text-green-400 font-medium';
+            reasonWrap.classList.remove('hidden');
+        } else if (leave[7] === 'Rejected' || leave[7] === 'ไม่อนุมัติ') {
+            reasonLabel.innerHTML = '<b>เหตุผลที่ปฏิเสธ:</b>';
+            reasonLabel.className = 'text-red-600 dark:text-red-400 font-medium';
+            reasonWrap.classList.remove('hidden');
+        } else {
+            reasonWrap.classList.add('hidden');
+        }
+    } else {
+        reasonWrap.classList.add('hidden');
+    }
+  }
+
+  // ... (โค้ดก่อนหน้านี้เหมือนเดิม) ...
+  const filesContainer = document.getElementById('filesContainer');
+  const noFilesMsg = document.getElementById('noFilesMessage');
+  
+  if (filesContainer && noFilesMsg) {
+    const files = (typeof allDataAttachments !== 'undefined' && allDataAttachments) ? 
+                  allDataAttachments.filter(f => f[1] === leaveId) : [];
+    
+    filesContainer.innerHTML = '';
+    if (files.length === 0) {
+        filesContainer.classList.add('hidden');
+        noFilesMsg.classList.remove('hidden');
+    } else {
+        filesContainer.classList.remove('hidden');
+        noFilesMsg.classList.add('hidden');
+        files.forEach(file => {
+            const card = document.createElement('div');
+            card.className = 'file-card border rounded-lg p-4 flex items-center shadow-sm hover:shadow-md transition-all duration-200';
+            card.style.backgroundColor = 'var(--bg-secondary)';
+            card.style.borderColor = 'var(--border-color)';
+            card.innerHTML = `
+                <div class="file-icon rounded-lg p-2 mr-4 flex-shrink-0" style="background-color: var(--bg-primary);">
+                    <i class="fa-regular fa-file-lines" style="color: var(--text-secondary);"></i>
+                </div>
+                <div class="flex-grow min-w-0">
+                    <h4 class="text-sm font-medium truncate" style="color: var(--text-primary);">${file[0]}</h4>
+                    <p class="text-sm" style="color: var(--text-secondary);">อัปโหลดเมื่อ ${file[4]}</p>
+                </div>
+                <!-- ✨ ไนท์ปรับแก้ปุ่มนี้: เพิ่มคำสั่งดันหน้าต่างไฟล์ให้ทะลุขึ้นมาอยู่บนสุด (z-[10001]) ค่ะ -->
+                <button class="view-file ml-2 p-2 text-white bg-green-500 hover:bg-green-600 rounded-lg text-xs transition-colors" 
+                        onclick="
+                            openFilePreview('${file[2]}', '${file[0]}');
+                            setTimeout(() => {
+                                // ค้นหาหน้าต่าง Popup ที่เพิ่งเปิดขึ้นมาและดึงมาไว้ชั้นบนสุด
+                                const modals = document.querySelectorAll('.fixed.inset-0');
+                                modals.forEach(m => {
+                                    if (!m.classList.contains('hidden') && m.id !== 'leaveModal' && m.id !== 'showLeaveGroupModal') {
+                                        m.style.zIndex = '10001';
+                                        m.classList.add('z-[10001]');
+                                    }
+                                });
+                            }, 100);
+                        ">เปิด</button>
+            `;
+            filesContainer.appendChild(card);
+        });
+    }
+  }
+  // ... (โค้ดด่านล่างส่วนของ approvalSteps เหมือนเดิม) ...
+
+  const stepVisual = document.getElementById('approvalSteps');
+  const stepTable = document.getElementById('stepDetailsTable');
+  
+  if (stepVisual && stepTable) {
+    const stepList = (typeof allDataApprovalSteps !== 'undefined' && Array.isArray(allDataApprovalSteps)) ? 
+                    allDataApprovalSteps.filter(s => s[1] === leaveId).sort((a, b) => +a[2] - +b[2]) : [];
+    
+    stepVisual.innerHTML = '';
+    stepTable.innerHTML = '';
+
+    if (stepList.length === 0) {
+      stepVisual.innerHTML = '<p style="color: var(--text-secondary);" class="text-center py-4">ไม่มีข้อมูลขั้นตอนการอนุมัติ</p>';
+      stepTable.innerHTML = '<tr><td colspan="6" class="text-center py-4" style="color: var(--text-secondary);">ไม่มีข้อมูลการอนุมัติ</td></tr>';
+    } else {
+      stepList.forEach((s, i) => {
+          const status = s[6];
+          const statusClass = (status === 'Approved' || status === 'อนุมัติแล้ว') ? 'approved' : 
+                            (status === 'Rejected' || status === 'ไม่อนุมัติ') ? 'rejected' : 
+                            (status === 'Pending' || status === 'รออนุมัติ') ? 'pending' : 'waiting';
+
+          if (i > 0) {
+              const prevStatus = stepList[i - 1][6];
+              const connector = document.createElement('div');
+              connector.className = `step-connector ${(prevStatus === 'Approved' || prevStatus === 'อนุมัติแล้ว') ? 'active' : ''}`;
+              stepVisual.appendChild(connector);
+          }
+
+          const circle = document.createElement('div');
+          circle.className = `step-circle ${statusClass}`;
+          circle.textContent = s[2];
+          stepVisual.appendChild(circle);
+
+          let approverName = s[3];
+          if (typeof getSearchUsers === 'function') {
+            const fetchedApprover = getSearchUsers(s[3]);
+            if(fetchedApprover) approverName = fetchedApprover.fullname || s[3];
+          }
+          
+          const statusTextBadge = (status === 'Approved' || status === 'อนุมัติแล้ว') ? 'อนุมัติแล้ว' : 
+                            (status === 'Rejected' || status === 'ไม่อนุมัติ') ? 'ปฏิเสธ' : 
+                            (status === 'Pending' || status === 'รออนุมัติ') ? 'รออนุมัติ' : 'รอดำเนินการ';
+          const statusBadgeClass = statusClass === 'approved' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                                  statusClass === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+                                  statusClass === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' : 
+                                  'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
+
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+              <td class="px-4 py-3 text-center text-sm whitespace-nowrap" style="color: var(--text-primary);">${s[2]}</td>
+              <td class="px-4 py-3 text-sm whitespace-nowrap" style="color: var(--text-primary);">${approverName}</td>
+              <td class="px-4 py-3 text-center text-sm whitespace-nowrap" style="color: var(--text-primary);">${s[4] || '-'}</td>
+              <td class="px-4 py-3 text-center text-sm whitespace-nowrap" style="color: var(--text-primary);">${s[5] || '-'}</td>
+              <td class="px-4 py-3 text-center text-sm whitespace-nowrap">
+                  <span class="px-2 inline-flex text-sm font-semibold rounded-full ${statusBadgeClass}">${statusTextBadge}</span>
+              </td>
+              <td class="px-4 py-3 text-sm whitespace-nowrap" style="color: var(--text-primary);">${s[7] || '-'}</td>
+          `;
+          stepTable.appendChild(tr);
+      });
+    }
+  }
+
+  // ... โค้ดด้านบนของฟังก์ชัน openLeaveModal เหมือนเดิมเลยนะคะ ...
+
+  // 👇 ไนท์ปรับแก้ไขตรงส่วนการเปิดหน้าต่างนี้นะคะ 👇
+  if (document.getElementById('leaveModal')) {
+    const leaveModalEl = document.getElementById('leaveModal');
+    leaveModalEl.classList.remove('hidden');
+    // ไนท์เพิ่มคลาส z-[10000] ของ Tailwind CSS เพื่อให้หน้าต่างรายละเอียดอยู่บนสุดและไม่โดนบังค่ะ
+    leaveModalEl.classList.add('z-[10000]'); 
+  }
+}; // ปิดฟังก์ชัน openLeaveModal
+
+// ฟังก์ชันสำหรับปิดหน้าต่าง (กดปุ่มกากบาท)
+const closeLeaveModal = () => {
+  const modal = document.getElementById('leaveModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    // นำคลาสออกเมื่อปิดหน้าต่าง เพื่อให้กลับเป็นค่าเริ่มต้นค่ะ
+    modal.classList.remove('z-[10000]');
+  }
+}; // ปิดฟังก์ชัน closeLeaveModal ตรงนี้ให้เรียบร้อยค่ะ!
+
+// นำโค้ดดักจับการคลิกพื้นหลังมาวางแยกไว้ข้างนอกฟังก์ชันแบบนี้เลยค่ะ
+document.getElementById('showLeaveGroupModal').addEventListener('click', function(event) {
+  // เช็คว่าจุดที่คลิกคือตัวพื้นหลังสีดำ ไม่ใช่ตัวกล่องสีขาว
+  if (event.target === this) {
+    closeLeaveGroupModal(); // ปิด Modal กลุ่ม
+  }
+});
+
+// เผื่อไว้ให้ค่ะ ถ้าอยากให้คลิกพื้นหลังดำแล้วปิดหน้าต่างรายบุคคลด้วย ก็เติมอันนี้เข้าไปได้เลย
+document.getElementById('leaveModal').addEventListener('click', function(event) {
+  if (event.target === this) {
+    closeLeaveModal(); // ปิด Modal รายบุคคล
+  }
+});
+
+</script>

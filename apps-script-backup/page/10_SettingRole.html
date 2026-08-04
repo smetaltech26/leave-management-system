@@ -1,0 +1,95 @@
+<div class="bg-[var(--bg-secondary)] p-6 rounded-2xl shadow-[var(--shadow)] fade-in">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+    <h3 class="font-bold text-lg">จัดการสิทธิ์การเข้าถึงเมนู</h3>
+  </div>
+  <div class="overflow-x-auto">
+    <div id="menuRenderSetMenu"></div>
+  </div>
+</div>
+
+<script>
+const renderSetMenu = (data) => {
+  const container = document.getElementById('menuRenderSetMenu');
+  container.innerHTML = '';
+
+  if (!data || data.length === 0) {
+    container.innerHTML = `
+      <div class="text-center text-red-600 bg-red-100 p-4 rounded-lg shadow mt-4">
+        <i class="fa-solid fa-circle-info mr-2"></i> ไม่พบข้อมูล! 😓
+      </div>`;
+    return;
+  }
+
+  const roles = [
+    { name: 'SuperAdmin', icon: 'https://cdn.jsdelivr.net/gh/EPICCODING17/image/user-1.png', columnIndex: 2 },
+    { name: 'Admin', icon: 'https://cdn.jsdelivr.net/gh/EPICCODING17/image/user-2.png', columnIndex: 3 },
+    { name: 'SuperUser', icon: 'https://cdn.jsdelivr.net/gh/EPICCODING17/image/user-3.png', columnIndex: 4 },
+    { name: 'User', icon: 'https://cdn.jsdelivr.net/gh/EPICCODING17/image/user-4.png', columnIndex: 5 }
+  ];
+
+  const tableHeaders = `
+    <tr>
+      <th class="px-4 py-3 text-center whitespace-nowrap">#</th>
+      <th class="px-4 py-3 text-left whitespace-nowrap">รายการเมนู</th>
+      ${roles.map(role => `
+        <th class="px-4 py-3 text-center whitespace-nowrap">
+          <div class="flex flex-col items-center">
+            <img src="${role.icon}" class="w-8 h-8 rounded-full mb-1" alt="${role.name}">
+            <span class="text-xs">${role.name}</span>
+          </div>
+        </th>`).join('')}
+    </tr>`;
+
+  const tableRows = data.map((menuItem, index) => {
+    const toggles = roles.map(role => `
+      <td class="px-4 py-3 text-center">
+        <label class="toggle-switch">
+          <input type="checkbox"
+            ${menuItem[role.columnIndex].toUpperCase() === "TRUE" ? 'checked' : ''}
+            id="switch-${role.name.toLowerCase()}-${index}"
+            onchange="updateMenu(${index}, '${role.name}', this.checked)">
+          <span class="toggle-slider"></span>
+        </label>
+      </td>`).join('');
+
+  return `
+    <tr style="transition: background-color 0.3s;" 
+        onmouseover="this.style.backgroundColor='var(--hover-bg-color)'" 
+        onmouseout="this.style.backgroundColor=''">
+      <td class="px-4 py-3 whitespace-nowrap text-center">${index + 1}</td>
+      <td class="px-4 py-3 whitespace-nowrap text-left">💻 ${menuItem[0]}</td>
+      ${toggles}
+    </tr>`;
+  }).join('');
+
+  container.innerHTML = `
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm divide-y divide-gray-200">
+        <thead class="border-b border-[var(--border-color)]">
+          ${tableHeaders}
+        </thead>
+        <tbody>
+          ${tableRows}
+        </tbody>
+      </table>
+    </div>`;
+};
+
+const updateMenu = (index, role, isChecked) => {
+  const menuItem = allDataMenu[index][1];
+  const roleIndex = {
+    'SuperAdmin': 2,
+    'Admin': 3,  
+    'SuperUser': 4,
+    'User': 5
+  }[role];
+  allDataMenu[index][roleIndex] = isChecked ? "TRUE" : "FALSE";
+  
+  $("#customLoader").show();
+  google.script.run.withSuccessHandler(async (res) => {
+    await updateSpecificDataMenu();
+    $("#customLoader").hide();
+    showToast("บันทึกข้อมูลสำเร็จ", "success");
+  }).updateMenuStatus(menuItem, role, isChecked);
+};
+</script>

@@ -1,0 +1,335 @@
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 fade-in items-start">
+  <!-- ฝั่งซ้าย: ฟอร์มตั้งค่า -->
+  <div class="bg-[var(--bg-secondary)] p-6 rounded-2xl shadow-[var(--shadow)]">
+    <h3 class="font-bold text-xl mb-4 text-[var(--bs-blue)]">⚙️ ฟอร์มตั้งค่าระบบ</h3>
+    <form class="w-full space-y-4">
+      <div>
+        <label class="block text-sm font-medium mb-1 text-[var(--text-secondary)]">Setting(Folder)</label>
+        <input type="text" class="form-input w-full" id="setData1" placeholder="Setting(Folder)" onkeyup="validateInput(this)">
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1 text-[var(--text-secondary)]">Setting(API)</label>
+        <input type="text" class="form-input w-full" id="setData2" placeholder="Setting(API)" onkeyup="validateInput(this)">
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1 text-[var(--text-secondary)]">Setting(SheetA)</label>
+        <input type="text" class="form-input w-full" id="setData3" placeholder="Setting(SheetA)" onkeyup="validateInput(this)">
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1 text-[var(--text-secondary)]">Setting(SheetB)</label>
+        <input type="text" class="form-input w-full" id="setData4" placeholder="Setting(SheetB)" onkeyup="validateInput(this)">
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1 text-[var(--text-secondary)]">Logo</label>
+        <input type="text" class="form-input w-full" id="setData5" placeholder="Logo" onkeyup="validateInput(this)">
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1 text-[var(--text-secondary)]">NameThai</label>
+        <input type="text" class="form-input w-full" id="setData6" placeholder="ชื่อภาษาไทย" onkeyup="validateInput(this)">
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1 text-[var(--text-secondary)]">NameEng</label>
+        <input type="text" class="form-input w-full" id="setData7" placeholder="ชื่อภาษาอังกฤษ" onkeyup="validateInput(this)">
+      </div>
+      <div class="text-left mt-2">
+        <button onclick="addSetting()" type="button" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium">บันทึกการตั้งค่า</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ฝั่งขวา: การใช้งาน -->
+  <div class="bg-[var(--bg-secondary)] p-6 rounded-2xl shadow-[var(--shadow)]">
+    <h3 class="font-bold text-xl mb-4 text-[var(--bs-green)]">การใช้งาน</h3>
+    <div class="space-y-3">
+        <div class="flex items-center justify-between p-3 bg-[var(--bg-primary)] rounded-lg">
+            <span class="text-sm font-medium">Setting(Folder)</span>
+            <div class="flex items-center">
+                <span class="status-indicator status-empty" id="status1"></span>
+                <span class="text-xs" id="statusText1">ว่าง</span>
+            </div>
+        </div>
+        <div class="flex items-center justify-between p-3 bg-[var(--bg-primary)] rounded-lg">
+            <span class="text-sm font-medium">Setting(API)</span>
+            <div class="flex items-center">
+                <span class="status-indicator status-empty" id="status2"></span>
+                <span class="text-xs" id="statusText2">ว่าง</span>
+            </div>
+        </div>
+        <div class="flex items-center justify-between p-3 bg-[var(--bg-primary)] rounded-lg">
+            <span class="text-sm font-medium">Setting(SheetA)</span>
+            <div class="flex items-center">
+                <span class="status-indicator status-empty" id="status3"></span>
+                <span class="text-xs" id="statusText3">ว่าง</span>
+            </div>
+        </div>
+        <div class="flex items-center justify-between p-3 bg-[var(--bg-primary)] rounded-lg">
+            <span class="text-sm font-medium">Setting(SheetB)</span>
+            <div class="flex items-center">
+                <span class="status-indicator status-empty" id="status4"></span>
+                <span class="text-xs" id="statusText4">ว่าง</span>
+            </div>
+        </div>
+        <div class="flex items-center justify-between p-3 bg-[var(--bg-primary)] rounded-lg">
+            <span class="text-sm font-medium">Logo</span>
+            <div class="flex items-center">
+                <span class="status-indicator status-empty" id="status5"></span>
+                <span class="text-xs" id="statusText5">ว่าง</span>
+            </div>
+        </div>
+        <div class="flex items-center justify-between p-3 bg-[var(--bg-primary)] rounded-lg">
+            <span class="text-sm font-medium">NameThai</span>
+            <div class="flex items-center">
+                <span class="status-indicator status-empty" id="status6"></span>
+                <span class="text-xs" id="statusText6">ว่าง</span>
+            </div>
+        </div>
+        <div class="flex items-center justify-between p-3 bg-[var(--bg-primary)] rounded-lg">
+            <span class="text-sm font-medium">NameEng</span>
+            <div class="flex items-center">
+                <span class="status-indicator status-empty" id="status7"></span>
+                <span class="text-xs" id="statusText7">ว่าง</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Status -->
+    <div class="mt-4 p-4 bg-[var(--bg-primary)] rounded-lg border-l-4 border-[var(--bs-gray)]" id="overallStatus">
+        <div class="flex items-center">
+            <i class="fas fa-exclamation-triangle text-[var(--bs-yellow)] mr-2"></i>
+            <span class="font-medium">ระบบยังไม่พร้อมใช้งาน</span>
+        </div>
+        <p class="text-sm text-[var(--text-secondary)] mt-1">กรุณากรอกข้อมูลให้ครบถ้วน</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const validateInput = (input) => {
+  const id = input.id;
+  const number = id.replace('setData', '');
+  const value = input.value.trim();
+  const statusIndicator = document.getElementById('status' + number);
+  const statusText = document.getElementById('statusText' + number);
+  
+  if (!statusIndicator || !statusText) {
+    return;
+  }
+  
+  if (value === '') {
+      statusIndicator.className = 'status-indicator status-empty';
+      statusText.textContent = 'ว่าง';
+  } else if (isValidInput(value, id)) {
+      statusIndicator.className = 'status-indicator status-valid';
+      statusText.textContent = 'ถูกต้อง';
+  } else {
+      statusIndicator.className = 'status-indicator status-invalid';
+      statusText.textContent = 'ผิดพลาด';
+  }
+  
+  checkOverallStatus();
+}
+
+const isValidInput = (value, inputId) => {
+  switch (inputId) {
+    case 'setData2':
+        return value.length >= 30;
+    case 'setData3':
+    case 'setData4':
+        return value.length > 20;
+    case 'setData5':
+        return value.startsWith('http') || value.startsWith('data:');
+    case 'setData6':
+        return /[\u0E00-\u0E7F]/.test(value);
+    case 'setData7':
+        return /^[a-zA-Z0-9\s()\-.,]+$/.test(value);
+    default:
+        return value.length > 0;
+  }
+}
+
+const checkAllInputs = () => {
+  for (let i = 1; i <= 7; i++) {
+    const input = document.getElementById('setData' + i);
+    if (input && input.value.trim() !== '') {
+      validateInput(input);
+    }
+  }
+}
+
+const checkOverallStatus = () => {
+  const inputs = ['setData1', 'setData2', 'setData3', 'setData4', 'setData5', 'setData6', 'setData7'];
+  let validCount = 0;
+  let totalCount = inputs.length;
+  
+  inputs.forEach((id, index) => {
+      const element = document.getElementById(id);
+      if (element) {
+        const value = element.value.trim();
+        if (value !== '' && isValidInput(value, id)) {
+            validCount++;
+        }
+      }
+  });
+  
+  const overallStatus = document.getElementById('overallStatus');
+  if (!overallStatus) return;
+  
+  const percentage = Math.round((validCount / totalCount) * 100);
+  
+  if (validCount === totalCount) {
+      overallStatus.className = 'mt-4 p-4 bg-[var(--bg-primary)] rounded-lg border-l-4 border-[var(--bs-green)]';
+      overallStatus.innerHTML = `
+          <div class="flex items-center">
+              <i class="fas fa-check-circle text-[var(--bs-green)] mr-2"></i>
+              <span class="font-medium">ระบบพร้อมใช้งาน</span>
+          </div>
+          <p class="text-sm text-[var(--text-secondary)] mt-1">การตั้งค่าครบถ้วน (${percentage}%)</p>
+      `;
+  } else if (validCount > 0) {
+      overallStatus.className = 'mt-4 p-4 bg-[var(--bg-primary)] rounded-lg border-l-4 border-[var(--bs-yellow)]';
+      overallStatus.innerHTML = `
+          <div class="flex items-center">
+              <i class="fas fa-exclamation-triangle text-[var(--bs-yellow)] mr-2"></i>
+              <span class="font-medium">ระบบไม่พร้อมใช้งาน</span>
+          </div>
+          <p class="text-sm text-[var(--text-secondary)] mt-1">การตั้งค่าเสร็จสิ้น ${validCount}/${totalCount} (${percentage}%)</p>
+      `;
+  } else {
+      overallStatus.className = 'mt-4 p-4 bg-[var(--bg-primary)] rounded-lg border-l-4 border-[var(--bs-gray)]';
+      overallStatus.innerHTML = `
+          <div class="flex items-center">
+              <i class="fas fa-exclamation-triangle text-[var(--bs-yellow)] mr-2"></i>
+              <span class="font-medium">ระบบยังไม่พร้อมใช้งาน</span>
+          </div>
+          <p class="text-sm text-[var(--text-secondary)] mt-1">กรุณากรอกข้อมูลให้ครบถ้วน</p>
+      `;
+  }
+}
+
+const openEditProfileModal = () => {
+  const uid = localStorage.getItem('uiduser');
+  const username = localStorage.getItem('username');
+  const password = localStorage.getItem('password') || '';
+  const fullname = localStorage.getItem('fullname') || '';
+  const imgUser = localStorage.getItem('imgUser');
+  const sigUser = localStorage.getItem('sigUser');
+
+  const [firstName, lastName] = fullname.split(' ');
+
+  $("#editFirstName").val(firstName || '');
+  $("#editLastName").val(lastName || '');
+  $("#editUsername").val(username);
+  $("#editPassword").val(password);
+
+  // รูปโปรไฟล์
+  if (imgUser) {
+    $("#editProfilePictureArea").css("background-image", `url(${imgUser})`)
+      .find(".upload-icon, .upload-text").hide();
+  }
+
+  // ลายเซ็น
+  if (sigUser) {
+    $("#editSignatureArea").css("background-image", `url(${sigUser})`)
+      .find(".upload-icon, .upload-text").hide();
+  }
+
+  document.getElementById("editProfileModal").classList.remove("hidden");
+};
+
+const closeEditProfileModal = () => {
+  document.getElementById("editProfileModal").classList.add("hidden");
+
+  $("#editFirstName, #editLastName, #editUsername, #editPassword").val('');
+  $("#editProfilePictureInput").val('');
+  $("#editSignatureInput").val('');
+
+  $("#editProfilePictureArea").css("background-image", "").find(".upload-icon, .upload-text").show();
+  $("#editSignatureArea").css("background-image", "").find(".upload-icon, .upload-text").show();
+};
+
+const handleEditProfilePicClick = () => {
+  document.getElementById("editProfilePictureInput").click();
+};
+
+const handleEditProfilePicChange = (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    $("#editProfilePictureArea").css("background-image", `url(${e.target.result})`)
+      .find(".upload-icon, .upload-text").hide();
+  };
+  reader.readAsDataURL(file);
+};
+
+const handleEditSignatureClick = () => {
+  document.getElementById("editSignatureInput").click();
+};
+
+const handleEditSignatureChange = (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    $("#editSignatureArea").css("background-image", `url(${e.target.result})`)
+      .find(".upload-icon, .upload-text").hide();
+  };
+  reader.readAsDataURL(file);
+};
+
+const submitEditProfile = () => {
+  $("#customLoader").show();
+
+  const uid = localStorage.getItem("uiduser");
+  const profileFile = document.getElementById("editProfilePictureInput").files[0];
+  const signatureFile = document.getElementById("editSignatureInput").files[0];
+
+  const obj = {
+    datakey: uid,
+    data1: $("#editUsername").val(),
+    data2: `${$("#editFirstName").val()} ${$("#editLastName").val()}`,
+    data3: $("#editPassword").val(),
+    profileImageData: '',
+    profileFiletype: '',
+    profileFilename: '',
+    signatureImageData: '',
+    signatureFiletype: '',
+    signatureFilename: ''
+  };
+
+  const readFileAsBase64 = (file) => new Promise((resolve) => {
+    if (!file) return resolve(null);
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.readAsDataURL(file);
+  });
+
+  Promise.all([readFileAsBase64(profileFile), readFileAsBase64(signatureFile)]).then(([profileImg, signatureImg]) => {
+    if (profileImg) {
+      obj.profileImageData = profileImg;
+      obj.profileFiletype = profileFile.type;
+      obj.profileFilename = profileFile.name;
+    }
+
+    if (signatureImg) {
+      obj.signatureImageData = signatureImg;
+      obj.signatureFiletype = signatureFile.type;
+      obj.signatureFilename = signatureFile.name;
+    }
+
+    google.script.run.withSuccessHandler(() => {
+      $("#customLoader").hide();
+      showToast("อัปเดตโปรไฟล์สำเร็จ", "success");
+
+      // อัปเดต localStorage
+      localStorage.setItem('username', obj.data1);
+      localStorage.setItem('fullname', obj.data2);
+      localStorage.setItem('password', obj.data3);
+      if (profileImg) localStorage.setItem('imgUser', profileImg);
+      if (signatureImg) localStorage.setItem('sigUser', signatureImg);
+
+      closeEditProfileModal();
+    }).changePageProFile(obj);
+  });
+};
+</script>

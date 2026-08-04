@@ -1,0 +1,697 @@
+<div id="customLoader" class="loader-wrapper" style="display:none">
+  <div class="loader-backdrop"></div>
+  <div class="loader">
+    <div class="box">
+      <div class="logo">
+        <img id="loaderLogo" src="" alt="Loading Logo">
+      </div>
+    </div>
+    <div class="box"></div>
+    <div class="box"></div>
+    <div class="box"></div>
+    <div class="box"></div>
+  </div>
+</div>
+
+<div id="logoutModal" class="fixed inset-0 z-[1200] hidden modal-backdrop flex items-center justify-center p-4">
+  <div class="modal-content w-full max-w-sm" style="border-radius: 1.5rem; background-color: var(--bg-secondary); color: var(--text-primary);">
+    <div class="p-6 text-center">
+      <div class="text-6xl mb-4">
+        <i class="bx bxs-error-circle bx-tada text-red-500"></i>
+      </div>
+      <h2 class="modal-title text-xl font-bold mb-2" style="color: var(--text-primary);">ออกจากระบบ!</h2>
+      <p class="modal-text text-sm font-light mb-4" style="color: var(--text-secondary);">คุณต้องการออกจากระบบหรือไม่ ?</p>
+      <div class="flex justify-center space-x-2">
+        <button type="button" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium" onclick="logoutUsers();">ออกจากระบบ</button>
+        <button type="button" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium" onclick="closeLogoutModal()">ยกเลิก</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="DelDataModal" class="fixed inset-0 z-[1200] hidden modal-backdrop flex items-center justify-center p-4">
+  <div class="modal-content w-full max-w-sm" style="border-radius: 1.5rem; background-color: var(--bg-secondary); color: var(--text-primary);">
+    <div class="p-6 text-center">
+      <div class="text-6xl mb-4">
+        <i class="bx bxs-error-circle bx-tada text-red-500"></i>
+      </div>
+      <h2 class="modal-title text-xl font-bold mb-2" style="color: var(--text-primary);">คุณยืนยันหรือไม่!</h2>
+      <p class="modal-text text-sm font-light mb-4" style="color: var(--text-secondary);">คุณต้องการยกเลิกรายการนี้หรือไม่ ?</p>
+      <div class="flex justify-center space-x-2">
+        <button type="button" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium" id="confirmBtnDel">ใช่, ต้องการ</button>
+        <button type="button" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium" id="xDelconfirmData" onclick="closeDelectModal()">ยกเลิก</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="agencyModal" class="fixed inset-0 z-200 hidden modal-backdrop flex items-center justify-center p-4 text-sm">
+  <div class="modal-content w-full max-w-sm" style="border-radius: 1.5rem; background-color: var(--bg-secondary); color: var(--text-primary);">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-semibold" style="color: var(--text-primary);" id="modalAgencyTitle">เพิ่มหน่วยงานใหม่</h2>
+        <button onclick="closeAgencyModal()" class="text-gray-500 hover:text-gray-700">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <form class="w-full space-y-4">
+        <input type="text" class="form-input w-full" id="agencyDataKye" name="agencyDataKye" hidden>
+        <div>
+          <label class="block text-sm font-medium mb-1 text-[var(--text-secondary)]">หน่วยงาน</label>
+          <input type="text" class="form-input w-full" id="agencyData1" name="agencyData1" placeholder="กรุณากรอกหน่วยงาน">
+        </div>
+      </form>
+
+      <div class="flex justify-end mt-4 pt-4">
+        <button onclick="closeAgencyModal()" type="button" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium mr-2">ยกเลิก</button>
+        <button onclick="submitModalAgency()" type="button" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium">ยืนยัน</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="departmentsModal" class="fixed inset-0 z-200 hidden modal-backdrop flex items-center justify-center p-4 text-sm">
+  <div class="modal-content w-full max-w-sm" style="border-radius: 1.5rem; background-color: var(--bg-secondary); color: var(--text-primary);">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-semibold" style="color: var(--text-primary);" id="modalDepartmentsTitle">เพิ่มฝ่ายงานใหม่</h2>
+        <button onclick="closeDepartmentsModal()" class="text-gray-500 hover:text-gray-700">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <form class="w-full space-y-4">
+        <input type="text" class="form-input w-full" id="departmentsDataKye" name="departmentsDataKye" hidden>
+        <div>
+          <label class="block text-sm font-medium mb-1 text-[var(--text-secondary)]">ฝ่าย</label>
+          <input type="text" class="form-input w-full" id="departmentsData1" name="departmentsData1" placeholder="กรุณากรอกฝ่าย">
+        </div>
+      </form>
+
+      <div class="flex justify-end mt-4 pt-4">
+        <button onclick="closeDepartmentsModal()" type="button" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium mr-2">ยกเลิก</button>
+        <button onclick="submitModalDepartments()" type="button" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium">ยืนยัน</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="policiesModal" class="fixed inset-0 z-200 hidden modal-backdrop flex items-center justify-center p-4 text-sm">
+  <div class="modal-content w-full max-w-sm" style="border-radius: 1.5rem; background-color: var(--bg-secondary); color: var(--text-primary);">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-semibold" style="color: var(--text-primary);" id="modalPoliciesTitle">เพิ่มวันลาพนักงานใหม่</h2>
+        <button onclick="closePoliciesModal()" class="text-gray-500 hover:text-gray-700">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <form class="w-full space-y-4">
+        <input type="text" class="form-input w-full" id="policiesDataKye" name="policiesDataKye" hidden>
+        <div>
+          <div id="selectedUserProfile" class="flex items-center gap-2 mt-2 hidden">
+            <img id="selectedUserImg" class="w-10 h-10 rounded-full object-cover" src="" alt="โปรไฟล์">
+            <span id="selectedUserName" class="text-sm text-[var(--text-secondary)]"></span>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1 text-[var(--text-secondary)]">ผู้ใช้งาน</label>
+          <div class="relative">
+            <input type="text" readonly id="policiesData1" name="policiesData1" class="form-input w-full pr-10 cursor-pointer" placeholder="กรุณาเลือกผู้ใช้งาน">
+            <button type="button" onclick="toggleUserPickerModal()" class="absolute inset-y-0 right-0 px-3 flex items-center text-[var(--text-secondary)] hover:text-[var(--bs-blue)]"><i class='bx bx-search-alt-2 text-xl'></i></button>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1 text-[var(--text-secondary)]">ประเภทวันลา</label>
+            <select id="policiesData2" name="policiesData2" class="form-select" required>
+              <option value="" disabled selected>กรุณาเลือกรายการ</option>
+              <option value="Annual">ลาพักร้อน</option>
+              <option value="Sick">ลาป่วย</option>
+              <option value="Personal">ลากิจได้รับค่าจ้าง</option>
+              <option value="Maternity">ลาคลอด</option>
+              <option value="Study">ลาศึกษา</option>
+              <option value="Military">ลาทหาร</option>
+              <option value="Other">ลาอื่นๆ</option>
+            </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1 text-[var(--text-secondary)]">จำนวนวันลา</label>
+          <input type="text" class="form-input w-full" id="policiesData3" name="policiesData3" placeholder="กรุณากรอกจำนวนวันลา">
+        </div>
+      </form>
+
+      <div class="flex justify-end mt-4 pt-4">
+        <button onclick="closePoliciesModal()" type="button" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium mr-2">ยกเลิก</button>
+        <button onclick="submitModalPolicies()" type="button" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium">ยืนยัน</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="userPickerModal" class="fixed inset-0 z-200 hidden modal-backdrop flex items-center justify-center p-4 text-sm">
+  <div class="modal-content w-full max-w-sm" style="border-radius: 1.5rem; background-color: var(--bg-secondary); color: var(--text-primary);">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-semibold" style="color: var(--text-primary);">เลือกผู้ใช้งาน</h2>
+        <button onclick="closeUserPicker()" class="text-gray-500 hover:text-gray-700">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <input type="text" id="userSearchInput" class="form-input w-full mb-4 px-4 py-2 border rounded-lg bg-[var(--bg-primary)] text-[var(--text-primary)]" oninput="renderUserPickerList()"  placeholder="ค้นหาผู้ใช้งาน..." />
+      <div id="userPickerList" class="space-y-4 w-full max-h-[300px] overflow-y-auto pr-1"></div>
+    </div>
+  </div>
+</div>
+
+<div id="holidaysModal" class="fixed inset-0 z-200 hidden modal-backdrop flex items-center justify-center p-4 text-sm">
+  <div class="modal-content w-full max-w-sm" style="border-radius: 1.5rem; background-color: var(--bg-secondary); color: var(--text-primary);">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-semibold" style="color: var(--text-primary);" id="modalHolidaysTitle">เพิ่มวันหยุดประจำปีใหม่</h2>
+        <button onclick="closeHolidaysModal()" class="text-gray-500 hover:text-gray-700">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <form class="w-full space-y-4">
+        <input type="text" class="form-input w-full" id="holidaysDataKye" name="holidaysDataKye" hidden>
+
+        <div>
+          <label class="block text-sm font-medium mb-1 text-[var(--text-secondary)]">วันที่</label>
+          <input type="date" class="form-input w-full" id="holidaysData1" name="holidaysData1">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1 text-[var(--text-secondary)]">รายละเอียด</label>
+          <textarea type="text" class="form-input w-full" id="holidaysData2" name="holidaysData2" placeholder="กรุณากรอกรายละเอียด"></textarea>
+        </div>
+      </form>
+
+      <div class="flex justify-end mt-4 pt-4">
+        <button onclick="closeHolidaysModal()" type="button" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium mr-2">ยกเลิก</button>
+        <button onclick="submitModalHolidays()" type="button" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium">ยืนยัน</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="usersModal" class="fixed inset-0 z-200 hidden modal-backdrop flex items-center justify-center p-4 text-sm">
+  <div class="modal-content rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto" style="border-radius: 1.5rem; background-color: var(--bg-secondary); color: var(--text-primary);">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-semibold" style="color: var(--text-primary);" id="modalTitle">เพิ่มบุคลากรใหม่</h2>
+        <button onclick="closeUsersModal()" class="text-gray-500 hover:text-gray-700">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+        <form id="modalRegisterForm" class="w-full">
+          <input type="text" id="modalDataKye" name="modalDataKye" class="form-input" hidden>
+
+          <div class="mb-6 flex justify-center flex-col items-center">
+            <div id="modalProfilePictureArea" class="profile-picture-upload cursor-pointer" onclick="handleModalProfilePicClick()">
+              <i class="bx bxs-user-circle upload-icon"></i>
+              <span class="upload-text">อัปโหลดรูปโปรไฟล์</span>
+            </div>
+          </div>
+
+          <div class="mt-4 flex items-center gap-3 justify-center">
+            <label class="text-sm font-medium" style="color: var(--text-secondary);">สถานะการใช้งาน:</label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="modalUserStatus" checked>
+              <span class="toggle-slider"></span>
+            </label>
+            <span id="modalStatusText" class="text-sm font-medium text-green-600">เปิดใช้งาน</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 mt-6">
+            <div>
+              <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">ชื่อ</label>
+              <input type="text" id="modalFirstName" name="modalFirstName" class="form-input" placeholder="ป้อนชื่อของคุณ">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">นามสกุล</label>
+              <input type="text" id="modalLastName" name="modalLastName" class="form-input" placeholder="ป้อนนามสกุลของคุณ">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">ชื่อผู้ใช้งาน</label>
+              <input type="text" id="modalUsername" name="modalUsername" class="form-input" placeholder="ป้อนชื่อผู้ใช้งานของคุณ">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">รหัสผ่าน</label>
+              <input type="text" id="modalPassword" name="modalPassword" class="form-input pr-10" placeholder="ป้อนรหัสผ่านของคุณ">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">หน่วยงาน</label>
+              <select id="modalAgency" class="form-select" required></select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">ฝ่าย</label>
+              <select id="modalDepartment" class="form-select" required></select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">ระดับผู้ใช้งาน</label>
+              <select id="modalRole" name="modalRole" class="form-select" required>
+                <option value="" disabled selected>กรุณาเลือกรายการ</option>
+                <option value="SuperAdmin">SuperAdmin</option>
+                <option value="Admin">Admin</option>
+                <option value="SuperUser">SuperUser</option>
+                <option value="User">User</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="mb-4 flex justify-center w-full">
+            <div id="modalSignatureArea" class="signature-upload cursor-pointer" onclick="handleModalSignatureClick()">
+              <i class="bx bxs-edit-alt upload-icon"></i>
+              <span class="upload-text">อัปโหลดลายเซ็น</span>
+            </div>
+          </div>
+
+          <input type="file" id="modalProfilePictureInput" accept="image/*" class="hidden" onchange="handleModalProfilePicChange(event)">
+          <input type="file" id="modalSignatureInput" accept="image/*" class="hidden" onchange="handleModalSignatureChange(event)">
+        </form>
+
+
+      <div class="flex justify-end mt-4 pt-4">
+        <button onclick="closeUsersModal()" type="button" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium mr-2">ยกเลิก</button>
+        <button onclick="submitModalUsers()" type="button" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium">ยืนยัน</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="userPoliciesModal" class="fixed inset-0 z-200 hidden modal-backdrop flex items-center justify-center p-4 text-sm">
+  <div class="modal-content rounded-lg shadow-xl w-full max-w-5xl max-h-[90vh] overflow-y-auto" style="border-radius: 1.5rem; background-color: var(--bg-secondary); color: var(--text-primary);">
+    <div class="p-6">
+      <!-- Header -->
+      <div class="flex justify-between items-center mb-6">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background-color: var(--bs-blue);">
+            <i class='bx bxs-calendar text-white text-xl'></i>
+          </div>
+          <div>
+            <h2 class="text-2xl font-semibold" style="color: var(--text-primary);" id="modalUserTitle">ข้อมูลวันหยุด</h2>
+            <p class="text-sm" style="color: var(--text-secondary);" id="modalUserSubtitle">พนักงาน • แผนก</p>
+          </div>
+        </div>
+        <button onclick="closeUserPoliciesModal()" class="text-gray-500 hover:text-gray-700 p-2 rounded-lg hover:bg-gray-100 transition">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6" id="leaveSummaryCards"></div>
+
+      <div class="bg-[var(--bg-primary)] p-4 rounded-xl">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
+          <h3 class="text-lg font-semibold" style="color: var(--text-primary);">
+            <i class="fas fa-history mr-2"></i>ประวัติการลา
+          </h3>
+
+          <div id="leaveTypeFilters" class="flex flex-wrap gap-2"></div>
+        </div>
+        <div id="leaveHistoryList" class="space-y-4 max-h-96 overflow-y-auto"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="leaveModal" class="fixed inset-0 z-200 hidden modal-backdrop flex items-center justify-center p-4 text-sm">
+  <div class="modal-content rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto" style="border-radius: 1.5rem; background-color: var(--bg-secondary); color: var(--text-primary);">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-semibold" style="color: var(--text-primary);">รายละเอียดคำขอลา</h2>
+        <button onclick="closeLeaveModal()" class="text-gray-500 hover:text-gray-700">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div>
+          <div class="space-y-3 text-sm">
+            <div class="flex flex-col items-center justify-center mb-6">
+              <div id="modalProfileImage" class="profile-picture-upload mb-2"></div>
+            </div>
+            <div style="color: var(--text-secondary);">
+              <span>รหัสคำขอ:</span>
+              <span id="modalLeaveId" class="font-semibold ml-1" style="color: var(--text-primary);"></span>
+            </div>
+            <div style="color: var(--text-secondary);">
+              <span>รายละเอียด:</span>
+              <span id="modalDescription" class="font-semibold ml-1" style="color: var(--text-primary);"></span>
+            </div>
+            <div style="color: var(--text-secondary);">
+              <span>ประเภทการลา:</span>
+              <span id="modalLeaveType" class="font-semibold ml-1" style="color: var(--text-primary);"></span>
+            </div>
+            <div style="color: var(--text-secondary);">
+              <span>ผู้ขอ:</span>
+              <span id="modalUserId" class="font-semibold ml-1" style="color: var(--text-primary);"></span>
+            </div>
+            <div style="color: var(--text-secondary);">
+              <span>แผนก:</span>
+              <span id="modalDepartments" class="font-semibold ml-1" style="color: var(--text-primary);"></span>
+            </div>
+            <div style="color: var(--text-secondary);">
+              <span>วันที่เริ่ม:</span>
+              <span id="modalStartDate" class="font-semibold ml-1" style="color: var(--text-primary);"></span>
+            </div>
+            <div style="color: var(--text-secondary);">
+              <span>วันที่สิ้นสุด:</span>
+              <span id="modalEndDate" class="font-semibold ml-1" style="color: var(--text-primary);"></span>
+            </div>
+            <div style="color: var(--text-secondary);">
+              <span>จำนวนวัน:</span>
+              <span id="modalLeaveDays" class="font-semibold ml-1 text-blue-600 dark:text-blue-400"></span>
+            </div>
+            <div style="color: var(--text-secondary);">
+              <span>สถานะ:</span>
+              <span id="modalStatus" class="font-semibold ml-1"></span>
+            </div>
+
+            <div id="modalRejectedReason" class="hidden border-t pt-3" style="border-color: var(--border-color);">
+              <div style="color: var(--text-secondary);">
+                <span id="reasonLabel" class="font-medium"></span>
+                <span id="rejectedReasonText" class="font-semibold ml-1" style="color: var(--text-primary);"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="space-y-4 text-sm">
+            <div>
+              <p class="font-medium mb-3 flex items-center gap-2" style="color: var(--text-primary);">
+                <i class="fas fa-calendar-check text-purple-600 dark:text-purple-400"></i>
+                สรุปการลาประจำปี
+              </p>
+              <div id="leaveQuotaContainer" class="grid grid-cols-2 gap-3"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="filesSection" class="mb-4 p-6 rounded-xl">
+        <h3 class="text-lg font-medium mb-4 flex items-center gap-2" style="color: var(--text-primary);">
+          <i class="fas fa-paperclip text-indigo-600 dark:text-indigo-400"></i>
+          ไฟล์แนบ
+        </h3>
+        <div id="filesContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        <div id="noFilesMessage" class="hidden text-center py-8">
+          <i class="fas fa-folder-open text-4xl mb-2" style="color: var(--text-secondary);"></i>
+          <p style="color: var(--text-secondary);">ไม่มีไฟล์แนบสำหรับคำขอนี้</p>
+        </div>
+      </div>
+
+      <div class="mb-4 p-6 rounded-xl">
+        <h3 class="text-lg font-medium mb-4 flex items-center gap-2" style="color: var(--text-primary);">
+          <i class="fas fa-route text-purple-600 dark:text-purple-400"></i>
+          ขั้นตอนการอนุมัติ
+        </h3>
+        <div id="approvalSteps" class="flex flex-wrap items-center justify-start mb-4"></div>
+      </div>
+
+      <div class="mb-4 p-6 rounded-xl">
+        <h3 class="text-lg font-medium mb-4 flex items-center gap-2" style="color: var(--text-primary);">
+          <i class="fas fa-list-ul text-teal-600 dark:text-teal-400"></i>
+          รายละเอียดการอนุมัติ
+        </h3>
+        <div class="overflow-x-auto rounded-lg">
+          <table class="min-w-full text-sm divide-y divide-gray-200">
+              <thead class="border-b border-[var(--border-color)]">
+              <tr>
+                <th class="px-4 py-3 text-center whitespace-nowrap">ลำดับ</th>
+                <th class="px-4 py-3 text-center whitespace-nowrap">ผู้อนุมัติ</th>
+                <th class="px-4 py-3 text-center whitespace-nowrap">วันที่มอบหมาย</th>
+                <th class="px-4 py-3 text-center whitespace-nowrap">วันที่อนุมัติ</th>
+                <th class="px-4 py-3 text-center whitespace-nowrap">สถานะ</th>
+                <th class="px-4 py-3 text-center whitespace-nowrap">ความคิดเห็น</th>
+              </tr>
+            </thead>
+            <tbody id="stepDetailsTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="filePreviewModal" class="fixed inset-0 z-200 hidden modal-backdrop flex items-center justify-center p-4 text-sm">
+  <div class="modal-content rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" style="border-radius: 1.5rem; background-color: var(--bg-secondary); color: var(--text-primary);">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-semibold" style="color: var(--text-primary);" id="filePreviewTitle">ดูไฟล์</h2>
+        <button onclick="closeFilePreview()" class="text-gray-500 hover:text-gray-700">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="flex-grow p-4 overflow-auto">
+        <iframe id="filePreviewFrame" class="w-full h-full min-h-[400px] border-0" src="" frameborder="0"></iframe>
+      </div>
+      <div class="flex justify-end mt-4 pt-4">
+        <a id="fileDownloadLink" href="#" target="_blank" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium">
+          เปิดในแท็บใหม่
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="announcementsModal" class="fixed inset-0 z-200 hidden modal-backdrop flex items-center justify-center p-4 text-sm">
+  <div class="modal-content w-full max-w-sm" style="border-radius: 1.5rem; background-color: var(--bg-secondary); color: var(--text-primary);">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-semibold" style="color: var(--text-primary);" id="modalAnnouncementsTitle">เพิ่มประชาสัมพันธ์ใหม่</h2>
+        <button onclick="closeAnnouncementsModal()" class="text-gray-500 hover:text-gray-700">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <form class="w-full space-y-4">
+        <input type="text" class="form-input w-full" id="annoDataKye" name="annoDataKye" hidden>
+        <div>
+          <label class="block text-sm font-medium mb-1 text-[var(--text-secondary)]">รายละเอียด</label>
+          <textarea type="text" class="form-input w-full" id="annoData1" name="annoData1" placeholder="กรุณากรอกรายละเอียด"></textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1 text-[var(--text-secondary)]">วันที่โพสต์</label>
+          <input type="date" class="form-input w-full" id="annoData2" name="annoData2">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">อัปโหลดไฟล์</label>
+          <input type="file" id="annoData3" name="annoData3" class="form-input w-full file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" style="file:background-color: var(--bs-blue); file:color: white; file:transition: all 0.2s ease;" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.xlsx,.xls,.ppt,.pptx,.txt,.zip,.rar">
+          <div class="text-xs mt-1" style="color: var(--text-secondary);">
+            รองรับไฟล์: PDF, JPG, PNG,
+          </div>
+        </div>
+      </form>
+
+      <div class="flex justify-end mt-4 pt-4">
+        <button onclick="closeAnnouncementsModal()" type="button" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium mr-2">ยกเลิก</button>
+        <button onclick="submitModalAnnouncements()" type="button" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium">ยืนยัน</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="leaveRequestsModal" class="fixed inset-0 z-200 hidden modal-backdrop flex items-center justify-center p-4 text-sm">
+  <div class="modal-content rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto" style="border-radius: 1.5rem; background-color: var(--bg-secondary); color: var(--text-primary);">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-semibold" style="color: var(--text-primary);" id="modalLeaveTitle">ขออนุญาตลางาน</h2>
+        <button onclick="closeLeaveRequestsModal()" class="text-gray-500 hover:text-gray-700">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <form id="formrequest" class="w-full space-y-4">
+        <input type="text" class="form-input" id="leaveDataKey" name="leaveDataKey" hidden>
+        <div id="leaveTypeContainer"></div>
+
+        <div id="leaveDurationContainer"></div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label class="block mb-1 text-[var(--text-primary)]">วันที่เริ่มลา</label>
+              <input type="date" class="form-input" id="leaveStart" name="leaveStart">
+            </div>
+            <div>
+              <label class="block mb-1 text-[var(--text-primary)]">วันที่สิ้นสุด</label>
+              <input type="date" class="form-input" id="leaveEnd" name="leaveEnd">
+            </div>
+          </div>
+
+        <div>
+          <label class="block mb-1 text-[var(--text-primary)]">รายละเอียด</label>
+          <textarea id="leaveDescription" name="leaveDescription" class="form-textarea" placeholder="กรุณากรอกรายละเอียด"></textarea>
+        </div>
+
+        <div>
+          <label class="block mb-1 text-[var(--text-primary)]">ผู้อนุมัติ</label>
+          <div class="flex flex-wrap mb-2 min-h-[2.5rem] items-center" id="selected-approvers"></div>
+          <button type="button" class="px-3 py-1.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg text-sm font-medium transition duration-200 ease-in-out shadow-sm hover:shadow-md" onclick="openApproverModal()">เลือกผู้อนุมัติ</button>
+        </div>
+
+        <div>
+          <label class="block mb-2 text-[var(--text-primary)]">ไฟล์เอกสารแนบ (ถ้ามี)</label>
+          <div id="dropzone" onclick="triggerFileInput()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave()" ondrop="handleDrop(event)" class="border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition duration-200" style="border-color: var(--border-color); background-color: var(--bg-primary);">
+            <input type="file" id="fileInput" onchange="handleFileInputChange()" multiple class="hidden">
+            <div class="flex flex-col items-center">
+              <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--text-secondary);">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+              </svg>
+              <p class="mt-2 text-sm" style="color: var(--text-secondary);">
+                <span class="font-semibold" style="color: var(--bs-blue);">คลิกเพื่ออัปโหลด</span> หรือลากไฟล์มาวาง
+              </p>
+              <p class="text-xs" style="color: var(--text-secondary);">PNG, JPG, PDF, DOCX (สูงสุด 10MB ต่อไฟล์)</p>
+            </div>
+          </div>
+          <div id="fileList" class="mt-4 space-y-2"></div>
+        </div>
+
+      </form>
+
+      <div class="flex justify-end mt-4 pt-4">
+        <button onclick="closeLeaveRequestsModal()" type="button" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium mr-2">ยกเลิก</button>
+        <button onclick="submitRequest()" type="button" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium">ยืนยัน</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="approverModal" class="fixed inset-0 z-200 hidden modal-backdrop flex items-center justify-center p-4 text-sm">
+  <div class="modal-content rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto" style="border-radius: 1.5rem; background-color: var(--bg-secondary); color: var(--text-primary);">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-semibold" style="color: var(--text-primary);">เลือกผู้อนุมัติ</h2>
+        <button onclick="closeApproverModal()" class="text-gray-500 hover:text-gray-700">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div id="approver-list-container" class="overflow-y-auto max-h-[60vh] mb-4 p-4" style="background-color: var(--bg-primary); border-radius: 0.5rem; border: 1px solid var(--border-color);"></div>
+      <div class="flex justify-end mt-4 pt-4">
+        <button onclick="closeApproverModal()" type="button" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium mr-2">ยกเลิก</button>
+        <button onclick="confirmApproverSelection()" type="button" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium">ยืนยัน</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="leaveActionModal" class="fixed inset-0 z-200 hidden modal-backdrop flex items-center justify-center p-4 text-sm">
+  <div class="modal-content rounded-lg shadow-xl w-full max-w-xl max-h-[90vh] overflow-y-auto" style="border-radius: 1.5rem; background-color: var(--bg-secondary); color: var(--text-primary);">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-semibold" style="color: var(--text-primary);" id="leaveActionModalTitle">ดำเนินการคำขอลา</h2>
+        <button onclick="closeLeaveActionModal()" class="text-gray-500 hover:text-gray-700">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="mb-4">
+        <label class="block mb-1 text-[var(--text-primary)]">เหตุผล/ความคิดเห็น</label>
+        <textarea id="leaveActionComment" rows="4" class="form-textarea" placeholder="ระบุเหตุผลหรือความคิดเห็น"></textarea>
+      </div>
+      <div class="flex justify-end mt-4 pt-4">
+        <button onclick="confirmLeaveReject()" id="leaveRejectButton" type="button" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium">ไม่อนุมัติ</button>
+        <button onclick="confirmLeaveApprove()" id="leaveApproveButton" type="button" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium">อนุมัติ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="editProfileModal" class="fixed inset-0 z-200 hidden modal-backdrop flex items-center justify-center p-4 text-sm">
+  <div class="modal-content rounded-lg shadow-xl w-full max-w-xl max-h-[90vh] overflow-y-auto" style="border-radius: 1.5rem; background-color: var(--bg-secondary); color: var(--text-primary);">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-semibold">โปรไฟล์ของฉัน</h2>
+        <button onclick="closeEditProfileModal()" class="text-gray-500 hover:text-gray-700">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <!-- รูปโปรไฟล์ -->
+      <div class="mb-6 flex justify-center flex-col items-center">
+        <div id="editProfilePictureArea" class="profile-picture-upload cursor-pointer" onclick="handleEditProfilePicClick()">
+          <i class="bx bxs-user-circle upload-icon"></i>
+          <span class="upload-text">อัปโหลดรูปโปรไฟล์</span>
+        </div>
+        <input type="file" id="editProfilePictureInput" class="hidden" accept="image/*" onchange="handleEditProfilePicChange(event)">
+      </div>
+
+      <!-- ชื่อ-นามสกุล -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 mt-6">
+        <div>
+          <label class="block text-sm font-medium mb-2">ชื่อ</label>
+          <input type="text" id="editFirstName" class="form-input" placeholder="ชื่อของคุณ">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">นามสกุล</label>
+          <input type="text" id="editLastName" class="form-input" placeholder="นามสกุลของคุณ">
+        </div>
+      </div>
+
+      <!-- อีเมล/รหัสผ่าน -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="block text-sm font-medium mb-2">อีเมล (Username)</label>
+          <input type="email" id="editUsername" class="form-input" placeholder="อีเมล">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">รหัสผ่าน</label>
+          <input type="text" id="editPassword" class="form-input pr-10" placeholder="รหัสผ่าน">
+        </div>
+      </div>
+
+      <!-- ลายเซ็น -->
+      <div class="mb-4 flex justify-center w-full">
+        <div id="editSignatureArea" class="signature-upload cursor-pointer" onclick="handleEditSignatureClick()">
+          <i class="bx bxs-edit-alt upload-icon"></i>
+          <span class="upload-text">อัปโหลดลายเซ็น</span>
+        </div>
+        <input type="file" id="editSignatureInput" class="hidden" accept="image/*" onchange="handleEditSignatureChange(event)">
+      </div>
+
+      <!-- ปุ่มยืนยัน/ยกเลิก -->
+      <div class="flex justify-end mt-4 pt-4">
+        <button onclick="closeEditProfileModal()" type="button" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium mr-2">ยกเลิก</button>
+        <button onclick="submitEditProfile()" type="button" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium">ยืนยัน</button>
+      </div>
+    </div>
+  </div>
+</div>

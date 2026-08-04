@@ -1,0 +1,835 @@
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6 fade-in">
+  <div class="p-6 rounded-2xl shadow-lg" style="background-color: var(--bs-blue); color: white;">
+      <div class="flex justify-between items-start">
+          <div>
+              <p class="text-sm opacity-80">ผู้ใช้งาน</p>
+              <h2 class="text-3xl font-bold" id="totalUsers">0</h2>
+          </div>
+          <div class="p-3 bg-white/20 rounded-xl"><i class='bx bxs-user text-2xl'></i></div>
+      </div>
+  </div>
+  <div class="p-6 rounded-2xl shadow-lg" style="background-color: var(--bs-green); color: white;">
+      <div class="flex justify-between items-start">
+          <div>
+              <p class="text-sm opacity-80">ผู้ใช้งาน(ทั่วไป)</p>
+              <h2 class="text-3xl font-bold" id="regularUsers">0</h2>
+          </div>
+          <div class="p-3 bg-white/20 rounded-xl"><i class='bx bxs-user-detail text-2xl'></i></div>
+      </div>
+  </div>
+  <div class="p-6 rounded-2xl shadow-lg" style="background-color: var(--bs-yellow); color: white;">
+      <div class="flex justify-between items-start">
+          <div>
+              <p class="text-sm opacity-80">ผู้ใช้งาน(ระดับสูง)</p>
+              <h2 class="text-3xl font-bold" id="adminUsers">0</h2>
+          </div>
+          <div class="p-3 bg-white/20 rounded-xl"><i class='bx bxs-user-badge text-2xl'></i></div>
+      </div>
+  </div>
+  <div class="p-6 rounded-2xl shadow-lg" style="background-color: var(--bs-red); color: white;">
+      <div class="flex justify-between items-start">
+          <div>
+              <p class="text-sm opacity-80">รออนุมัติ</p>
+              <h2 class="text-3xl font-bold" id="pendingUsers">0</h2>
+          </div>
+          <div class="p-3 bg-white/20 rounded-xl"><i class='bx bxs-hourglass text-2xl'></i></div>
+      </div>
+  </div>
+</div>
+
+<div class="bg-[var(--bg-secondary)] p-6 rounded-2xl shadow-[var(--shadow)] fade-in">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+    <h3 class="font-bold text-lg">ข้อมูลพนักงาน</h3>
+    
+    <div class="flex items-center gap-2 max-w-md w-full sm:w-auto">
+      <div class="relative flex-1">
+        <input type="search" id="searchUsers" class="form-input" placeholder="ค้นหาพนักงาน..." oninput="filterUsers()">
+        <i class="fas fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--text-secondary)] pointer-events-none"></i>
+      </div>
+      <button class="px-4 py-3 text-white bg-green-500 hover:bg-green-600 rounded-lg whitespace-nowrap" onclick="openUsersModal()">
+        เพิ่มข้อมูล
+      </button>
+    </div>
+  </div>
+  <div class="overflow-x-auto">
+      <table class="min-w-full text-sm divide-y divide-gray-200">
+          <thead class="border-b border-[var(--border-color)]">
+              <tr>
+                  <th class="px-4 py-2 text-center whitespace-nowrap">รหัส</th>
+                  <th class="px-4 py-2 text-center whitespace-nowrap">พนักงาน</th>
+                  <th class="px-4 py-2 text-center whitespace-nowrap">ระดับ</th>
+                  <th class="px-4 py-2 text-center whitespace-nowrap">วันที่</th>
+                  <th class="px-4 py-2 text-center whitespace-nowrap">จัดการ</th>
+              </tr>
+          </thead>
+          <tbody id="tableUsers"></tbody>
+      </table>
+  </div>
+  <div class="p-4 mt-4 px-4 py-3 rounded-t-xl rounded-b-xl mt-3">
+    <div class="flex flex-col items-center justify-between gap-2 text-sm">
+      <div id="paginationUsersInfo" class="text-center"></div>
+      <div id="paginationUsers" class="text-center w-full overflow-x-auto py-2"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let filteredUsers = [];
+let currentUsers = 1;
+let itemsPerUsers = 10;
+
+const renderUsers = (data) => {
+  const table = document.getElementById('tableUsers');
+  table.innerHTML = '';
+
+  const startIndex = (currentUsers - 1) * itemsPerUsers;
+  const endIndex = startIndex + itemsPerUsers;
+  const pageData = data.slice(startIndex, endIndex);
+  const totalRows = data.length;
+
+  const startRow = startIndex + 1;
+  const endRow = startIndex + pageData.length;
+
+  document.getElementById('paginationUsersInfo').innerText = `แสดง ${startRow} ถึง ${endRow} จาก ${totalRows} แถว`;
+
+  if (pageData.length === 0) {
+    const row = table.insertRow();
+    row.innerHTML = `
+      <td colspan="7" class="text-center text-[var(--text-secondary)] py-6 text-base">
+        ไม่พบข้อมูล! 😓
+      </td>`;
+    return;
+  }
+
+  pageData.forEach((rowIndex) => {
+    const userData = getSearchUsers(rowIndex[0]);
+
+    const statusBadge = {
+      'Admin': '<span class="status-badge status-pending"><i class="fas fa-user-shield"></i> Admin</span>',
+      'SuperAdmin': '<span class="status-badge status-approved"><i class="fas fa-crown"></i> SuperAdmin</span>',
+      'SuperUser': '<span class="status-badge status-rejected"><i class="fas fa-user-plus"></i> SuperUser</span>'
+    }[rowIndex[6]] || `<span class="status-badge status-info"><i class="fas fa-user"></i> ${rowIndex[6]}</span>`;
+
+    const row = table.insertRow();
+    row.className = 'transition duration-200 ease-in-out';
+    row.onmouseover = () => row.style.backgroundColor = 'var(--hover-bg-color)';
+    row.onmouseout = () => row.style.backgroundColor = '';
+
+    row.innerHTML = `
+      <td class="px-4 py-3 text-sm whitespace-nowrap text-center text-[var(--text-primary)]">${rowIndex[0]}</td>
+      <td class="px-4 py-3 text-sm whitespace-nowrap">
+        <div class="flex items-center gap-3">
+          <img src="${rowIndex[8] || 'https://placehold.co/100x100/eeeeee/black?text=NO_PIC'}" alt="Profile" class="w-8 h-8 rounded-full object-cover border border-[var(--border-color)]">
+          <div>
+            <div class="font-medium text-[var(--text-primary)]">${rowIndex[3] || 'ไม่ระบุ'}</div>
+            <div class="text-xs text-[var(--text-secondary)]">${userData.agency || '-'} | ${userData.department || ''}</div>
+          </div>
+        </div>
+      </td>
+      <td class="px-4 py-3 text-sm whitespace-nowrap text-center">${statusBadge}</td>
+      <td class="px-4 py-3 text-sm whitespace-nowrap text-center text-[var(--text-primary)]">${rowIndex[7]}</td>
+      <td class="px-4 py-3 text-center text-sm whitespace-nowrap">
+        <button class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition duration-200 ease-in-out shadow-sm hover:shadow-md mr-1"
+          onclick="recordUsers('${rowIndex[0]}')">
+          <i class="fa-regular fa-eye"></i>
+        </button>
+        <button class="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-medium transition duration-200 ease-in-out shadow-sm hover:shadow-md mr-1"
+          onclick="editUsers('${rowIndex[0]}')">
+          <i class="fa-solid fa-pen-to-square"></i>
+        </button>
+        <button class="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition duration-200 ease-in-out shadow-sm hover:shadow-md"
+          onclick="delUsers('${rowIndex[0]}')">
+          <i class="fa-solid fa-trash-can"></i>
+        </button>
+      </td>
+    `;
+  });
+
+  renderPageUsers(totalRows);
+};
+
+const renderPageUsers = (totalItems) => {
+  const totalPages = Math.ceil(totalItems / itemsPerUsers);
+  const paginationContainer = document.getElementById('paginationUsers');
+  paginationContainer.innerHTML = '';
+
+  const ul = document.createElement('ul');
+  ul.className = "custom-pagination";
+
+  const createPageButton = (htmlContent, page, isDisabled = false, isActive = false) => {
+    const li = document.createElement('li');
+    if (isDisabled) li.classList.add('disabled');
+    if (isActive) li.classList.add('active');
+
+    const button = document.createElement('button');
+    button.innerHTML = htmlContent;
+    button.addEventListener('click', () => {
+      if (!isDisabled) {
+        currentUsers = page;
+        const dataToRender = filteredUsers.length ? filteredUsers : allDataUsers;
+        renderUsers(dataToRender);
+      }
+    });
+    li.appendChild(button);
+    return li;
+  };
+
+  ul.appendChild(createPageButton('<i class="fa-solid fa-angles-left"></i>', 1, currentUsers === 1));
+  ul.appendChild(createPageButton('<i class="fa-solid fa-angle-left"></i>', currentUsers - 1, currentUsers === 1));
+
+  let startPage, endPage;
+  if (totalPages <= 3) {
+    startPage = 1;
+    endPage = totalPages;
+  } else {
+    if (currentUsers <= 2) {
+      startPage = 1;
+      endPage = 3;
+    } else if (currentUsers + 1 >= totalPages) {
+      startPage = totalPages - 2;
+      endPage = totalPages;
+    } else {
+      startPage = currentUsers - 1;
+      endPage = currentUsers + 1;
+    }
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    ul.appendChild(createPageButton(i, i, false, currentUsers === i));
+  }
+
+  ul.appendChild(createPageButton('<i class="fa-solid fa-angle-right"></i>', currentUsers + 1, currentUsers === totalPages));
+  ul.appendChild(createPageButton('<i class="fa-solid fa-angles-right"></i>', totalPages, currentUsers === totalPages));
+
+  paginationContainer.appendChild(ul);
+}
+
+const filterUsers = () => {
+  const query = document.getElementById('searchUsers').value.toLowerCase();
+
+  filteredUsers = allDataUsers.filter(row => {
+    return query === '' || row.some(column => column.toLowerCase().includes(query));
+  });
+
+  currentUsers = 1;
+  renderUsers(filteredUsers);
+};
+
+const updateDashboardStats = (data) => {
+  let stats = { total: 0, user: 0, admin: 0, pending: 0 };
+  
+  if (data && data.length > 0) {
+    stats.total = data.length;
+    
+    data.forEach(row => {
+      const role = row[6] || '';
+      const status = row[10];
+      
+      if (role === 'User' || role === 'SuperUser') {
+        stats.user++;
+      } else if (role === 'Admin' || role === 'SuperAdmin') {
+        stats.admin++;
+      }
+      
+      if (status === 'FALSE' || status === false) {
+        stats.pending++;
+      }
+    });
+  }
+  
+  document.querySelector('#totalUsers').textContent = stats.total;
+  document.querySelector('#regularUsers').textContent = stats.user;
+  document.querySelector('#adminUsers').textContent = stats.admin;
+  document.querySelector('#pendingUsers').textContent = stats.pending;
+};
+
+const openUsersModal = () => {
+  document.getElementById('usersModal').classList.remove('hidden');
+}
+
+const closeUsersModal = () => {
+  document.getElementById('usersModal').classList.add('hidden');
+
+  // รีเซ็ตข้อความและ input
+  $("#modalTitle").text('เพิ่มบุคลากรใหม่');
+  $("#modalDataKye").val('');
+  $("#modalFirstName").val('');
+  $("#modalLastName").val('');
+  $("#modalUsername").val('');
+  $("#modalPassword").val('');
+  $("#modalAgency").val('').prop('selectedIndex', 0);
+  $("#modalDepartment").val('').prop('selectedIndex', 0);
+  $("#modalRole").val('').prop('selectedIndex', 0);
+
+  // สถานะการใช้งาน
+  $("#modalUserStatus").prop('checked', true);
+  $("#modalStatusText")
+    .text('เปิดใช้งาน')
+    .removeClass('text-red-600')
+    .addClass('text-green-600');
+
+  // โปรไฟล์
+  $("#modalProfilePictureInput").val('');
+  $("#modalProfilePictureArea")
+    .css("background-image", "")
+    .find(".upload-icon, .upload-text").show();
+
+  // ลายเซ็น
+  $("#modalSignatureInput").val('');
+  $("#modalSignatureArea")
+    .css("background-image", "")
+    .find(".upload-icon, .upload-text").show();
+};
+
+const handleModalProfilePicClick = () => {
+  const input = document.getElementById('modalProfilePictureInput');
+  if (input) input.click();
+};
+
+const handleModalProfilePicChange = (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const area = document.getElementById('modalProfilePictureArea');
+    area.style.backgroundImage = `url(${e.target.result})`;
+    $(area).find('.upload-icon, .upload-text').hide();
+  };
+  reader.readAsDataURL(file);
+};
+
+const handleModalSignatureClick = () => {
+  const input = document.getElementById('modalSignatureInput');
+  if (input) input.click();
+};
+
+const handleModalSignatureChange = (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const area = document.getElementById('modalSignatureArea');
+    area.style.backgroundImage = `url(${e.target.result})`;
+    $(area).find('.upload-icon, .upload-text').hide();
+  };
+  reader.readAsDataURL(file);
+};
+
+const submitModalUsers = () => {
+  event.preventDefault();
+  const datakey = $("#modalDataKye").val().trim();
+  const username = $("#modalUsername").val().trim();
+  const password = $("#modalPassword").val().trim();
+  const fullname = $("#modalFirstName").val().trim() + " " + $("#modalLastName").val().trim();
+  const userStatus = $("#modalUserStatus").is(':checked');
+  const agency = $("#modalAgency").val();
+  const department = $("#modalDepartment").val();
+  const role = $("#modalRole").val();
+
+  if (username === '' || password === '' || fullname.trim() === '' || agency === '' || department === '' || role === '') {
+    showToast("กรุณากรอกข้อมูลให้ครบทุกช่อง", "warning");
+    return;
+  }
+
+  const obj = {
+    username,
+    password,
+    fullname,
+    agency,
+    department,
+    role,
+    status: userStatus ? 'TRUE' : 'FALSE',
+    profileCheck: $("#modalProfilePictureInput").val(),
+    signatureCheck: $("#modalSignatureInput").val(),
+    datakey: datakey || ""
+  };
+
+  const profileDiv = document.getElementById("modalProfilePictureArea");
+  const profileBg = profileDiv.style.backgroundImage;
+  if (obj.profileCheck === "") {
+    if (profileBg && profileBg !== 'none') {
+      const url = profileBg.slice(5, -2);
+      obj.profileImage = url;
+    } else {
+      obj.profileImage = "";
+    }
+  } else {
+    if (profileBg && profileBg !== 'none') {
+      const url = profileBg.slice(5, -2);
+      obj.profileImageDataUrl = url;
+      obj.profileFiletype = "image/png";
+      obj.profileFilename = "profile_" + username;
+      obj.profileImage = url;
+    }
+  }
+
+  const sigDiv = document.getElementById("modalSignatureArea");
+  const sigBg = sigDiv.style.backgroundImage;
+  if (obj.signatureCheck === "") {
+    if (sigBg && sigBg !== 'none') {
+      const url = sigBg.slice(5, -2);
+      obj.signatureImage = url;
+    } else {
+      obj.signatureImage = "";
+    }
+  } else {
+    if (sigBg && sigBg !== 'none') {
+      const url = sigBg.slice(5, -2);
+      obj.signatureImageDataUrl = url;
+      obj.signatureFiletype = "image/png";
+      obj.signatureFilename = "signature_" + username;
+      obj.signatureImage = url;
+    }
+  }
+
+  $("#customLoader").show();
+  const handler = obj.datakey ? google.script.run.withSuccessHandler : google.script.run.withSuccessHandler;
+  const callback = async (res) => {
+    $("#customLoader").hide();
+    if (res === true) {
+      closeUsersModal();
+      await updateSpecificDataUsers();
+      showToast(obj.datakey ? "แก้ไขข้อมูลสำเร็จ" : "บันทึกข้อมูลสำเร็จ", "success");
+    } else {
+      showToast("ชื่อผู้ใช้นี้ถูกใช้งานแล้ว", "error");
+    }
+  };
+
+  if (!obj.datakey) {
+    google.script.run.withSuccessHandler(callback).addUsers(obj);
+  } else {
+    google.script.run.withSuccessHandler(callback).upUsers(obj);
+  }
+};
+
+
+const editUsers = (codeID) => {
+  const rowIndex = allDataUsers.find(row => row[0].trim() === codeID.trim());
+
+  if (!rowIndex) {
+    showToast("ไม่พบข้อมูลที่เลือกในระบบ", "warning");
+    return;
+  }
+
+  openUsersModal();
+  $("#modalTitle").text('แก้ไขข้อมูลบุคลากร');
+  $("#modalDataKye").val(rowIndex[0]);
+  $("#modalUsername").val(rowIndex[1]);
+  $("#modalPassword").val(rowIndex[2]);
+
+  const fullname = rowIndex[3] || '';
+  const nameArray = fullname.split(' ');
+  $("#modalFirstName").val(nameArray[0] || '');
+  $("#modalLastName").val(nameArray.slice(1).join(' ') || '');
+
+  $("#modalAgency").val(rowIndex[4] || '');
+  $("#modalDepartment").val(rowIndex[5] || '');
+  $("#modalRole").val(rowIndex[6] || '');
+
+  const isActive = rowIndex[10] === 'TRUE' || rowIndex[10] === true;
+  $("#modalUserStatus").prop('checked', isActive);
+  $("#modalStatusText")
+    .text(isActive ? 'เปิดใช้งาน' : 'ปิดใช้งาน')
+    .removeClass('text-green-600 text-red-600')
+    .addClass(isActive ? 'text-green-600' : 'text-red-600');
+
+  // โปรไฟล์
+  $("#modalProfilePictureInput").val('');
+  if (rowIndex[8]) {
+    $("#modalProfilePictureArea")
+      .css("background-image", `url(${rowIndex[8]})`)
+      .find(".upload-icon, .upload-text").hide();
+  } else {
+    $("#modalProfilePictureArea")
+      .css("background-image", "")
+      .find(".upload-icon, .upload-text").show();
+  }
+
+  // ลายเซ็น
+  $("#modalSignatureInput").val('');
+  if (rowIndex[9]) {
+    $("#modalSignatureArea")
+      .css("background-image", `url(${rowIndex[9]})`)
+      .find(".upload-icon, .upload-text").hide();
+  } else {
+    $("#modalSignatureArea")
+      .css("background-image", "")
+      .find(".upload-icon, .upload-text").show();
+  }
+};
+
+
+const delUsers = (codeID) => {
+  let rowIndex = allDataUsers.find(row => row[0].trim() === codeID.trim());
+  
+  if (!rowIndex) {
+    showToast("ไม่พบข้อมูลที่เลือกในระบบ", "warning");
+    return;
+  }
+
+  if (rowIndex) {
+    $('#confirmBtnDel').off('click').on('click', function() {
+      document.getElementById('DelDataModal').classList.add('hidden');
+      $("#customLoader").show();
+      google.script.run.withSuccessHandler(async (res) => {
+        rowIndex = allDataUsers.filter(row => row[0] !== codeID);
+        closeUsersModal();
+        await updateSpecificDataUsers();
+        $("#customLoader").hide();
+        showToast("ลบข้อมูลสำเร็จ", "success");
+      }).delDataUsers(codeID);
+    });
+    $('#xDelconfirmData').off('click').on('click', function() {
+      document.getElementById('DelDataModal').classList.add('hidden');
+    });
+    document.getElementById('DelDataModal').classList.remove('hidden');
+  }
+}
+
+const closeDelectModal = () => {
+  document.getElementById('DelDataModal').classList.add('hidden');
+};
+
+const recordUsers = (codeID) => {
+  const rowIndex = allDataUsers.find(row => row[0].trim() === codeID.trim());
+
+  if (!rowIndex) {
+    showToast("ไม่พบข้อมูลที่เลือกในระบบ", "warning");
+    return;
+  }
+
+  document.getElementById('userPoliciesModal').classList.remove('hidden');
+  loadUserLeaveData(codeID, rowIndex);
+};
+
+const closeUserPoliciesModal = () => {
+  document.getElementById('userPoliciesModal').classList.add('hidden');
+};
+
+const loadUserLeaveData = (userId, userData) => {
+  document.getElementById('modalUserTitle').textContent = `ข้อมูลวันหยุด - ${userData[3]}`;
+  const agencyInfo = getSearchAgency(userData[4]);
+  const departmentInfo = getSearchDepartments(userData[5]);
+
+  document.getElementById('modalUserSubtitle').textContent = 
+    `${userData[6]} • ${agencyInfo.agencyname || userData[4]} • ${departmentInfo.deptname || userData[5]}`;
+
+  const userPolicies = allDataUserPolicies.filter(policy => policy[1] === userId);
+  const userLeaveRequests = allDataLeaveRequests.filter(request => request[4] === userId);
+  
+  const leaveStats = calculateLeaveStats(userPolicies, userLeaveRequests);
+  
+  renderLeaveSummaryCards(leaveStats);
+  renderLeaveHistory(userLeaveRequests);
+  
+  window.currentUserLeaveRequests = userLeaveRequests;
+}
+
+const calculateLeaveStats = (policies, requests) => {
+  const stats = {};
+  
+  policies.forEach(policy => {
+    const leaveType = policy[2];
+    const quota = parseInt(policy[3]);
+    
+    const approvedRequests = requests.filter(req => 
+      req[6] === leaveType && req[7] === 'Approved'
+    );
+    
+    let usedDays = 0;
+    approvedRequests.forEach(req => {
+      const leaveDuration = req[12] || 'F';
+      let days = 1;
+      if (typeof calculateActualLeaveDays === 'function') {
+        days = calculateActualLeaveDays(req[2], req[3], leaveDuration); 
+      } else {
+        days = calculateDaysBetweenFallback(req[2], req[3], leaveDuration);
+      }
+      usedDays += days;
+    });
+    
+    stats[leaveType] = {
+      quota: quota,
+      used: usedDays,
+      remaining: quota - usedDays,
+      percentage: quota > 0 ? Math.round((usedDays / quota) * 100) : 0
+    };
+  });
+  
+  return stats;
+}
+
+const renderLeaveHistory = (requests) => {
+  const container = document.getElementById('leaveHistoryList');
+  container.innerHTML = '';
+  
+  if (requests.length === 0) {
+    container.innerHTML = '<div class="text-center py-8" style="color: var(--text-secondary);">ไม่มีประวัติการลา</div>';
+    return;
+  }
+  
+  const sortedRequests = requests.sort((a, b) => {
+    const dateA = new Date(a[10].split('/').reverse().join('-'));
+    const dateB = new Date(b[10].split('/').reverse().join('-'));
+    return dateB - dateA;
+  });
+  
+  sortedRequests.forEach(request => {
+    const statusConfig = {
+      'Pending': { class: 'status-pending', icon: 'fas fa-clock', text: 'รอดำเนินการ' },
+      'Approved': { class: 'status-approved', icon: 'fas fa-check-circle', text: 'อนุมัติ' },
+      'Rejected': { class: 'status-rejected', icon: 'fas fa-times-circle', text: 'ปฏิเสธ' }
+    };
+    
+    const status = statusConfig[request[7]] || { class: 'status-info', icon: 'fas fa-info-circle', text: request[7] };
+    
+    const leaveDuration = request[12] || 'F';
+    let days = 1;
+    if (typeof calculateActualLeaveDays === 'function') {
+      days = calculateActualLeaveDays(request[2], request[3], leaveDuration);
+    } else {
+      days = calculateDaysBetweenFallback(request[2], request[3], leaveDuration);
+    }
+    
+    let daysDisplay = '';
+    const daysValue = days % 1 === 0 ? days.toString() : days.toFixed(1);
+    
+    if (leaveDuration === 'AM') {
+      daysDisplay = `${daysValue} วัน (ครึ่งเช้า)`;
+    } else if (leaveDuration === 'PM') {
+      daysDisplay = `${daysValue} วัน (ครึ่งบ่าย)`;
+    } else {
+      daysDisplay = `${daysValue} วัน`;
+    }
+    
+    const item = document.createElement('div');
+    item.className = 'p-4 rounded-lg transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer';
+    item.style.backgroundColor = 'var(--bg-secondary)';
+    
+    item.addEventListener('click', () => {
+      if (typeof openLeaveModal === 'function') {
+        openLeaveModal(request[0]);
+      }
+    });
+    
+    item.innerHTML = `
+      <div class="flex items-start justify-between mb-2">
+        <div class="flex-1">
+          <div class="font-medium" style="color: var(--text-primary);">${request[1]}</div>
+          <div class="text-sm" style="color: var(--text-secondary);">
+            ${request[2]} - ${request[3]} (${daysDisplay}) • ${getLeaveTypeDisplayName(request[6])}
+          </div>
+        </div>
+        <span class="status-badge ${status.class}">
+          <i class="${status.icon}"></i> ${status.text}
+        </span>
+      </div>
+      <div class="text-xs" style="color: var(--text-secondary);">
+        ส่งคำขอ: ${request[10]}
+        ${request[9] ? ` • เหตุผลปฏิเสธ: ${request[9]}` : ''}
+      </div>
+      <div class="text-xs mt-1" style="color: var(--text-secondary);">
+        <i class="fas fa-mouse-pointer"></i> คลิกเพื่อดูรายละเอียด
+      </div>
+    `;
+    
+    container.appendChild(item);
+  });
+}
+
+const calculateDaysBetweenFallback = (startDateStr, endDateStr, leaveDuration = 'F') => {
+  const parseDate = (dateStr) => {
+    const [day, month, year] = dateStr.split('/');
+    return new Date(year, month - 1, day);
+  };
+
+  const startDate = parseDate(startDateStr);
+  const endDate = parseDate(endDateStr);
+  
+  const holidays = new Set();
+  if (typeof allDataHolidays !== 'undefined' && allDataHolidays) {
+    allDataHolidays.forEach(holiday => {
+      holidays.add(holiday[1]);
+    });
+  }
+  
+  const workingDays = new Map();
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  
+  if (typeof allDataDayOfWeek !== 'undefined' && allDataDayOfWeek) {
+    allDataDayOfWeek.forEach(dayData => {
+      const dayName = dayData[0];
+      const isWorking = dayData[1] === 'TRUE';
+      workingDays.set(dayName, isWorking);
+    });
+  } else {
+    dayNames.forEach((day, index) => {
+      workingDays.set(day, index >= 1 && index <= 5);
+    });
+  }
+  
+  let actualLeaveDays = 0;
+  let currentDate = new Date(startDate);
+  
+  let dailyLeaveValue = 1;
+  if (leaveDuration === 'AM' || leaveDuration === 'PM') {
+    dailyLeaveValue = 0.5;
+  }
+  
+  while (currentDate <= endDate) {
+    const dayOfWeek = dayNames[currentDate.getDay()];
+    const dateStr = String(currentDate.getDate()).padStart(2, '0') + '/' + 
+                   String(currentDate.getMonth() + 1).padStart(2, '0') + '/' + 
+                   currentDate.getFullYear();
+    
+    const isWorkingDay = workingDays.get(dayOfWeek) || false;
+    const isHoliday = holidays.has(dateStr);
+    
+    if (isWorkingDay && !isHoliday) {
+      actualLeaveDays += dailyLeaveValue;
+    }
+    
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+  
+  return actualLeaveDays;
+};
+
+const getLeaveTypeDisplayName = (leaveType) => {
+  const leaveTypeMapping = {
+    'Annual': 'ลาพักร้อน',
+    'Sick': 'ลาป่วย',
+    'Personal': 'ลากิจได้รับค่าจ้าง',
+    'Other': 'อื่นๆ',
+    'Maternity': 'ลาคลอด',
+    'Study': 'ลาศึกษา',
+    'Military': 'ลาทหาร'
+  };
+  return leaveTypeMapping[leaveType] || leaveType;
+};
+
+const renderLeaveSummaryCards = (stats) => {
+  const container = document.getElementById('leaveSummaryCards');
+  container.innerHTML = '';
+
+  const leaveTypes = {
+    'Annual':    { name: 'ลาพักร้อน',  color: 'var(--bs-blue)',     icon: 'fa-solid fa-plane-up' },
+    'Sick':      { name: 'ลาป่วย',     color: 'var(--bs-red)',      icon: 'fa-solid fa-user-injured' },
+    'Personal':  { name: 'ลากิจได้รับค่าจ้าง',      color: 'var(--bs-purple)',   icon: 'fa-solid fa-person-walking-luggage' },
+    'Other':     { name: 'อื่นๆ',       color: 'var(--bs-yellow)',   icon: 'fa-solid fa-circle-question' },
+    'Maternity': { name: 'ลาคลอด',     color: 'var(--bs-pink)',     icon: 'fa-solid fa-baby-carriage' },
+    'Study':     { name: 'ลาศึกษา',     color: 'var(--bs-orange)',   icon: 'fa-solid fa-graduation-cap' },
+    'Military':  { name: 'ลาทหาร',     color: 'var(--bs-teal)',     icon: 'fa-solid fa-person-military-rifle' }
+  };
+  
+  Object.entries(stats).forEach(([type, data]) => {
+    const config = leaveTypes[type];
+    if (!config) return;
+    
+    const card = document.createElement('div');
+    card.className = 'p-4 rounded-xl border transition-all duration-300 hover:shadow-lg';
+    card.style.backgroundColor = `${config.color}15`;
+    card.style.borderColor = config.color;
+    
+    let progressColor = config.color;
+    if (data.percentage >= 80) {
+      progressColor = 'var(--bs-red)';
+    } else if (data.percentage >= 60) {
+      progressColor = 'var(--bs-yellow)';
+    }
+    
+    const usedDisplay = data.used % 1 === 0 ? data.used.toString() : data.used.toFixed(1);
+    const remainingDisplay = data.remaining % 1 === 0 ? data.remaining.toString() : data.remaining.toFixed(1);
+    
+    card.innerHTML = `
+      <div class="flex items-center justify-between mb-3">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background-color: ${config.color};">
+          <i class="${config.icon} text-white text-lg"></i>
+        </div>
+        <div class="text-right">
+          <div class="text-2xl font-bold" style="color: ${data.remaining < 0 ? 'var(--bs-red)' : config.color};">
+            ${remainingDisplay}
+          </div>
+          <div class="text-xs" style="color: var(--text-secondary);">คงเหลือ</div>
+        </div>
+      </div>
+      <div class="mb-2">
+        <div class="text-sm font-medium" style="color: var(--text-primary);">${config.name}</div>
+        <div class="text-xs" style="color: var(--text-secondary);">
+          ใช้ไป ${usedDisplay}/${data.quota} วัน
+          ${data.remaining < 0 ? `<span style="color: var(--bs-red);"> (เกิน ${Math.abs(data.remaining)} วัน)</span>` : ''}
+        </div>
+      </div>
+      <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+        <div class="h-full rounded-full transition-all duration-500" 
+             style="width: ${Math.min(data.percentage, 100)}%; background-color: ${progressColor};">
+        </div>
+      </div>
+      <div class="text-xs mt-1 text-center" style="color: var(--text-secondary);">
+        ${data.percentage}% ใช้ไปแล้ว
+        ${data.percentage > 100 ? '<span style="color: var(--bs-red);"> (เกินโควตา)</span>' : ''}
+      </div>
+    `;
+    
+    container.appendChild(card);
+  });
+  
+  if (Object.keys(stats).length === 0) {
+    container.innerHTML = `
+      <div class="col-span-full text-center py-8" style="color: var(--text-secondary);">
+        <i class="fas fa-calendar-times text-4xl mb-2"></i>
+        <p>ไม่มีข้อมูลนโยบายการลาสำหรับผู้ใช้นี้</p>
+      </div>
+    `;
+  }
+};
+
+const calculateDaysBetween = (startDate, endDate, leaveDuration = 'F') => {
+  if (typeof calculateActualLeaveDays === 'function') {
+    return calculateActualLeaveDays(startDate, endDate, leaveDuration);
+  } else {
+    return calculateDaysBetweenFallback(startDate, endDate, leaveDuration);
+  }
+};
+
+const getSearchAgency = (codeID) => {
+  const dpm = allDataAgency.find(row => row[0] === codeID);
+  if (!dpm) return {};
+  return {
+    agencyId: dpm[0],
+    agencyname: dpm[1]
+  };
+};
+
+const getSearchDepartments = (codeID) => {
+  const dpm = allDataDepartments.find(row => row[0] === codeID);
+  if (!dpm) return {};
+  return {
+    deptId: dpm[0],
+    deptname: dpm[1]
+  };
+};
+
+const getSearchUsers = (codeID) => {
+  const user = allDataUsers.find(row => row[0] === codeID);
+  if (!user) return {};
+  
+  const agencyInfo = getSearchAgency(user[4]);
+  const departmentInfo = getSearchDepartments(user[5]);
+  
+  return {
+    uid: user[0],
+    email: user[1],
+    fullname: user[3],
+    agency: agencyInfo.agencyname || user[4],
+    agencyId: user[4],
+    department: departmentInfo.deptname || user[5],
+    departmentId: user[5],
+    role: user[6],
+    profile: user[8],
+    sig: user[9]
+  };
+};
+</script>

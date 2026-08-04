@@ -1,0 +1,114 @@
+<aside class="sidebar">
+<!-- Logo -->
+<div class="sidebar-logo flex items-center justify-center py-6 h-[var(--navbar-height)]">
+  <img id="logoSystem" src="https://cdn.jsdelivr.net/gh/smetaltech25/Img/SMT.png" alt="EpicCoding Logo" class="h-10 w-auto">
+  <span class="ml-3 font-bold text-1xl" id="textSystemEng">Leave Management System (LMS)</span>
+</div>
+  
+  <!-- Menu -->
+  <ul class="sidebar-menu-list">
+    <li class="sidebar-menu-header" data-original-text="HOME">ข้อมูลหลัก</li>
+    <li class="sidebar-menu-item active" id="sidebarManu1">
+      <a href="#" class="sidebar-menu-item-link">
+        <i class='bx bxs-home sidebar-menu-item-icon'></i>
+        <span class="sidebar-menu-item-text">หน้าแรก</span>
+      </a>
+    </li>     
+    <li class="sidebar-menu-item" id="sidebarManu2">
+        <a href="#" class="sidebar-menu-item-link">
+          <i class='bx bxs-plane-alt sidebar-menu-item-icon'></i>
+          <span class="sidebar-menu-item-text">การขออนุญาตลา</span>
+        </a>
+    </li>
+    <li class="sidebar-menu-item" id="sidebarManu3">
+        <a href="#" class="sidebar-menu-item-link">
+          <i class='bx bxs-calendar sidebar-menu-item-icon'></i>
+          <span class="sidebar-menu-item-text">ปฏิทินการลา</span>
+        </a>
+    </li>
+    <li class="sidebar-menu-item" id="sidebarManu4">
+        <a href="#" class="sidebar-menu-item-link">
+          <i class='bx bxs-megaphone sidebar-menu-item-icon'></i>
+          <span class="sidebar-menu-item-text">ประชาสัมพันธ์</span>
+        </a>
+    </li>
+    <li class="sidebar-menu-item" id="sidebarManu5">
+        <a href="#" class="sidebar-menu-item-link">
+          <i class='bx bxs-file-find sidebar-menu-item-icon'></i>
+          <span class="sidebar-menu-item-text">รายงาน</span>
+        </a>
+    </li>
+
+    <li class="sidebar-menu-header" data-original-text="USER">ผู้ใช้งาน</li>
+    <li class="sidebar-menu-item" id="sidebarManu6">
+        <a href="#" class="sidebar-menu-item-link">
+          <i class='bx bxs-user-account sidebar-menu-item-icon'></i>
+          <span class="sidebar-menu-item-text">ผู้ใช้งานระบบ</span>
+        </a>
+    </li>
+    <li class="sidebar-menu-item" id="sidebarManu10">
+        <a href="#" class="sidebar-menu-item-link">
+          <i class='bx bxs-shield-plus sidebar-menu-item-icon'></i>
+          <span class="sidebar-menu-item-text">สิทธิการใช้งาน</span>
+        </a>
+    </li>
+    
+    <li class="sidebar-menu-header" data-original-text="SETTING">ตั้งค่าระบบ</li>
+    <li class="sidebar-menu-item" id="sidebarManu7">
+        <a href="#" class="sidebar-menu-item-link">
+          <i class='bx bxs-buildings sidebar-menu-item-icon'></i>
+          <span class="sidebar-menu-item-text">ตั้งค่าหน่วยงาน</span>
+        </a>
+    </li>
+    <li class="sidebar-menu-item" id="sidebarManu8">
+        <a href="#" class="sidebar-menu-item-link">
+          <i class='bx bxs-group sidebar-menu-item-icon'></i>
+          <span class="sidebar-menu-item-text">ตั้งค่าฝ่าย</span>
+        </a>
+    </li>
+    <li class="sidebar-menu-item" id="sidebarManu9">
+        <a href="#" class="sidebar-menu-item-link">
+          <i class='bx bxs-calendar sidebar-menu-item-icon'></i>
+          <span class="sidebar-menu-item-text">ตั้งค่าวันลา</span>
+        </a>
+    </li>
+    <li class="sidebar-menu-item" id="sidebarManu11">
+        <a href="#" class="sidebar-menu-item-link">
+          <i class='bx bxs-calendar-x sidebar-menu-item-icon'></i>
+          <span class="sidebar-menu-item-text">ตั้งค่าวันหยุด</span>
+        </a>
+    </li>
+    <li class="sidebar-menu-item" id="sidebarManu12">
+        <a href="#" class="sidebar-menu-item-link">
+          <i class='bx bxs-calendar-check sidebar-menu-item-icon'></i>
+          <span class="sidebar-menu-item-text">ตั้งค่าวันทำงาน</span>
+        </a>
+    </li>
+    <li class="sidebar-menu-item" id="sidebarManu13">
+        <a href="#" class="sidebar-menu-item-link">
+          <i class='bx bxs-megaphone sidebar-menu-item-icon'></i>
+          <span class="sidebar-menu-item-text">ตั้งค่าประชาสัมพันธ์</span>
+        </a>
+    </li>
+    <li class="sidebar-menu-item" id="sidebarManu14">
+        <a href="#" class="sidebar-menu-item-link">
+          <i class='bx bxs-cog sidebar-menu-item-icon'></i>
+          <span class="sidebar-menu-item-text">ตั้งค่าระบบ</span>
+        </a>
+    </li>
+  </ul>
+  
+  <div class="sidebar-footer">
+    <div class="sidebar-toggle-btn">
+        <label class="toggle-switch">
+            <input type="checkbox" id="realtimeToggle" onchange="toggleRealTime()">
+            <span class="toggle-slider"></span>
+        </label>
+        <span class="sidebar-toggle-text cursor-pointer">โหมดเรียลไทม์</span>
+    </div>
+    <a onclick="openLogoutModal()" id="logoutBtn" class="logout-btn cursor-pointer">
+      <i class='bx bx-log-out logout-btn-icon'></i>
+      <span class="logout-btn-text">ออกจากระบบ</span>
+    </a>
+  </div>
+</aside>

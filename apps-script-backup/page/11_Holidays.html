@@ -1,0 +1,258 @@
+<div class="bg-[var(--bg-secondary)] p-6 rounded-2xl shadow-[var(--shadow)] fade-in">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+    <h3 class="font-bold text-lg">จัดการวันหยุดประจำปี</h3>
+    
+    <div class="flex items-center gap-2 max-w-md w-full sm:w-auto">
+      <div class="relative flex-1">
+        <input type="search" id="searchHolidays" class="form-input" placeholder="ค้นหาข้อมูล..." oninput="filterHolidays()">
+        <i class="fas fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--text-secondary)] pointer-events-none"></i>
+      </div>
+      <button class="px-4 py-3 text-white bg-green-500 hover:bg-green-600 rounded-lg whitespace-nowrap" onclick="openHolidaysModal()">
+        เพิ่มข้อมูล
+      </button>
+    </div>
+  </div>
+  <div class="overflow-x-auto">
+      <table class="min-w-full text-sm divide-y divide-gray-200">
+          <thead class="border-b border-[var(--border-color)]">
+              <tr>
+                  <th class="px-4 py-2 text-center whitespace-nowrap">รหัส</th>
+                  <th class="px-4 py-2 text-center whitespace-nowrap">วันที่</th>
+                  <th class="px-4 py-2 text-center whitespace-nowrap">รายละเอียด</th>
+                  <th class="px-4 py-2 text-center whitespace-nowrap">จัดการ</th>
+              </tr>
+          </thead>
+          <tbody id="tableHolidays"></tbody>
+      </table>
+  </div>
+  <div class="p-4 mt-4 px-4 py-3 rounded-t-xl rounded-b-xl mt-3">
+    <div class="flex flex-col items-center justify-between gap-2 text-sm">
+      <div id="paginationHolidaysInfo" class="text-center"></div>
+      <div id="paginationHolidays" class="text-center w-full overflow-x-auto py-2"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let filteredHolidays = [];
+let currentHolidays = 1;
+let itemsPerHolidays = 10;
+
+const renderHolidays = (data) => {
+  const table = document.getElementById('tableHolidays');
+  table.innerHTML = '';
+
+  const startIndex = (currentHolidays - 1) * itemsPerHolidays;
+  const endIndex = startIndex + itemsPerHolidays;
+  const pageData = data.slice(startIndex, endIndex);
+  const totalRows = data.length;
+
+  const startRow = startIndex + 1;
+  const endRow = startIndex + pageData.length;
+
+  document.getElementById('paginationHolidaysInfo').innerText = `แสดง ${startRow} ถึง ${endRow} จาก ${totalRows} แถว`;
+
+  if (pageData.length === 0) {
+    const row = table.insertRow();
+    row.innerHTML = `
+      <td colspan="3" class="text-center text-[var(--text-secondary)] py-6 text-base">
+        ไม่พบข้อมูล! 😓
+      </td>`;
+    return;
+  }
+
+  pageData.forEach((rowIndex) => {
+
+    const row = table.insertRow();
+    row.className = 'transition duration-200 ease-in-out';
+    row.onmouseover = () => row.style.backgroundColor = 'var(--hover-bg-color)';
+    row.onmouseout = () => row.style.backgroundColor = '';
+
+    row.innerHTML = `
+      <td class="px-4 py-3 text-sm whitespace-nowrap text-center text-[var(--text-primary)]">${rowIndex[0]}</td>
+      <td class="px-4 py-3 text-sm whitespace-nowrap text-center text-[var(--text-primary)]">${rowIndex[1]}</td>
+      <td class="px-4 py-3 text-sm whitespace-nowrap text-left text-[var(--text-primary)]">${rowIndex[2]}</td>
+      <td class="px-4 py-3 text-center text-sm whitespace-nowrap">
+        <button class="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-medium transition duration-200 ease-in-out shadow-sm hover:shadow-md mr-1"
+          onclick="editHolidays('${rowIndex[0]}')">
+          <i class="fa-solid fa-pen-to-square"></i>
+        </button>
+        <button class="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition duration-200 ease-in-out shadow-sm hover:shadow-md"
+          onclick="delHolidays('${rowIndex[0]}')">
+          <i class="fa-solid fa-trash-can"></i>
+        </button>
+      </td>
+    `;
+  });
+
+  renderPageHolidays(totalRows);
+};
+
+const renderPageHolidays = (totalItems) => {
+  const totalPages = Math.ceil(totalItems / itemsPerHolidays);
+  const paginationContainer = document.getElementById('paginationHolidays');
+  paginationContainer.innerHTML = '';
+
+  const ul = document.createElement('ul');
+  ul.className = "custom-pagination";
+
+  const createPageButton = (htmlContent, page, isDisabled = false, isActive = false) => {
+    const li = document.createElement('li');
+    if (isDisabled) li.classList.add('disabled');
+    if (isActive) li.classList.add('active');
+
+    const button = document.createElement('button');
+    button.innerHTML = htmlContent;
+    button.addEventListener('click', () => {
+      if (!isDisabled) {
+        currentHolidays = page;
+        const dataToRender = filteredHolidays.length ? filteredHolidays : allDataHolidays;
+        renderHolidays(dataToRender);
+      }
+    });
+    li.appendChild(button);
+    return li;
+  };
+
+  ul.appendChild(createPageButton('<i class="fa-solid fa-angles-left"></i>', 1, currentHolidays === 1));
+  ul.appendChild(createPageButton('<i class="fa-solid fa-angle-left"></i>', currentHolidays - 1, currentHolidays === 1));
+
+  let startPage, endPage;
+  if (totalPages <= 3) {
+    startPage = 1;
+    endPage = totalPages;
+  } else {
+    if (currentHolidays <= 2) {
+      startPage = 1;
+      endPage = 3;
+    } else if (currentHolidays + 1 >= totalPages) {
+      startPage = totalPages - 2;
+      endPage = totalPages;
+    } else {
+      startPage = currentHolidays - 1;
+      endPage = currentHolidays + 1;
+    }
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    ul.appendChild(createPageButton(i, i, false, currentHolidays === i));
+  }
+
+  ul.appendChild(createPageButton('<i class="fa-solid fa-angle-right"></i>', currentHolidays + 1, currentHolidays === totalPages));
+  ul.appendChild(createPageButton('<i class="fa-solid fa-angles-right"></i>', totalPages, currentHolidays === totalPages));
+
+  paginationContainer.appendChild(ul);
+}
+
+const filterHolidays = () => {
+  const query = document.getElementById('searchHolidays').value.toLowerCase();
+
+  filteredHolidays = allDataHolidays.filter(row => {
+    return query === '' || row.some(column => column.toLowerCase().includes(query));
+  });
+
+  currentHolidays = 1;
+  renderHolidays(filteredHolidays);
+};
+
+const openHolidaysModal = () => {
+  document.getElementById('holidaysModal').classList.remove('hidden');
+}
+
+const closeHolidaysModal = () => {
+  document.getElementById('holidaysModal').classList.add('hidden');
+  $("#modalHolidaysTitle").text('เพิ่มวันหยุดประจำปีใหม่');
+  $("#holidaysDataKye").val('');
+  $("#holidaysData1").val('');
+  $("#holidaysData2").val('');
+}
+
+const submitModalHolidays = () => {
+  event.preventDefault();
+  $("#customLoader").show();
+
+  const obj = {
+    datakey: document.getElementById('holidaysDataKye').value,
+    data1: document.getElementById('holidaysData1').value,
+    data2: document.getElementById('holidaysData2').value       
+  };
+
+  if (!obj.data1 || !obj.data2) {
+    showToast("กรุณากรอกข้อมูลให้ครบถ้วน", "warning");
+    $("#customLoader").hide();
+    return;
+  }
+
+  if (!obj.datakey) {
+    google.script.run.withSuccessHandler(async (res) => {
+      closeHolidaysModal();
+      await updateSpecificDataHolidays();
+      $("#customLoader").hide();
+      showToast("บันทึกข้อมูลสำเร็จ", "success");
+    }).addHolidays(obj);
+  } else {
+    google.script.run.withSuccessHandler(async (res) => {
+      closeHolidaysModal();
+      await updateSpecificDataHolidays();
+      $("#customLoader").hide();
+      showToast("แก้ไขข้อมูลสำเร็จ", "success");
+    }).upHolidays(obj);
+  }
+}
+
+const editHolidays = (codeID) => {
+  const rowIndex = allDataHolidays.find(row => row[0].trim() === codeID.trim());
+
+  const formatDateForInput = (rawDate) => {
+    if (!rawDate || typeof rawDate !== 'string') return '';
+    const [day, month, year] = rawDate.split('/');
+    if (!day || !month || !year) return '';
+    const paddedDay = day.padStart(2, '0');
+    const paddedMonth = month.padStart(2, '0');
+    return `${year}-${paddedMonth}-${paddedDay}`;
+  };
+
+  if (!rowIndex) {
+    showToast("ไม่พบข้อมูลที่เลือกในระบบ", "warning");
+    return;
+  }
+
+  openHolidaysModal();
+  $("#modalHolidaysTitle").text('แก้ไขวันหยุดประจำปี');
+  $('#holidaysDataKye').val(rowIndex[0]);
+
+  const dateHolidays = formatDateForInput(rowIndex[1]);
+  if (!dateHolidays) {
+    showToast("วันที่ไม่ถูกต้องหรือไม่พบวันที่", "warning");
+  }
+
+  $('#holidaysData1').val(dateHolidays);
+  $('#holidaysData2').val(rowIndex[2]);
+};
+
+const delHolidays = (codeID) => {
+  let rowIndex = allDataHolidays.find(row => row[0].trim() === codeID.trim());
+  
+  if (!rowIndex) {
+    showToast("ไม่พบข้อมูลที่เลือกในระบบ", "warning");
+    return;
+  }
+
+  if (rowIndex) {
+    $('#confirmBtnDel').off('click').on('click', function() {
+      document.getElementById('DelDataModal').classList.add('hidden');
+      $("#customLoader").show();
+      google.script.run.withSuccessHandler(async (res) => {
+        rowIndex = allDataHolidays.filter(row => row[0] !== codeID);
+        await updateSpecificDataHolidays();
+        $("#customLoader").hide();
+        showToast("ลบข้อมูลสำเร็จ", "success");
+      }).delDataHolidays(codeID);
+    });
+    $('#xDelconfirmData').off('click').on('click', function() {
+      document.getElementById('DelDataModal').classList.add('hidden');
+    });
+    document.getElementById('DelDataModal').classList.remove('hidden');
+  }
+}
+</script>

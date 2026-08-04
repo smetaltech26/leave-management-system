@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <?!= include ('css') ?>
+  <title>ระบบลางาน ออนไลน์ 2025</title>
+</head>
+  <body>
+  <?!= include ('page/00_FormLogin') ?>
+<section id="dashboardPage" style="display:none">
+  <div class="admin-dashboard sidebar-collapsed">
+    <!-- Sidebar -->
+    <?!= include ('page/Sidebar') ?>
+
+    <!-- Navbar -->
+    <?!= include ('page/Navbar') ?>
+
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay"></div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div id="page1">
+        <?!= include ('page/01_Home') ?>
+      </div>
+
+      <div id="page2" style="display:none">
+        <?!= include ('page/02_Approval') ?>
+      </div>
+
+      <div id="page3" style="display:none">
+        <?!= include ('page/03_Calendar') ?>
+      </div>
+
+      <div id="page4" style="display:none">
+        <?!= include ('page/04_ManagerDB') ?>
+      </div>
+
+      <div id="page5" style="display:none">
+        <?!= include ('page/05_Report') ?>
+      </div>
+
+      <div id="page6" style="display:none">
+        <?!= include ('page/06_Users') ?>
+      </div>
+
+      <div id="page7" style="display:none">
+        <?!= include ('page/07_SettingAgency') ?>
+      </div>
+
+      <div id="page8" style="display:none">
+        <?!= include ('page/08_SettingDepartments') ?>
+      </div>
+
+      <div id="page9" style="display:none">
+        <?!= include ('page/09_SettingUserPolicies') ?>
+      </div>
+
+      <div id="page10" style="display:none">
+        <?!= include ('page/10_SettingRole') ?>
+      </div>
+
+      <div id="page11" style="display:none">
+        <?!= include ('page/11_Holidays') ?>
+      </div>
+
+      <div id="page12" style="display:none">
+        <?!= include ('page/12_DayOfWeek') ?>
+      </div>
+
+      <div id="page13" style="display:none">
+        <?!= include ('page/13_ManagerDB') ?>
+      </div>
+
+      <div id="page14" style="display:none">
+        <?!= include ('page/14_Setting') ?>
+      </div>
+    </main>
+  
+  </div>
+</section>
+  <?!= include ('page/Toast') ?>
+  <?!= include ('page/Modal') ?>
+  <?!= include ('JavaScript') ?>
+  </body>
+</html>

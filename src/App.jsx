@@ -29,6 +29,25 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('home');
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
 
+  // Theme State: 'light' หรือ 'dark' (เริ่มต้นโหมดสว่าง Clean Light Mode)
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('smt_theme') || 'light';
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+    localStorage.setItem('smt_theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
   // คำนวณจำนวนรายการรออนุมัติสำหรับ currentUser
   const pendingCount = requests.filter(r => {
     if (r.status !== 'Pending') return false;
@@ -120,7 +139,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
+    <div className="min-h-screen flex flex-col ambient-light-bg transition-colors duration-300">
       
       {/* Top Navbar */}
       <Navbar
@@ -129,6 +148,8 @@ export default function App() {
         users={users}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
+        theme={theme}
+        toggleTheme={toggleTheme}
       />
 
       {/* Main Content Body */}

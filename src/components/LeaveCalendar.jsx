@@ -47,33 +47,33 @@ export default function LeaveCalendar({ requests, holidays, users }) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-white flex items-center space-x-2">
+          <h2 className="text-2xl font-bold text-[var(--text-main)] flex items-center space-x-2">
             <span>ปฏิทินแสดงการลางาน</span>
           </h2>
-          <p className="text-xs text-slate-400 mt-1">ตารางภาพรวมการลางานของพนักงาน และวันหยุดประจำปี {year}</p>
+          <p className="text-xs text-[var(--text-muted)] mt-1">ตารางภาพรวมการลางานของพนักงาน และวันหยุดประจำปี {year}</p>
         </div>
 
         {/* Month Navigator */}
-        <div className="flex items-center space-x-3 bg-slate-900/80 p-1.5 rounded-2xl border border-slate-800 self-start sm:self-auto">
-          <button onClick={prevMonth} className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-all">
+        <div className="flex items-center space-x-3 bg-[var(--card-bg)]/80 p-1.5 rounded-2xl border border-[var(--card-border)] self-start sm:self-auto">
+          <button onClick={prevMonth} className="p-2 rounded-xl text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--card-bg)] transition-all">
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <span className="text-xs font-bold text-white px-2">
+          <span className="text-xs font-bold text-[var(--text-main)] px-2">
             {monthNames[month]} {year + 543}
           </span>
-          <button onClick={nextMonth} className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-all">
+          <button onClick={nextMonth} className="p-2 rounded-xl text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--card-bg)] transition-all">
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
       </div>
 
       {/* Calendar Grid */}
-      <div className="glass-card rounded-3xl p-4 md:p-6 border border-slate-800 overflow-hidden shadow-2xl">
+      <div className="glass-card-clean rounded-3xl p-4 md:p-6 border border-[var(--card-border)] overflow-hidden shadow-2xl">
         
         {/* Days Header */}
         <div className="grid grid-cols-7 gap-1 text-center mb-2">
           {daysOfWeek.map((day, idx) => (
-            <div key={idx} className={`py-2 text-xs font-bold ${idx === 0 || idx === 6 ? 'text-rose-400' : 'text-slate-400'}`}>
+            <div key={idx} className={`py-2 text-xs font-bold ${idx === 0 || idx === 6 ? 'text-rose-400' : 'text-[var(--text-muted)]'}`}>
               {day}
             </div>
           ))}
@@ -99,12 +99,12 @@ export default function LeaveCalendar({ requests, holidays, users }) {
                   holiday
                     ? 'bg-rose-500/10 border-rose-500/30'
                     : isWeekend
-                    ? 'bg-slate-900/40 border-slate-800/60'
-                    : 'bg-slate-900/80 border-slate-800 hover:border-slate-700'
+                    ? 'bg-[var(--card-bg)]/40 border-[var(--card-border)]/60'
+                    : 'bg-[var(--card-bg)]/80 border-[var(--card-border)] hover:border-[var(--card-border)]'
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className={`text-xs font-bold ${holiday || isWeekend ? 'text-rose-400' : 'text-slate-200'}`}>
+                  <span className={`text-xs font-bold ${holiday || isWeekend ? 'text-rose-400' : 'text-[var(--text-main)]'}`}>
                     {dayNum}
                   </span>
                   {holiday && (

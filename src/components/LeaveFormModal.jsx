@@ -114,21 +114,21 @@ export default function LeaveFormModal({ isOpen, onClose, currentUser, users, us
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
-      <div className="w-full max-w-2xl glass-card-clean rounded-3xl p-6 md:p-8 border border-slate-200 dark:border-slate-800 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--card-bg)]/60 backdrop-blur-md animate-in fade-in">
+      <div className="w-full max-w-2xl glass-card-clean-clean rounded-3xl p-6 md:p-8 border border-slate-200 dark:border-[var(--card-border)] shadow-2xl relative max-h-[90vh] overflow-y-auto">
         
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800 mb-6">
+        <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-[var(--card-border)] mb-6">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
               <Calendar className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-lg font-extrabold text-slate-900 dark:text-white">ยื่นคำขอลางานใหม่</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">กรอกรายละเอียดเพื่อส่งอนุมัติไปยังหัวหน้างาน</p>
+              <h3 className="text-lg font-extrabold text-slate-900 dark:text-[var(--text-main)]">ยื่นคำขอลางานใหม่</h3>
+              <p className="text-xs text-slate-500 dark:text-[var(--text-muted)]">กรอกรายละเอียดเพื่อส่งอนุมัติไปยังหัวหน้างาน</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+          <button onClick={onClose} className="p-2 rounded-xl text-[var(--text-muted)] hover:bg-slate-100 dark:hover:bg-[var(--card-bg)] transition-all">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -139,7 +139,7 @@ export default function LeaveFormModal({ isOpen, onClose, currentUser, users, us
           {/* Leave Type Select */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">ประเภทการลา</label>
+              <label className="block text-xs font-bold text-slate-700 dark:text-[var(--text-muted)] mb-1.5">ประเภทการลา</label>
               <select
                 value={leaveType}
                 onChange={(e) => setLeaveType(e.target.value)}
@@ -156,7 +156,7 @@ export default function LeaveFormModal({ isOpen, onClose, currentUser, users, us
             {/* Quota Badge */}
             <div className="flex items-center p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
               <div className="text-xs">
-                <span className="text-slate-600 dark:text-slate-400">วันลาคงเหลือประเภทนี้: </span>
+                <span className="text-slate-600 dark:text-[var(--text-muted)]">วันลาคงเหลือประเภทนี้: </span>
                 <span className="text-emerald-700 dark:text-emerald-400 font-extrabold text-sm ml-1">{remainingDays} วัน</span>
               </div>
             </div>
@@ -164,7 +164,7 @@ export default function LeaveFormModal({ isOpen, onClose, currentUser, users, us
 
           {/* Reason */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">เหตุผลการลา</label>
+            <label className="block text-xs font-bold text-slate-700 dark:text-[var(--text-muted)] mb-1.5">เหตุผลการลา</label>
             <textarea
               required
               rows={2}
@@ -178,7 +178,7 @@ export default function LeaveFormModal({ isOpen, onClose, currentUser, users, us
           {/* Dates & Duration */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">วันที่เริ่มลา</label>
+              <label className="block text-xs font-bold text-slate-700 dark:text-[var(--text-muted)] mb-1.5">วันที่เริ่มลา</label>
               <input
                 type="date"
                 required
@@ -189,7 +189,7 @@ export default function LeaveFormModal({ isOpen, onClose, currentUser, users, us
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">วันที่สิ้นสุด</label>
+              <label className="block text-xs font-bold text-slate-700 dark:text-[var(--text-muted)] mb-1.5">วันที่สิ้นสุด</label>
               <input
                 type="date"
                 required
@@ -200,7 +200,7 @@ export default function LeaveFormModal({ isOpen, onClose, currentUser, users, us
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">จำนวน (วัน)</label>
+              <label className="block text-xs font-bold text-slate-700 dark:text-[var(--text-muted)] mb-1.5">จำนวน (วัน)</label>
               <input
                 type="number"
                 step="0.5"
@@ -214,8 +214,8 @@ export default function LeaveFormModal({ isOpen, onClose, currentUser, users, us
           </div>
 
           {/* Approvers Step 1 - 3 */}
-          <div className="p-4 rounded-2xl bg-slate-100/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-3">
-            <div className="flex items-center space-x-2 text-xs font-bold text-slate-700 dark:text-slate-300">
+          <div className="p-4 rounded-2xl bg-slate-100/80 dark:bg-[var(--card-bg)]/60 border border-slate-200 dark:border-[var(--card-border)] space-y-3">
+            <div className="flex items-center space-x-2 text-xs font-bold text-slate-700 dark:text-[var(--text-muted)]">
               <UserCheck className="w-4 h-4 text-emerald-500" />
               <span>ลำดับผู้อนุมัติ (Multi-step Approvers)</span>
             </div>
@@ -268,9 +268,9 @@ export default function LeaveFormModal({ isOpen, onClose, currentUser, users, us
 
           {/* Attachment File */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">แนบไฟล์หลักฐาน / ใบรับรองแพทย์ (ถ้ามี)</label>
+            <label className="block text-xs font-bold text-slate-700 dark:text-[var(--text-muted)] mb-1.5">แนบไฟล์หลักฐาน / ใบรับรองแพทย์ (ถ้ามี)</label>
             <div className="flex items-center space-x-3">
-              <label className="cursor-pointer py-2.5 px-4 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold border border-slate-200 dark:border-slate-700 flex items-center space-x-2 transition-all">
+              <label className="cursor-pointer py-2.5 px-4 rounded-2xl bg-slate-100 dark:bg-[var(--card-bg)] hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-[var(--text-muted)] text-xs font-semibold border border-slate-200 dark:border-[var(--card-border)] flex items-center space-x-2 transition-all">
                 <Upload className="w-4 h-4 text-emerald-500" />
                 <span>อัปโหลดรูปภาพ / เอกสาร</span>
                 <input type="file" accept="image/*,.pdf" onChange={handleFileChange} className="hidden" />
@@ -279,12 +279,12 @@ export default function LeaveFormModal({ isOpen, onClose, currentUser, users, us
             </div>
 
             {filePreview && (
-              <div className="mt-3 relative w-32 h-32 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-md">
+              <div className="mt-3 relative w-32 h-32 rounded-2xl overflow-hidden border border-slate-200 dark:border-[var(--card-border)] shadow-md">
                 <img src={filePreview} alt="Preview" className="w-full h-full object-cover" />
                 <button
                   type="button"
                   onClick={() => { setFile(null); setFilePreview(null); }}
-                  className="absolute top-1 right-1 bg-slate-900/80 p-1 rounded-full text-rose-400 hover:text-rose-300"
+                  className="absolute top-1 right-1 bg-[var(--card-bg)]/80 p-1 rounded-full text-rose-400 hover:text-rose-300"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -293,11 +293,11 @@ export default function LeaveFormModal({ isOpen, onClose, currentUser, users, us
           </div>
 
           {/* Buttons */}
-          <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+          <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-200 dark:border-[var(--card-border)]">
             <button
               type="button"
               onClick={onClose}
-              className="py-2.5 px-5 rounded-2xl text-xs font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+              className="py-2.5 px-5 rounded-2xl text-xs font-bold text-slate-500 dark:text-[var(--text-muted)] hover:bg-slate-100 dark:hover:bg-[var(--card-bg)] transition-all"
             >
               ยกเลิก
             </button>
@@ -305,7 +305,7 @@ export default function LeaveFormModal({ isOpen, onClose, currentUser, users, us
             <button
               type="submit"
               disabled={isSubmitting}
-              className="py-3 px-6 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white text-xs font-bold rounded-2xl shadow-lg shadow-emerald-500/25 flex items-center space-x-2 transition-all"
+              className="py-3 px-6 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-[var(--text-main)] text-xs font-bold rounded-2xl shadow-lg shadow-emerald-500/25 flex items-center space-x-2 transition-all"
             >
               <CheckCircle2 className="w-4 h-4" />
               <span>{isSubmitting ? 'กำลังส่งข้อมูล...' : 'ส่งคำขออนุมัติ'}</span>

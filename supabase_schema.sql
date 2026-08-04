@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS public.day_of_week (
     is_working_day BOOLEAN DEFAULT true NOT NULL
 );
 
--- Enable RLS on all tables (allow all read/write for now or configure rules)
+-- Enable RLS on all tables
 ALTER TABLE public.agencies ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.departments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
@@ -113,16 +113,21 @@ ALTER TABLE public.attachments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.holidays ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.day_of_week ENABLE ROW LEVEL SECURITY;
 
--- Allow anon public access policies for development
-CREATE POLICY "Allow public read/write agencies" ON public.agencies FOR ALL USING (true);
-CREATE POLICY "Allow public read/write departments" ON public.departments FOR ALL USING (true);
-CREATE POLICY "Allow public read/write users" ON public.users FOR ALL USING (true);
-CREATE POLICY "Allow public read/write user_policies" ON public.user_policies FOR ALL USING (true);
-CREATE POLICY "Allow public read/write leave_requests" ON public.leave_requests FOR ALL USING (true);
-CREATE POLICY "Allow public read/write approval_steps" ON public.approval_steps FOR ALL USING (true);
-CREATE POLICY "Allow public read/write attachments" ON public.attachments FOR ALL USING (true);
-CREATE POLICY "Allow public read/write holidays" ON public.holidays FOR ALL USING (true);
-CREATE POLICY "Allow public read/write day_of_week" ON public.day_of_week FOR ALL USING (true);
+-- Allow anon & authenticated full access
+CREATE POLICY "Allow anon all agencies" ON public.agencies FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow anon all departments" ON public.departments FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow anon all users" ON public.users FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow anon all user_policies" ON public.user_policies FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow anon all leave_requests" ON public.leave_requests FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow anon all approval_steps" ON public.approval_steps FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow anon all attachments" ON public.attachments FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow anon all holidays" ON public.holidays FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow anon all day_of_week" ON public.day_of_week FOR ALL USING (true) WITH CHECK (true);
+
+-- Grant privileges to anon and authenticated roles
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL FUNCTIONS IN SCHEMA public TO anon, authenticated, service_role;
 
 -- Insert Default Day of Week
 INSERT INTO public.day_of_week (id, day_name, is_working_day) VALUES

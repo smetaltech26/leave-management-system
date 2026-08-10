@@ -27,9 +27,8 @@ export default function Navbar({ currentUser, setCurrentUser, users, activeTab, 
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <h1 className="font-bold text-lg text-[var(--text-main)] dark:text-[var(--text-main)] tracking-tight">
-                <span className="hidden sm:inline">Leave Management System</span>
-                <span className="sm:hidden">LMS</span>
+              <h1 className="font-bold text-base sm:text-lg text-[var(--text-main)] dark:text-[var(--text-main)] tracking-tight">
+                Leave Management System
               </h1>
             </div>
             <p className="text-xs text-[var(--text-muted)] dark:text-[var(--text-muted)] hidden sm:block">ระบบจัดการคำขอลางานออนไลน์ (S Metal Tech)</p>

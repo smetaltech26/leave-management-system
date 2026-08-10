@@ -54,7 +54,7 @@ export default function LeaveDetailsModal({ isOpen, onClose, request, user, allP
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose}>
-      <div className="bg-[var(--bg-main)] rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden border border-[var(--card-border)] relative" onClick={e => e.stopPropagation()}>
+      <div className="bg-[var(--bg-main)] rounded-3xl shadow-2xl w-full max-w-[calc(100vw-2rem)] sm:max-w-2xl max-h-[90vh] flex flex-col overflow-hidden border border-[var(--card-border)] relative" onClick={e => e.stopPropagation()}>
         
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-[var(--card-border)] flex justify-between items-center bg-[var(--card-bg)] min-w-0">

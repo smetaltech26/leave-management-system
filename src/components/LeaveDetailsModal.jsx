@@ -62,9 +62,9 @@ export default function LeaveDetailsModal({ isOpen, onClose, request, user, allP
             <div className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center bg-slate-100 dark:bg-slate-800 shadow-inner`}>
               <FileText className={`w-5 h-5 ${typeInfo.color}`} />
             </div>
-            <div className="min-w-0">
-              <h2 className="text-lg sm:text-xl font-bold text-[var(--text-main)] truncate">รายละเอียดคำขอ {request.id}</h2>
-              <p className="text-xs text-[var(--text-muted)] font-medium truncate">ยื่นเมื่อ: {new Date(request.created_at).toLocaleString('th-TH')}</p>
+            <div className="min-w-0 pr-2">
+              <h2 className="text-sm md:text-base lg:text-lg font-bold text-[var(--text-main)] leading-tight">รายละเอียดคำขอ {request.id}</h2>
+              <p className="text-[10px] sm:text-xs text-[var(--text-muted)] font-medium truncate mt-0.5">ยื่นเมื่อ: {new Date(request.created_at).toLocaleString('th-TH')}</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 rounded-full transition-colors">

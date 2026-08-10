@@ -32,7 +32,7 @@ export default function LoginPage({ onLogin, users, theme = 'light', toggleTheme
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-950">
+    <div className="min-h-[100dvh] flex flex-col justify-start pt-12 md:pt-0 md:justify-center items-center p-4 bg-slate-50 dark:bg-slate-950">
       {/* Overlay */}
       <div className={`absolute inset-0 backdrop-blur-md transition-colors duration-500 ${theme === 'dark' ? 'bg-slate-950/80' : 'bg-blue-50/70'}`}></div>
 

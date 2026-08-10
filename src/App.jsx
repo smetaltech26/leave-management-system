@@ -357,7 +357,7 @@ export default function App() {
   };
 
   return (
-    <div className="h-screen flex flex-col ambient-light-bg transition-colors duration-300 overflow-hidden">
+    <div className="fixed inset-0 flex flex-col ambient-light-bg transition-colors duration-300 overflow-hidden">
       
       {/* Top Navbar */}
       <Navbar

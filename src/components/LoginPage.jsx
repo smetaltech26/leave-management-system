@@ -49,7 +49,7 @@ export default function LoginPage({ onLogin, users, theme = 'light', toggleTheme
 
         {/* Logo Section */}
         <div className="flex flex-col items-center justify-center mb-10 relative">
-          <div className="absolute top-0 right-4 sm:right-8 text-blue-600 dark:text-blue-400 font-bold text-xs sm:text-sm animate-pulse rotate-12 bg-blue-100 dark:bg-blue-900/30 px-2 py-0.5 rounded-md shadow-sm border border-blue-200 dark:border-blue-800 pointer-events-none">
+          <div className="absolute top-0 right-4 sm:right-8 text-blue-600 dark:text-blue-400 font-bold text-xs sm:text-sm animate-pulse bg-blue-100 dark:bg-blue-900/30 px-2 py-0.5 rounded-md shadow-sm border border-blue-200 dark:border-blue-800 pointer-events-none">
             New Version ✨
           </div>
           <div className="w-24 h-24 bg-white rounded-2xl shadow-xl flex items-center justify-center p-2 mb-6 border border-slate-100 overflow-hidden">

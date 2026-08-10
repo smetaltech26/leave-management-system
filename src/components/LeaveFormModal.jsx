@@ -280,11 +280,11 @@ export default function LeaveFormModal({ isOpen, onClose, currentUser, users, us
 
   return (
     <>
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--card-bg)]/60 backdrop-blur-md animate-in fade-in">
-      <div className="w-[90vw] md:w-full md:max-w-2xl glass-card-clean-clean rounded-3xl p-6 md:p-8 border border-slate-200 dark:border-[var(--card-border)] shadow-2xl relative max-h-[85vh] md:max-h-[90vh] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+      <div className="bg-slate-50 dark:bg-slate-900 w-[90vw] md:w-full md:max-w-2xl max-h-[75vh] md:max-h-[85vh] rounded-[2rem] shadow-2xl flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800">
         
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-[var(--card-border)] shrink-0">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900 shrink-0">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-2xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
               <Calendar className="w-5 h-5" />
@@ -294,13 +294,14 @@ export default function LeaveFormModal({ isOpen, onClose, currentUser, users, us
               <p className="text-xs text-[var(--text-muted)] dark:text-[var(--text-muted)]">{editingRequest ? 'แก้ไขรายละเอียดคำขอเดิมที่ยังไม่มีผู้อนุมัติ' : 'กรอกรายละเอียดเพื่อส่งอนุมัติไปยังหัวหน้างาน'}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 rounded-xl text-[var(--text-muted)] hover:bg-slate-100 dark:hover:bg-[var(--card-bg)] transition-all">
+          <button onClick={onClose} className="p-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 rounded-full transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-5 overflow-y-auto custom-scrollbar flex-grow pr-2">
+        {/* Form Body (Scrollable) */}
+        <div className="overflow-y-auto custom-scrollbar flex-1 bg-slate-50 dark:bg-slate-900">
+          <form id="leave-form" onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6">
           
           {/* Leave Type Select */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -463,27 +464,28 @@ export default function LeaveFormModal({ isOpen, onClose, currentUser, users, us
             )}
           </div>
 
-          {/* Buttons */}
-          <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-200 dark:border-[var(--card-border)]">
-            <button
-              type="button"
-              onClick={onClose}
-              className="py-2.5 px-5 rounded-2xl text-xs font-bold text-[var(--text-muted)] dark:text-[var(--text-muted)] hover:bg-slate-100 dark:hover:bg-[var(--card-bg)] transition-all"
-            >
-              ยกเลิก
-            </button>
+          </form>
+        </div>
 
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="py-3 px-6 bg-gradient-to-r from-blue-500 to-sky-600 hover:from-blue-400 hover:to-sky-500 text-white text-sm font-bold rounded-2xl shadow-lg shadow-blue-500/30 flex items-center space-x-2 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
-            >
-              <CheckCircle2 className="w-4 h-4" />
-              <span>{isSubmitting ? 'กำลังส่งข้อมูล...' : 'ส่งคำขออนุมัติ'}</span>
-            </button>
-          </div>
+        {/* Footer Buttons */}
+        <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-end space-x-3 shrink-0">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-6 py-2.5 rounded-xl text-sm font-bold bg-rose-500 hover:bg-rose-600 text-white transition-colors"
+          >
+            ยกเลิก
+          </button>
 
-        </form>
+          <button
+            type="submit"
+            form="leave-form"
+            disabled={isSubmitting}
+            className="px-6 py-2.5 rounded-xl text-sm font-bold bg-emerald-500 hover:bg-emerald-600 text-white transition-colors shadow-lg shadow-emerald-500/30 flex items-center space-x-2"
+          >
+            {isSubmitting ? <span>กำลังส่งข้อมูล...</span> : <span>ส่งคำขออนุมัติ</span>}
+          </button>
+        </div>
 
       </div>
     </div>

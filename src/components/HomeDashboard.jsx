@@ -149,7 +149,8 @@ export default function HomeDashboard({ currentUser, userPolicies, requests, onD
 
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Desktop Table View */}
+        <div className="overflow-x-auto hidden md:block">
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800/50 text-[var(--text-main)] border-b border-slate-200 dark:border-[var(--card-border)]">
@@ -178,7 +179,6 @@ export default function HomeDashboard({ currentUser, userPolicies, requests, onD
                     badge: 'bg-slate-100 text-slate-900 border-slate-300 dark:bg-slate-800 dark:text-slate-300'
                   };
                   
-                  // เงื่อนไขสามารถแก้ไข/ลบได้ เฉพาะเมื่อยังไม่มีการอนุมัติใดๆ (เช่น Pending และ current_step = 1)
                   const canEditOrDelete = req.status === 'Pending' && req.current_step === 1;
 
                   return (
@@ -260,6 +260,99 @@ export default function HomeDashboard({ currentUser, userPolicies, requests, onD
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Card View */}
+        <div className="md:hidden flex flex-col divide-y divide-slate-100 dark:divide-[var(--card-border)]">
+          {myRequests.length === 0 ? (
+            <div className="py-12 text-center">
+              <Send className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+              <p className="text-slate-500 dark:text-slate-400 font-bold">คุณยังไม่มีคำขอลางานในขณะนี้</p>
+            </div>
+          ) : (
+            myRequests.map((req) => {
+              const meta = leaveTypesLabel[req.leave_type] || { 
+                name: req.leave_type,
+                badge: 'bg-slate-100 text-slate-900 border-slate-300 dark:bg-slate-800 dark:text-slate-300'
+              };
+              
+              const canEditOrDelete = req.status === 'Pending' && req.current_step === 1;
+
+              return (
+                <div key={req.id} className="p-4 space-y-4 hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-3">
+                      <img 
+                        src={currentUser?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser?.fullname)}&background=random`} 
+                        alt="" 
+                        className="w-12 h-12 rounded-full object-cover border-2 border-slate-100 dark:border-slate-800 shadow-sm" 
+                        onError={(e) => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser?.fullname)}&background=random`; }}
+                      />
+                      <div>
+                        <div className="font-mono text-blue-500 dark:text-blue-400 text-xs font-bold mb-0.5">{req.id}</div>
+                        <div className="font-bold text-[var(--text-main)] text-sm">{currentUser?.fullname}</div>
+                        <div className="text-xs text-[var(--text-muted)] mt-0.5">{agencies?.find(a => a.id === currentUser?.agency_id)?.name || currentUser?.agency_id || 'SMT'} | {departments?.find(d => d.id === currentUser?.department_id)?.name || currentUser?.department_id || 'ทั่วไป'}</div>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-2">
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center justify-center w-fit ${meta.badge.replace('border', '')}`}>{meta.name}</span>
+                      
+                      {req.status === 'Pending' && (
+                        <span className="px-2 py-1 bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 rounded-md text-[10px] font-bold flex items-center gap-1 w-fit"><Clock className="w-2.5 h-2.5"/> ขั้น {req.current_step}</span>
+                      )}
+                      {req.status === 'Approved' && (
+                        <span className="px-2 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 rounded-md text-[10px] font-bold flex items-center gap-1 w-fit"><CheckCircle2 className="w-2.5 h-2.5"/> อนุมัติ</span>
+                      )}
+                      {req.status === 'Rejected' && (
+                        <span className="px-2 py-1 bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400 rounded-md text-[10px] font-bold flex items-center gap-1 w-fit"><XCircle className="w-2.5 h-2.5"/> ไม่อนุมัติ</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center bg-slate-50 dark:bg-[var(--card-bg)] rounded-xl p-3 border border-slate-100 dark:border-[var(--card-border)]">
+                    <div className="text-xs text-center">
+                      <div className="text-[var(--text-muted)] font-medium mb-1">เริ่มต้น</div>
+                      <div className="font-bold text-[var(--text-main)]">{req.date_start ? req.date_start.split('-').reverse().join('-') : ''}</div>
+                    </div>
+                    <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 flex flex-col items-center">
+                      <span>{req.leave_duration} วัน</span>
+                      <div className="w-12 h-px bg-slate-300 dark:bg-slate-700 my-1"></div>
+                    </div>
+                    <div className="text-xs text-center">
+                      <div className="text-[var(--text-muted)] font-medium mb-1">สิ้นสุด</div>
+                      <div className="font-bold text-[var(--text-main)]">{req.date_end ? req.date_end.split('-').reverse().join('-') : ''}</div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center gap-2">
+                    <div className="text-xs text-[var(--text-muted)] truncate flex-1" title={req.description}>
+                      <span className="font-bold">เหตุผล: </span>{req.description}
+                    </div>
+                    <div className="flex gap-1.5 shrink-0">
+                      <button onClick={() => setSelectedRequest(req)} className="p-2 text-blue-600 bg-blue-100 dark:bg-blue-500/20 hover:bg-blue-200 dark:hover:bg-blue-500/40 rounded-lg transition-colors" title="ดูรายละเอียด">
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      
+                      {canEditOrDelete && (
+                        <>
+                          <button onClick={() => onOpenLeaveModal(req)} className="p-2 text-amber-600 bg-amber-100 dark:bg-amber-500/20 hover:bg-amber-200 dark:hover:bg-amber-500/40 rounded-lg transition-colors" title="แก้ไขคำขอ">
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => {
+                            if(window.confirm('คุณต้องการยกเลิก/ลบ คำขอลานี้ใช่หรือไม่?')) {
+                              onDeleteRequest(req.id);
+                            }
+                          }} className="p-2 text-rose-600 bg-rose-100 dark:bg-rose-500/20 hover:bg-rose-200 dark:hover:bg-rose-500/40 rounded-lg transition-colors" title="ลบคำขอ">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
 

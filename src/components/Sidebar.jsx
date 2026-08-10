@@ -1,7 +1,7 @@
 import React from 'react';
-import { Home, CheckSquare, Calendar, Users, Settings, FileText, PlusCircle, LogOut, ShieldCheck } from 'lucide-react';
+import { Home, CheckSquare, Calendar, Users, Settings, FileText, PlusCircle, LogOut, ShieldCheck, X } from 'lucide-react';
 
-export default function Sidebar({ activeTab, setActiveTab, currentUser, setCurrentUser, pendingCount, onOpenLeaveModal, permissions }) {
+export default function Sidebar({ activeTab, setActiveTab, currentUser, setCurrentUser, pendingCount, onOpenLeaveModal, permissions, isMobileMenuOpen, setIsMobileMenuOpen }) {
   
   // ตรวจสอบสิทธิ์การเข้าถึงเมนูจาก Role ปัจจุบัน
   const checkPermission = (menuItemCode) => {
@@ -116,33 +116,76 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, setCurre
             </span>
           </button>
         </div>
+        </div>
       </aside>
 
-      {/* Mobile Bottom Navigation */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 glass-panel-clean border-t border-slate-200 dark:border-[var(--card-border)] z-40 px-2 py-2 flex items-center justify-around shadow-2xl">
-        {navItems.filter(item => item.show !== false).slice(0, 5).map((item) => {
-          const Icon = item.icon;
-          const isActive = activeTab === item.id;
+      {/* Mobile Drawer Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 md:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        ></div>
+      )}
 
-          return (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`flex flex-col items-center py-1 px-3 rounded-xl relative transition-all ${
-                isActive ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-[var(--text-muted)] dark:text-[var(--text-muted)]'
-              }`}
-            >
-              <Icon className="w-5 h-5" />
-              <span className="text-[10px] mt-1 font-medium">{item.label}</span>
-              {item.badge && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-[var(--text-main)] text-[9px] font-bold rounded-full flex items-center justify-center">
-                  {item.badge}
-                </span>
-              )}
+      {/* Mobile Drawer */}
+      <aside className={`fixed top-0 left-0 bottom-0 w-72 glass-panel-clean border-r border-slate-200 dark:border-[var(--card-border)] py-6 px-3 flex flex-col justify-between z-50 transform transition-transform duration-300 md:hidden ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between px-2 mb-4">
+            <span className="font-bold text-[var(--text-main)] text-lg">เมนูหลัก</span>
+            <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-[var(--text-muted)] hover:text-slate-800 dark:hover:text-slate-200">
+              <X className="w-6 h-6" />
             </button>
-          );
-        })}
-      </div>
+          </div>
+          {/* Navigation Links */}
+          <div className="space-y-2">
+            {navItems.filter(item => item.show !== false).map((item) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    setActiveTab(item.id);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  title={item.label}
+                  className={`w-full flex items-center px-4 py-3.5 rounded-2xl font-bold text-base transition-all overflow-hidden ${
+                    isActive
+                      ? 'bg-blue-500 text-white shadow-md shadow-blue-500/20'
+                      : 'text-[var(--text-muted)] dark:text-[var(--text-muted)] hover:text-[var(--text-main)] dark:hover:text-[var(--text-main)] hover:bg-slate-100 dark:hover:bg-[var(--card-bg)]/60'
+                  }`}
+                >
+                  <div className="flex-shrink-0 flex items-center justify-center">
+                    <Icon className={`w-[22px] h-[22px] ${isActive ? 'text-white' : 'text-[var(--text-muted)]'}`} />
+                  </div>
+                  <span className="ml-4">{item.label}</span>
+                  
+                  {item.badge && (
+                    <span className="ml-auto px-2 py-0.5 text-xs font-extrabold bg-rose-500 text-white rounded-full shadow-sm">
+                      {item.badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Footer Actions */}
+        <div className="space-y-3 pb-4">
+          <button
+            onClick={() => setCurrentUser(null)}
+            title="ออกจากระบบ"
+            className="w-full flex items-center px-4 py-3.5 rounded-xl text-rose-500 hover:bg-rose-500/10 font-bold text-base transition-all border border-transparent overflow-hidden"
+          >
+            <div className="flex-shrink-0 flex items-center justify-center">
+              <LogOut className="w-[22px] h-[22px]" />
+            </div>
+            <span className="ml-4">ออกจากระบบ</span>
+          </button>
+        </div>
+      </aside>
     </>
   );
 }

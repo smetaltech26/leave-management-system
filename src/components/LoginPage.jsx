@@ -32,11 +32,7 @@ export default function LoginPage({ onLogin, users, theme = 'light', toggleTheme
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ 
-        backgroundImage: "url('https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&q=80')",
-        backgroundSize: "cover",
-        backgroundPosition: "center"
-    }}>
+    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-950">
       {/* Overlay */}
       <div className={`absolute inset-0 backdrop-blur-md transition-colors duration-500 ${theme === 'dark' ? 'bg-slate-950/80' : 'bg-blue-50/70'}`}></div>
 

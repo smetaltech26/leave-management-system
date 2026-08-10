@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Bell, User, LogOut, Shield, ChevronDown, Sun, Moon, Sparkles } from 'lucide-react';
+import { Bell, User, LogOut, Shield, ChevronDown, Sun, Moon, Sparkles, Menu } from 'lucide-react';
 import logoUrl from '../assets/smt-logo.jpg';
 
-export default function Navbar({ currentUser, setCurrentUser, users, activeTab, setActiveTab, theme, toggleTheme }) {
+export default function Navbar({ currentUser, setCurrentUser, users, activeTab, setActiveTab, theme, toggleTheme, setIsMobileMenuOpen }) {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   return (
@@ -11,6 +11,17 @@ export default function Navbar({ currentUser, setCurrentUser, users, activeTab, 
         
         {/* Brand & Logo */}
         <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setActiveTab('home')}>
+          {/* Hamburger Menu (Mobile Only) */}
+          <button 
+            className="md:hidden p-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsMobileMenuOpen(true);
+            }}
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+
           <div className="w-10 h-10 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex items-center justify-center">
             <img src={logoUrl} alt="SMT Logo" className="w-full h-full object-cover" />
           </div>

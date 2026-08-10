@@ -28,6 +28,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('home');
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
   const [editingRequest, setEditingRequest] = useState(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleOpenLeaveModal = (req = null) => {
     setEditingRequest(req);
@@ -367,10 +368,11 @@ export default function App() {
         setActiveTab={setActiveTab}
         theme={theme}
         toggleTheme={toggleTheme}
+        setIsMobileMenuOpen={setIsMobileMenuOpen}
       />
 
       {/* Main Content Body */}
-      <div className="flex-1 flex w-full px-2 lg:px-6 pb-20 md:pb-8 overflow-hidden">
+      <div className="flex-1 flex w-full px-0 md:px-2 lg:px-6 pb-0 overflow-hidden relative">
         
         {/* Sidebar */}
         <Sidebar 
@@ -381,6 +383,8 @@ export default function App() {
           pendingCount={pendingCount}
           onOpenLeaveModal={() => handleOpenLeaveModal(null)}
           permissions={permissions}
+          isMobileMenuOpen={isMobileMenuOpen}
+          setIsMobileMenuOpen={setIsMobileMenuOpen}
         />
 
         {/* Dynamic Page Views */}

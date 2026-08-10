@@ -57,17 +57,17 @@ export default function LeaveDetailsModal({ isOpen, onClose, request, user, allP
       <div className="bg-[var(--bg-main)] rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden border border-[var(--card-border)] relative" onClick={e => e.stopPropagation()}>
         
         {/* Header */}
-        <div className="p-5 border-b border-[var(--card-border)] flex justify-between items-center bg-[var(--card-bg)]">
-          <div className="flex items-center space-x-3">
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center bg-slate-100 dark:bg-slate-800 shadow-inner`}>
+        <div className="p-4 sm:p-5 border-b border-[var(--card-border)] flex justify-between items-center bg-[var(--card-bg)] min-w-0">
+          <div className="flex items-center space-x-3 min-w-0">
+            <div className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center bg-slate-100 dark:bg-slate-800 shadow-inner`}>
               <FileText className={`w-5 h-5 ${typeInfo.color}`} />
             </div>
-            <div>
-              <h2 className="text-xl font-bold text-[var(--text-main)]">รายละเอียดคำขอ {request.id}</h2>
-              <p className="text-xs text-[var(--text-muted)] font-medium">ยื่นเมื่อ: {new Date(request.created_at).toLocaleString('th-TH')}</p>
+            <div className="min-w-0">
+              <h2 className="text-lg sm:text-xl font-bold text-[var(--text-main)] truncate">รายละเอียดคำขอ {request.id}</h2>
+              <p className="text-xs text-[var(--text-muted)] font-medium truncate">ยื่นเมื่อ: {new Date(request.created_at).toLocaleString('th-TH')}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 text-[var(--text-muted)] hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-full transition-colors">
+          <button onClick={onClose} className="p-2 shrink-0 text-[var(--text-muted)] hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-full transition-colors">
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -76,19 +76,19 @@ export default function LeaveDetailsModal({ isOpen, onClose, request, user, allP
         <div className="p-6 overflow-y-auto custom-scrollbar flex-grow space-y-6">
           
           {/* User Info & Status */}
-          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 p-4 rounded-2xl bg-[var(--card-bg)] border border-[var(--card-border)] shadow-sm">
-            <div className="flex items-center space-x-4">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 p-4 rounded-2xl bg-[var(--card-bg)] border border-[var(--card-border)] shadow-sm min-w-0">
+            <div className="flex items-center space-x-4 min-w-0">
               <img 
                 src={user?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullname || request.user_id)}&background=random`}
                 alt="Profile" 
-                className="w-20 h-20 rounded-full border-4 border-slate-100 dark:border-slate-800 shadow-md"
+                className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 rounded-full border-4 border-slate-100 dark:border-slate-800 shadow-md"
               />
-              <div>
-                <h3 className="text-lg font-bold text-[var(--text-main)]">{user?.fullname || request.user_id}</h3>
-                <p className="text-sm text-[var(--text-muted)]">{agencies?.find(a => a.id === user?.agency_id)?.name || 'ไม่ระบุสังกัด'} | {departments?.find(d => d.id === user?.department_id)?.name || 'ไม่ระบุฝ่าย'}</p>
+              <div className="min-w-0">
+                <h3 className="text-base sm:text-lg font-bold text-[var(--text-main)] truncate">{user?.fullname || request.user_id}</h3>
+                <p className="text-xs sm:text-sm text-[var(--text-muted)] truncate">{agencies?.find(a => a.id === user?.agency_id)?.name || 'ไม่ระบุสังกัด'} | {departments?.find(d => d.id === user?.department_id)?.name || 'ไม่ระบุฝ่าย'}</p>
               </div>
             </div>
-            <div className="flex flex-col items-end">
+            <div className="flex flex-col items-end shrink-0">
               {request.status === 'Approved' ? (
                 <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200 flex items-center shadow-sm">
                   <CheckCircle2 className="w-4 h-4 mr-1.5" /> อนุมัติแล้ว
@@ -189,11 +189,11 @@ export default function LeaveDetailsModal({ isOpen, onClose, request, user, allP
                             <span className="text-[10px] font-bold text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">รอดำเนินการ</span>
                           )}
                         </div>
-                        <div className="flex items-center space-x-4 mb-2">
-                          <img src={approverUser?.avatar_url || step.approver?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(approverUser?.fullname || step.approver?.fullname || step.approver_id)}&background=random`} className="w-12 h-12 rounded-full shadow-sm object-cover border-2 border-slate-100 dark:border-slate-700" alt="approver" />
-                          <div className="flex flex-col">
-                            <span className="text-sm font-bold text-[var(--text-main)]">{approverUser?.fullname || step.approver?.fullname || step.approver_id}</span>
-                            <span className="text-xs font-medium text-[var(--text-muted)]">{approverAgency} | {approverDept} <span className="font-bold">({roleTitle})</span></span>
+                        <div className="flex items-center space-x-3 sm:space-x-4 mb-2 min-w-0">
+                          <img src={approverUser?.avatar_url || step.approver?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(approverUser?.fullname || step.approver?.fullname || step.approver_id)}&background=random`} className="w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-full shadow-sm object-cover border-2 border-slate-100 dark:border-slate-700" alt="approver" />
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-sm font-bold text-[var(--text-main)] truncate">{approverUser?.fullname || step.approver?.fullname || step.approver_id}</span>
+                            <span className="text-[10px] sm:text-xs font-medium text-[var(--text-muted)] truncate">{approverAgency} | {approverDept} <span className="font-bold">({roleTitle})</span></span>
                           </div>
                         </div>
                         {step.action_date && (

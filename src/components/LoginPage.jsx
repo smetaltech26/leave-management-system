@@ -56,7 +56,7 @@ export default function LoginPage({ onLogin, users, theme = 'light', toggleTheme
             Leave Management <span className="text-blue-600 dark:text-blue-400">System</span>
           </h1>
           <p className="text-sm font-medium text-slate-600 dark:text-slate-300 text-center bg-white/80 dark:bg-slate-800/80 px-4 py-1.5 rounded-full shadow-sm border border-slate-100 dark:border-slate-700">
-            ระบบจัดการคำขอลางานออนไลน์ (S Metal Tech)
+            ระบบจัดการคำขอลางานออนไลน์
           </p>
         </div>
 

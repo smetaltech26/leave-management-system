@@ -45,24 +45,24 @@ export default function HomeDashboard({ currentUser, userPolicies, requests, onD
     <div className="space-y-7 animate-in fade-in duration-200">
       
       {/* Premium Hero Welcome Banner */}
-      <div className="rounded-[1.5rem] p-3 md:p-4 relative overflow-hidden bg-gradient-to-r from-blue-600 via-sky-600 to-cyan-700 text-white shadow-xl shadow-sky-600/15">
-        <div className="absolute right-0 top-0 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="rounded-[1.5rem] p-3 md:p-4 relative overflow-hidden bg-gradient-to-r from-blue-600 via-sky-600 to-cyan-700 dark:from-slate-800 dark:via-slate-800 dark:to-slate-900 text-white shadow-xl shadow-sky-600/15 dark:shadow-none border border-transparent dark:border-slate-700/50">
+        <div className="absolute right-0 top-0 w-96 h-96 bg-white/10 dark:bg-blue-500/5 rounded-full blur-3xl pointer-events-none"></div>
         
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
           <div className="space-y-1">
             <h2 className="text-xl md:text-2xl font-extrabold tracking-tight drop-shadow-sm">
               สวัสดีค่ะคุณ {currentUser?.fullname}
             </h2>
-            <p className="text-blue-100 text-xs md:text-sm font-semibold">
+            <p className="text-blue-100 dark:text-slate-400 text-xs md:text-sm font-semibold">
               สังกัด: {agencies?.find(a => a.id === currentUser?.agency_id)?.name || currentUser?.agency_id || 'SMT'} | ฝ่าย: {departments?.find(d => d.id === currentUser?.department_id)?.name || currentUser?.department_id || 'ทั่วไป'}
             </p>
           </div>
 
           <button
             onClick={() => onOpenLeaveModal()}
-            className="py-2 px-5 bg-white hover:bg-blue-50 text-blue-900 font-extrabold rounded-xl shadow-lg flex items-center justify-center space-x-2 transition-all transform hover:scale-105 active:scale-95 shrink-0 text-sm border border-blue-100"
+            className="py-2 px-5 bg-white dark:bg-blue-500/20 hover:bg-blue-50 dark:hover:bg-blue-500/30 text-blue-900 dark:text-blue-300 font-extrabold rounded-xl shadow-lg dark:shadow-none flex items-center justify-center space-x-2 transition-all transform hover:scale-105 active:scale-95 shrink-0 text-sm border border-blue-100 dark:border-blue-500/30"
           >
-            <PlusCircle className="w-5 h-5 text-blue-600" />
+            <PlusCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             <span>ยื่นใบลาใหม่</span>
           </button>
         </div>

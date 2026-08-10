@@ -17,7 +17,11 @@ export const sendLinePushToUser = async (lineUserId, messageText, channelAccessT
   }
 
   try {
-    const response = await fetch('https://api.line.me/v2/bot/message/push', {
+    const apiUrl = import.meta.env.DEV 
+      ? '/line-api/v2/bot/message/push' 
+      : 'https://api.line.me/v2/bot/message/push';
+
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -53,14 +57,23 @@ export const notifyLeaveApprover = async ({ approverName, lineUserId, requesterN
     'Annual': 'ลาพักร้อน',
     'Sick': 'ลาป่วย',
     'Personal': 'ลากิจ',
-    'Other': 'อื่นๆ',
+    'Other': 'ลาอื่นๆ',
     'Maternity': 'ลาคลอด',
     'Study': 'ลาศึกษา',
     'Military': 'ลาทหาร'
   };
 
   const typeName = leaveTypesMap[leaveType] || leaveType;
-  const message = `${approverName} มีพนักงาน (${requesterName}) ขออนุมัติ${typeName} (${dateRange}) เข้ามาในระบบค่ะ (ขั้นตอนที่ ${stepNum}) ช่วยตรวจสอบและอนุมัติด้วยค่ะ 🙏`;
+  
+  let formattedDateRange = dateRange;
+  if (dateRange && dateRange.includes(' ถึง ')) {
+    const [start, end] = dateRange.split(' ถึง ');
+    if (start && end) {
+      formattedDateRange = `${start.split('-').reverse().join('-')} ถึง ${end.split('-').reverse().join('-')}`;
+    }
+  }
+
+  const message = `${approverName} มีพนักงาน (${requesterName}) ขออนุมัติ${typeName} (${formattedDateRange}) เข้ามาในระบบค่ะ ช่วยตรวจสอบและอนุมัติด้วยค่ะ 🙏`;
 
   return await sendLinePushToUser(lineUserId, message, channelAccessToken);
 };

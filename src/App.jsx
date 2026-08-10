@@ -6,28 +6,33 @@ import HomeDashboard from './components/HomeDashboard';
 import LeaveFormModal from './components/LeaveFormModal';
 import ApprovalPage from './components/ApprovalPage';
 import LeaveCalendar from './components/LeaveCalendar';
+import LoginPage from './components/LoginPage';
 import UsersPage from './components/UsersPage';
 import SettingsPage from './components/SettingsPage';
 import ReportPage from './components/ReportPage';
+import PermissionsPage from './components/admin/PermissionsPage';
 
-import {
-  INITIAL_USERS,
-  INITIAL_AGENCIES,
-  INITIAL_DEPARTMENTS,
-  INITIAL_USER_POLICIES,
-  INITIAL_REQUESTS,
-  INITIAL_HOLIDAYS
-} from './lib/mockData';
+import * as api from './services/supabaseApi';
 
 export default function App() {
-  const [users, setUsers] = useState(INITIAL_USERS);
-  const [userPolicies, setUserPolicies] = useState(INITIAL_USER_POLICIES);
-  const [requests, setRequests] = useState(INITIAL_REQUESTS);
-  const [holidays, setHolidays] = useState(INITIAL_HOLIDAYS);
+  const [users, setUsers] = useState([]);
+  const [userPolicies, setUserPolicies] = useState([]);
+  const [requests, setRequests] = useState([]);
+  const [holidays, setHolidays] = useState([]);
+  const [agencies, setAgencies] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [permissions, setPermissions] = useState([]);
+  const [loadingData, setLoadingData] = useState(true);
 
-  const [currentUser, setCurrentUser] = useState(INITIAL_USERS[2]); // เริ่มต้นที่พนักงาน (USER-008)
+  const [currentUser, setCurrentUser] = useState(null); 
   const [activeTab, setActiveTab] = useState('home');
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
+  const [editingRequest, setEditingRequest] = useState(null);
+
+  const handleOpenLeaveModal = (req = null) => {
+    setEditingRequest(req);
+    setIsLeaveModalOpen(true);
+  };
 
   // Theme State: 'light' หรือ 'dark' (เริ่มต้นโหมดสว่าง Clean Light Mode)
   const [theme, setTheme] = useState(() => {
@@ -48,6 +53,45 @@ export default function App() {
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
   };
 
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [u, p, r, h, a, d, perms] = await Promise.all([
+          api.fetchAllUsers(),
+          api.fetchAllUserPolicies(),
+          api.fetchAllRequests(),
+          api.fetchAllHolidays(),
+          api.fetchAllAgencies(),
+          api.fetchAllDepartments(),
+          api.fetchAllPermissions()
+        ]);
+        setUsers(u);
+        setUserPolicies(p);
+        setRequests(r);
+        setHolidays(h);
+        setAgencies(a);
+        setDepartments(d);
+        setPermissions(perms);
+      } catch (err) {
+        console.error("Failed to load initial data:", err);
+      } finally {
+        setLoadingData(false);
+      }
+    };
+    loadData();
+  }, []);
+
+  // ---------------------------------------------------------
+  // Render: If not logged in, show LoginPage
+  // ---------------------------------------------------------
+  if (loadingData) {
+    return <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-500">กำลังโหลดข้อมูลระบบ...</div>;
+  }
+
+  if (!currentUser) {
+    return <LoginPage onLogin={(user) => setCurrentUser(user)} users={users} theme={theme} toggleTheme={toggleTheme} />;
+  }
+
   // คำนวณจำนวนรายการรออนุมัติสำหรับ currentUser
   const pendingCount = requests.filter(r => {
     if (r.status !== 'Pending') return false;
@@ -56,90 +100,263 @@ export default function App() {
   }).length;
 
   // เพิ่มคำขอลาใหม่
-  const handleAddRequest = (newReq) => {
-    setRequests([newReq, ...requests]);
+  const handleAddRequest = async (newReq) => {
+    try {
+      const createdReq = await api.createLeaveRequest(newReq, newReq.approvers, newReq.attachments);
+      setRequests(prev => [createdReq, ...prev]);
 
-    // หักวันลาใน userPolicies
-    setUserPolicies(prevPolicies => {
-      return prevPolicies.map(pol => {
-        if (pol.user_id === newReq.user_id && pol.leave_type === newReq.leave_type) {
-          const newUsed = pol.used_days + newReq.leave_duration;
-          return {
-            ...pol,
-            used_days: newUsed,
-            remaining_days: pol.max_days - newUsed
-          };
-        }
-        return pol;
+      await api.updateUserPolicyUsedDays(newReq.user_id, newReq.leave_type, Number(newReq.leave_duration));
+      
+      setUserPolicies(prevPolicies => {
+        return prevPolicies.map(pol => {
+          if (pol.user_id === newReq.user_id && pol.leave_type === newReq.leave_type) {
+            const newUsed = Number(pol.used_days) + Number(newReq.leave_duration);
+            return {
+              ...pol,
+              used_days: newUsed,
+              remaining_days: pol.max_days - newUsed
+            };
+          }
+          return pol;
+        });
       });
-    });
-  };
-
-  // ดำเนินการอนุมัติ Step
-  const handleApproveStep = (requestId, stepNumber, comment) => {
-    setRequests(prev => {
-      return prev.map(r => {
-        if (r.id === requestId) {
-          const updatedApprovers = r.approvers.map(a => {
-            if (a.step_number === stepNumber) {
-              return { ...a, status: 'Approved', comment, action_date: new Date().toISOString() };
-            }
-            return a;
-          });
-
-          const totalSteps = r.approvers.length;
-          const isFinal = stepNumber >= totalSteps;
-
-          return {
-            ...r,
-            approvers: updatedApprovers,
-            current_step: isFinal ? r.current_step : r.current_step + 1,
-            status: isFinal ? 'Approved' : 'Pending'
-          };
-        }
-        return r;
-      });
-    });
-  };
-
-  // ดำเนินการปฏิเสธ Step
-  const handleRejectStep = (requestId, stepNumber, comment) => {
-    setRequests(prev => {
-      return prev.map(r => {
-        if (r.id === requestId) {
-          const updatedApprovers = r.approvers.map(a => {
-            if (a.step_number === stepNumber) {
-              return { ...a, status: 'Rejected', comment, action_date: new Date().toISOString() };
-            }
-            return a;
-          });
-
-          return {
-            ...r,
-            approvers: updatedApprovers,
-            status: 'Rejected',
-            reject_reason: comment
-          };
-        }
-        return r;
-      });
-    });
-  };
-
-  // อัปเดตข้อมูลผู้ใช้ (เช่น บันทึก LINE User ID)
-  const handleUpdateUser = (updatedUser) => {
-    setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
-    if (currentUser?.id === updatedUser.id) {
-      setCurrentUser(updatedUser);
+    } catch (err) {
+      console.error("Error adding request:", err);
+      alert("ไม่สามารถบันทึกคำขอลาได้: " + err.message);
+      throw err;
     }
   };
 
-  if (!currentUser) {
-    return <FormLogin onLogin={(u) => setCurrentUser(u)} users={users} />;
-  }
+  // แก้ไขคำขอลา
+  const handleEditRequest = async (updatedReq) => {
+    try {
+      await api.updateLeaveRequest(updatedReq);
+      
+      setRequests(prev => {
+        const oldReq = prev.find(r => r.id === updatedReq.id);
+        if (!oldReq) return prev;
+        
+        const diff = Number(updatedReq.leave_duration) - Number(oldReq.leave_duration);
+        
+        if (diff !== 0 && oldReq.leave_type === updatedReq.leave_type) {
+          // Fire and forget updating policy via API
+          api.updateUserPolicyUsedDays(updatedReq.user_id, updatedReq.leave_type, diff).catch(console.error);
+          
+          setUserPolicies(prevPol => prevPol.map(pol => {
+            if (pol.user_id === updatedReq.user_id && pol.leave_type === updatedReq.leave_type) {
+              const newUsed = Number(pol.used_days) + diff;
+              return { ...pol, used_days: newUsed, remaining_days: pol.max_days - newUsed };
+            }
+            return pol;
+          }));
+        }
+        
+        return prev.map(r => r.id === updatedReq.id ? updatedReq : r);
+      });
+    } catch (err) {
+      console.error("Error editing request:", err);
+      alert("ไม่สามารถแก้ไขคำขอลาได้: " + err.message);
+      throw err;
+    }
+  };
+
+  // ลบคำขอลา
+  const handleDeleteRequest = async (reqId) => {
+    try {
+      const reqToDelete = requests.find(r => r.id === reqId);
+      await api.deleteLeaveRequest(reqId);
+      
+      if (reqToDelete) {
+        await api.updateUserPolicyUsedDays(reqToDelete.user_id, reqToDelete.leave_type, -Number(reqToDelete.leave_duration));
+        
+        setUserPolicies(prevPol => prevPol.map(pol => {
+          if (pol.user_id === reqToDelete.user_id && pol.leave_type === reqToDelete.leave_type) {
+            const newUsed = Number(pol.used_days) - Number(reqToDelete.leave_duration);
+            return { ...pol, used_days: newUsed, remaining_days: pol.max_days - newUsed };
+          }
+          return pol;
+        }));
+      }
+      setRequests(prev => prev.filter(r => r.id !== reqId));
+    } catch (err) {
+      console.error("Error deleting request:", err);
+      alert("ไม่สามารถลบคำขอลาได้: " + err.message);
+    }
+  };
+
+  // ดำเนินการอนุมัติ Step
+  const handleApproveStep = async (requestId, stepNumber, comment) => {
+    try {
+      const req = requests.find(r => r.id === requestId);
+      const totalSteps = req.approvers.length;
+      const isFinal = stepNumber >= totalSteps;
+      
+      await api.approveStep(requestId, stepNumber, comment, isFinal);
+      
+      setRequests(prev => {
+        return prev.map(r => {
+          if (r.id === requestId) {
+            const updatedApprovers = r.approvers.map(a => {
+              if (a.step_number === stepNumber) {
+                return { ...a, status: 'Approved', comment, action_date: new Date().toISOString() };
+              }
+              return a;
+            });
+            return {
+              ...r,
+              approvers: updatedApprovers,
+              current_step: isFinal ? r.current_step : r.current_step + 1,
+              status: isFinal ? 'Approved' : 'Pending'
+            };
+          }
+          return r;
+        });
+      });
+    } catch (err) {
+      console.error("Error approving step:", err);
+      alert("ไม่สามารถอนุมัติได้: " + err.message);
+    }
+  };
+
+  // ดำเนินการปฏิเสธ Step
+  const handleRejectStep = async (requestId, stepNumber, comment) => {
+    try {
+      await api.rejectStep(requestId, stepNumber, comment);
+      
+      setRequests(prev => {
+        return prev.map(r => {
+          if (r.id === requestId) {
+            const updatedApprovers = r.approvers.map(a => {
+              if (a.step_number >= stepNumber) {
+                return { ...a, status: 'Rejected', comment, action_date: new Date().toISOString() };
+              }
+              return a;
+            });
+            return {
+              ...r,
+              approvers: updatedApprovers,
+              status: 'Rejected',
+              reject_reason: comment
+            };
+          }
+          return r;
+        });
+      });
+    } catch (err) {
+      console.error("Error rejecting step:", err);
+      alert("ไม่สามารถปฏิเสธได้: " + err.message);
+    }
+  };
+
+  const handleAdminEditRequest = async (oldReq, actionType, updates = null) => {
+    try {
+      if (actionType === 'UPDATE') {
+        const diffDuration = Number(updates.leave_duration) - Number(oldReq.leave_duration);
+        await api.adminUpdateLeaveRequest(oldReq.id, {
+          date_start: updates.date_start,
+          date_end: updates.date_end,
+          leave_duration: updates.leave_duration,
+          leave_type: updates.leave_type
+        });
+
+        if (oldReq.status === 'Approved') {
+          if (oldReq.leave_type !== updates.leave_type) {
+             await api.updateUserPolicyUsedDays(oldReq.user_id, oldReq.leave_type, -Number(oldReq.leave_duration));
+             await api.updateUserPolicyUsedDays(oldReq.user_id, updates.leave_type, Number(updates.leave_duration));
+             
+             setUserPolicies(prevPol => prevPol.map(pol => {
+                if (pol.user_id === oldReq.user_id) {
+                  if (pol.leave_type === oldReq.leave_type) {
+                    const newUsed = Number(pol.used_days) - Number(oldReq.leave_duration);
+                    return { ...pol, used_days: newUsed, remaining_days: pol.max_days - newUsed };
+                  }
+                  if (pol.leave_type === updates.leave_type) {
+                    const newUsed = Number(pol.used_days) + Number(updates.leave_duration);
+                    return { ...pol, used_days: newUsed, remaining_days: pol.max_days - newUsed };
+                  }
+                }
+                return pol;
+             }));
+          } else if (diffDuration !== 0) {
+             await api.updateUserPolicyUsedDays(oldReq.user_id, oldReq.leave_type, diffDuration);
+             setUserPolicies(prevPol => prevPol.map(pol => {
+                if (pol.user_id === oldReq.user_id && pol.leave_type === oldReq.leave_type) {
+                  const newUsed = Number(pol.used_days) + diffDuration;
+                  return { ...pol, used_days: newUsed, remaining_days: pol.max_days - newUsed };
+                }
+                return pol;
+             }));
+          }
+        }
+        
+        setRequests(prev => prev.map(r => r.id === oldReq.id ? { ...r, ...updates } : r));
+        alert('บันทึกการแก้ไขเรียบร้อยแล้ว');
+
+      } else if (actionType === 'REVERT_PENDING') {
+        await api.adminUpdateLeaveRequest(oldReq.id, { status: 'Pending', current_step: 1, reject_reason: null });
+        await api.adminResetApprovalSteps(oldReq.id);
+        
+        if (oldReq.status === 'Approved') {
+           await api.updateUserPolicyUsedDays(oldReq.user_id, oldReq.leave_type, -Number(oldReq.leave_duration));
+           setUserPolicies(prevPol => prevPol.map(pol => {
+              if (pol.user_id === oldReq.user_id && pol.leave_type === oldReq.leave_type) {
+                const newUsed = Number(pol.used_days) - Number(oldReq.leave_duration);
+                return { ...pol, used_days: newUsed, remaining_days: pol.max_days - newUsed };
+              }
+              return pol;
+           }));
+        }
+        
+        setRequests(prev => prev.map(r => {
+          if (r.id === oldReq.id) {
+            const updatedApprovers = r.approvers.map(a => ({ ...a, status: 'Pending', comment: '', action_date: null }));
+            return { ...r, status: 'Pending', current_step: 1, reject_reason: null, approvers: updatedApprovers };
+          }
+          return r;
+        }));
+        alert('ดึงกลับเป็นสถานะรออนุมัติเรียบร้อยแล้ว');
+
+      } else if (actionType === 'CANCEL_LEAVE') {
+        await api.adminUpdateLeaveRequest(oldReq.id, { status: 'Rejected', reject_reason: 'ยกเลิกโดย SuperAdmin' });
+        
+        if (oldReq.status === 'Approved') {
+           await api.updateUserPolicyUsedDays(oldReq.user_id, oldReq.leave_type, -Number(oldReq.leave_duration));
+           setUserPolicies(prevPol => prevPol.map(pol => {
+              if (pol.user_id === oldReq.user_id && pol.leave_type === oldReq.leave_type) {
+                const newUsed = Number(pol.used_days) - Number(oldReq.leave_duration);
+                return { ...pol, used_days: newUsed, remaining_days: pol.max_days - newUsed };
+              }
+              return pol;
+           }));
+        }
+        
+        setRequests(prev => prev.map(r => r.id === oldReq.id ? { ...r, status: 'Rejected', reject_reason: 'ยกเลิกโดย SuperAdmin' } : r));
+        alert('ยกเลิกการลาและเปลี่ยนเป็นไม่อนุมัติเรียบร้อยแล้ว');
+      }
+
+    } catch (err) {
+      console.error("Error admin editing request:", err);
+      alert("เกิดข้อผิดพลาดในการดำเนินการ: " + err.message);
+      throw err;
+    }
+  };
+
+  // อัปเดตข้อมูลผู้ใช้ (เช่น บันทึก LINE User ID)
+  const handleUpdateUser = async (updatedUser) => {
+    try {
+      await api.updateUserProfile(updatedUser.id, updatedUser);
+      setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
+      if (currentUser?.id === updatedUser.id) {
+        setCurrentUser(updatedUser);
+      }
+    } catch (err) {
+      console.error("Error updating user:", err);
+      alert("ไม่สามารถบันทึกข้อมูลผู้ใช้ได้: " + err.message);
+    }
+  };
 
   return (
-    <div className="min-h-screen flex flex-col ambient-light-bg transition-colors duration-300">
+    <div className="h-screen flex flex-col ambient-light-bg transition-colors duration-300 overflow-hidden">
       
       {/* Top Navbar */}
       <Navbar
@@ -153,15 +370,17 @@ export default function App() {
       />
 
       {/* Main Content Body */}
-      <div className="flex-1 flex max-w-7xl w-full mx-auto pb-20 md:pb-8">
+      <div className="flex-1 flex w-full px-2 lg:px-6 pb-20 md:pb-8 overflow-hidden">
         
         {/* Sidebar */}
-        <Sidebar
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
+        <Sidebar 
+          activeTab={activeTab} 
+          setActiveTab={setActiveTab} 
           currentUser={currentUser}
+          setCurrentUser={setCurrentUser}
           pendingCount={pendingCount}
-          onOpenLeaveModal={() => setIsLeaveModalOpen(true)}
+          onOpenLeaveModal={() => handleOpenLeaveModal(null)}
+          permissions={permissions}
         />
 
         {/* Dynamic Page Views */}
@@ -171,8 +390,12 @@ export default function App() {
               currentUser={currentUser}
               userPolicies={userPolicies}
               requests={requests}
-              onOpenLeaveModal={() => setIsLeaveModalOpen(true)}
+              onDeleteRequest={handleDeleteRequest}
+              onOpenLeaveModal={handleOpenLeaveModal}
               setActiveTab={setActiveTab}
+              agencies={agencies}
+              departments={departments}
+              users={users}
             />
           )}
 
@@ -181,8 +404,12 @@ export default function App() {
               currentUser={currentUser}
               requests={requests}
               users={users}
+              agencies={agencies}
+              departments={departments}
               onApproveStep={handleApproveStep}
               onRejectStep={handleRejectStep}
+              onAdminEditRequest={handleAdminEditRequest}
+              holidays={holidays}
             />
           )}
 
@@ -190,24 +417,37 @@ export default function App() {
             <LeaveCalendar
               requests={requests}
               holidays={holidays}
+              currentUser={currentUser}
               users={users}
+              agencies={agencies}
+              departments={departments}
+              userPolicies={userPolicies}
             />
           )}
 
           {activeTab === 'users' && (
             <UsersPage
               users={users}
-              onUpdateUser={handleUpdateUser}
-              agencies={INITIAL_AGENCIES}
-              departments={INITIAL_DEPARTMENTS}
+              setUsers={setUsers}
+              pendingCount={pendingCount}
+              userPolicies={userPolicies}
+              requests={requests}
+              agencies={agencies}
+              departments={departments}
             />
           )}
 
           {activeTab === 'settings' && (
             <SettingsPage
               userPolicies={userPolicies}
+              setUserPolicies={setUserPolicies}
               holidays={holidays}
-              onUpdatePolicies={setUserPolicies}
+              setHolidays={setHolidays}
+              users={users}
+              agencies={agencies}
+              setAgencies={setAgencies}
+              departments={departments}
+              setDepartments={setDepartments}
             />
           )}
 
@@ -215,6 +455,15 @@ export default function App() {
             <ReportPage
               requests={requests}
               users={users}
+              agencies={agencies}
+              departments={departments}
+            />
+          )}
+
+          {activeTab === 'permissions' && (
+            <PermissionsPage
+              permissions={permissions}
+              setPermissions={setPermissions}
             />
           )}
         </main>
@@ -224,11 +473,20 @@ export default function App() {
       {/* Leave Request Form Modal */}
       <LeaveFormModal
         isOpen={isLeaveModalOpen}
-        onClose={() => setIsLeaveModalOpen(false)}
+        onClose={() => {
+          setIsLeaveModalOpen(false);
+          setEditingRequest(null);
+        }}
         currentUser={currentUser}
         users={users}
         userPolicies={userPolicies}
+        requests={requests}
+        editingRequest={editingRequest}
+        holidays={holidays}
         onSubmitRequest={handleAddRequest}
+        onEditRequest={handleEditRequest}
+        agencies={agencies}
+        departments={departments}
       />
 
     </div>

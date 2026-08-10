@@ -1,51 +1,73 @@
 import React from 'react';
-import { Home, CheckSquare, Calendar, Users, Settings, FileText, PlusCircle } from 'lucide-react';
+import { Home, CheckSquare, Calendar, Users, Settings, FileText, PlusCircle, LogOut, ShieldCheck } from 'lucide-react';
 
-export default function Sidebar({ activeTab, setActiveTab, currentUser, pendingCount, onOpenLeaveModal }) {
+export default function Sidebar({ activeTab, setActiveTab, currentUser, setCurrentUser, pendingCount, onOpenLeaveModal, permissions }) {
   
+  // ตรวจสอบสิทธิ์การเข้าถึงเมนูจาก Role ปัจจุบัน
+  const checkPermission = (menuItemCode) => {
+    if (!currentUser || !currentUser.role) return false;
+    const perm = permissions?.find(p => p.MenuItems === menuItemCode);
+    if (!perm) return false;
+    // perm จะมี key เช่น "SuperAdmin", "Admin", "SuperUser", "User"
+    return perm[currentUser.role] === true;
+  };
+
   const navItems = [
-    { id: 'home', label: 'หน้าหลัก', icon: Home },
+    { 
+      id: 'home', 
+      label: 'หน้าหลัก', 
+      icon: Home,
+      show: checkPermission('sidebarManu1')
+    },
     { 
       id: 'approval', 
       label: 'อนุมัติคำขอ', 
       icon: CheckSquare,
       badge: pendingCount > 0 ? pendingCount : null,
-      show: currentUser?.role === 'Manager' || currentUser?.role === 'Admin'
+      show: checkPermission('sidebarManu2')
     },
-    { id: 'calendar', label: 'ปฏิทินวันลา', icon: Calendar },
+    { 
+      id: 'calendar', 
+      label: 'ปฏิทินวันลา', 
+      icon: Calendar,
+      show: checkPermission('sidebarManu3')
+    },
     { 
       id: 'users', 
       label: 'พนักงาน & LINE', 
       icon: Users,
-      show: currentUser?.role === 'Admin' || currentUser?.role === 'Manager'
+      show: checkPermission('sidebarManu6')
     },
     { 
       id: 'settings', 
       label: 'ตั้งค่าระบบ', 
       icon: Settings,
-      show: currentUser?.role === 'Admin'
+      show: checkPermission('sidebarManu14')
     },
-    { id: 'report', label: 'รายงาน', icon: FileText },
+    { 
+      id: 'permissions', 
+      label: 'สิทธิการใช้งาน', 
+      icon: ShieldCheck,
+      show: checkPermission('sidebarManu10')
+    },
+    { 
+      id: 'report', 
+      label: 'รายงาน', 
+      icon: FileText,
+      show: checkPermission('sidebarManu5')
+    },
   ];
 
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="w-64 glass-panel-clean border-r border-slate-200 dark:border-[var(--card-border)] p-4 hidden md:flex flex-col justify-between min-h-[calc(100vh-65px)] transition-colors">
+      <aside className="group w-[5.5rem] hover:w-64 glass-panel-clean border-r border-slate-200 dark:border-[var(--card-border)] py-6 px-3 hidden md:flex flex-col justify-between min-h-[calc(100vh-65px)] transition-all duration-300 relative z-40 overflow-hidden">
         <div className="space-y-6">
-          
-          {/* Quick Action Button */}
-          <button
-            onClick={onOpenLeaveModal}
-            className="w-full py-3.5 px-4 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-500 text-[var(--text-main)] font-bold text-sm rounded-2xl shadow-lg shadow-emerald-500/25 flex items-center justify-center space-x-2 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
-          >
-            <PlusCircle className="w-5 h-5" />
-            <span>ยื่นคำขอลางาน</span>
-          </button>
+
 
           {/* Navigation Links */}
-          <div className="space-y-1">
-            <p className="px-3 text-[11px] font-bold text-[var(--text-muted)] dark:text-[var(--text-muted)] uppercase tracking-wider mb-2">เมนูหลัก</p>
+          <div className="space-y-2">
+            <p className="px-3 text-sm font-extrabold text-center group-hover:text-left text-[var(--text-muted)] dark:text-[var(--text-muted)] uppercase tracking-wider mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap overflow-hidden">เมนูหลัก</p>
             {navItems.filter(item => item.show !== false).map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -54,18 +76,22 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, pendingC
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl font-semibold text-sm transition-all ${
+                  title={item.label}
+                  className={`w-full flex items-center px-4 py-3.5 rounded-2xl font-bold text-base transition-all overflow-hidden ${
                     isActive
-                      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shadow-sm font-bold'
+                      ? 'bg-blue-500 text-white shadow-md shadow-blue-500/20'
                       : 'text-[var(--text-muted)] dark:text-[var(--text-muted)] hover:text-[var(--text-main)] dark:hover:text-[var(--text-main)] hover:bg-slate-100 dark:hover:bg-[var(--card-bg)]/60'
                   }`}
                 >
-                  <div className="flex items-center space-x-3">
-                    <Icon className={`w-4 h-4 ${isActive ? 'text-emerald-500' : 'text-[var(--text-muted)]'}`} />
-                    <span>{item.label}</span>
+                  <div className="flex-shrink-0 flex items-center justify-center">
+                    <Icon className={`w-[22px] h-[22px] ${isActive ? 'text-white' : 'text-[var(--text-muted)] group-hover:text-[var(--text-main)] dark:group-hover:text-[var(--text-main)]'}`} />
                   </div>
+                  <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap ml-4">
+                    {item.label}
+                  </span>
+                  
                   {item.badge && (
-                    <span className="px-2 py-0.5 text-xs font-extrabold bg-rose-500 text-[var(--text-main)] rounded-full animate-pulse shadow-sm">
+                    <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 ml-auto px-2 py-0.5 text-xs font-extrabold bg-rose-500 text-white rounded-full shadow-sm">
                       {item.badge}
                     </span>
                   )}
@@ -75,10 +101,20 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, pendingC
           </div>
         </div>
 
-        {/* Footer Info */}
-        <div className="p-3.5 rounded-2xl bg-slate-100/80 dark:bg-[var(--card-bg)]/60 border border-slate-200 dark:border-[var(--card-border)]/80 text-center">
-          <p className="text-xs font-semibold text-[var(--text-muted)] dark:text-[var(--text-muted)]">SMT Leave System v2.0</p>
-          <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium mt-0.5">LINE 1:1 Messaging Integrated</p>
+        {/* Footer Actions */}
+        <div className="space-y-3 pb-4">
+          <button
+            onClick={() => setCurrentUser(null)}
+            title="ออกจากระบบ"
+            className="w-full flex items-center px-4 py-3.5 rounded-xl text-rose-500 hover:bg-rose-500/10 font-bold text-base transition-all border border-transparent group-hover:border-rose-500/20 overflow-hidden"
+          >
+            <div className="flex-shrink-0 flex items-center justify-center">
+              <LogOut className="w-[22px] h-[22px]" />
+            </div>
+            <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap ml-4">
+              ออกจากระบบ
+            </span>
+          </button>
         </div>
       </aside>
 
@@ -93,7 +129,7 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, pendingC
               key={item.id}
               onClick={() => setActiveTab(item.id)}
               className={`flex flex-col items-center py-1 px-3 rounded-xl relative transition-all ${
-                isActive ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-[var(--text-muted)] dark:text-[var(--text-muted)]'
+                isActive ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-[var(--text-muted)] dark:text-[var(--text-muted)]'
               }`}
             >
               <Icon className="w-5 h-5" />

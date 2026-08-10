@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
   --bg-main: #f1f5f9;
@@ -37,7 +38,7 @@ body {
 /* Ambient Background Light & Dark */
 .ambient-light-bg {
   background-image: 
-    radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.1) 0px, transparent 40%),
+    radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.1) 0px, transparent 40%),
     radial-gradient(at 100% 0%, rgba(14, 165, 233, 0.1) 0px, transparent 40%),
     radial-gradient(at 50% 100%, rgba(245, 158, 11, 0.08) 0px, transparent 40%);
   background-attachment: fixed;
@@ -45,7 +46,7 @@ body {
 
 .dark .ambient-light-bg {
   background-image: 
-    radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.15) 0px, transparent 50%),
+    radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
     radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
     radial-gradient(at 50% 100%, rgba(236, 72, 153, 0.1) 0px, transparent 50%);
   background-attachment: fixed;
@@ -66,7 +67,7 @@ body {
 
 .glass-card-clean:hover {
   transform: translateY(-2px);
-  border-color: #10b981;
+  border-color: #3b82f6;
 }
 
 .glass-input-clean {
@@ -79,8 +80,28 @@ body {
 
 .glass-input-clean:focus {
   outline: none;
-  border-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.glass-input-clean::placeholder {
+  color: #94a3b8;
+  opacity: 0.8;
+}
+
+.dark .glass-input-clean::placeholder {
+  color: #64748b;
+  opacity: 1;
+}
+
+.glass-input-clean option {
+  background-color: var(--panel-bg);
+  color: var(--text-main);
+}
+
+.dark .glass-input-clean option {
+  background-color: #1e293b;
+  color: #f8fafc;
 }
 
 /* Custom Scrollbar */
@@ -99,5 +120,5 @@ body {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #10b981;
+  background: #3b82f6;
 }

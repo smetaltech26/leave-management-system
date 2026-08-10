@@ -1,11 +1,26 @@
 import React, { useState } from 'react';
-import { CheckCircle2, XCircle, Clock, FileText, User, MessageSquare, AlertCircle, Sparkles } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, FileText, User, MessageSquare, AlertCircle, Sparkles, Edit2 } from 'lucide-react';
 import { notifyLeaveApprover, sendLinePushToUser } from '../lib/lineNotify';
+import { sendEmailNotification } from '../services/emailService';
+import AdminEditLeaveModal from './admin/AdminEditLeaveModal';
 
-export default function ApprovalPage({ currentUser, requests, users, onApproveStep, onRejectStep }) {
+export default function ApprovalPage({ currentUser, requests, users, agencies = [], departments = [], onApproveStep, onRejectStep, onAdminEditRequest, holidays = [] }) {
   const [activeSubTab, setActiveSubTab] = useState('pending'); // pending | completed
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [comment, setComment] = useState('');
+  
+  const [adminEditRequest, setAdminEditRequest] = useState(null);
+  const [isSubmittingAdmin, setIsSubmittingAdmin] = useState(false);
+
+  const handleAdminAction = async (request, actionType, updates) => {
+    setIsSubmittingAdmin(true);
+    try {
+      await onAdminEditRequest(request, actionType, updates);
+      setAdminEditRequest(null);
+    } finally {
+      setIsSubmittingAdmin(false);
+    }
+  };
 
   // คำขอที่คอยการอนุมัติจาก currentUser
   const pendingForMe = requests.filter(r => {
@@ -29,45 +44,132 @@ export default function ApprovalPage({ currentUser, requests, users, onApproveSt
 
     if (action === 'Approved') {
       onApproveStep(selectedRequest.id, currentStepNum, comment);
+      const requester = users.find(u => u.id === selectedRequest.user_id);
 
-      // ถ้ายังไม่ใช่ Step สุดท้าย -> ยิง LINE Push 1:1 หาผู้อนุมัติ Step ถัดไป!
+      // ถ้ายังไม่ใช่ Step สุดท้าย -> ยิง LINE Push 1:1 และ Email หาผู้อนุมัติ Step ถัดไป!
       if (!isFinalStep) {
         const nextStepNum = currentStepNum + 1;
         const nextStepObj = selectedRequest.approvers.find(a => a.step_number === nextStepNum);
         if (nextStepObj) {
           const nextApprover = users.find(u => u.id === nextStepObj.approver_id);
-          const requester = users.find(u => u.id === selectedRequest.user_id);
-          if (nextApprover && nextApprover.line_user_id) {
-            await notifyLeaveApprover({
-              approverName: nextApprover.fullname,
-              lineUserId: nextApprover.line_user_id,
-              requesterName: requester?.fullname || 'พนักงาน',
-              leaveType: selectedRequest.leave_type,
-              dateRange: `${selectedRequest.date_start} ถึง ${selectedRequest.date_end}`,
-              stepNum: nextStepNum
-            });
+          if (nextApprover) {
+            if (nextApprover.line_user_id) {
+              await notifyLeaveApprover({
+                approverName: nextApprover.fullname,
+                lineUserId: nextApprover.line_user_id,
+                requesterName: requester?.fullname || 'พนักงาน',
+                leaveType: selectedRequest.leave_type,
+                dateRange: `${selectedRequest.date_start} ถึง ${selectedRequest.date_end}`,
+                stepNum: nextStepNum
+              });
+            }
+            if (nextApprover.email) {
+              const periodText = selectedRequest.leave_period === 'Morning' ? 'เช้า' : selectedRequest.leave_period === 'Afternoon' ? 'บ่าย' : 'ทั้งวัน';
+              const htmlBody = `
+                <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.6;">
+                  <h2 style="color: #059669;">แจ้งเตือนขออนุมัติการลา (ขั้นที่ ${nextStepNum})</h2>
+                  <p>เรียน คุณ${nextApprover.fullname},</p>
+                  <p>ระบบได้รับคำขออนุมัติการลา โปรดพิจารณาอนุมัติคำขอดังกล่าว โดยมีรายละเอียดดังนี้:</p>
+                  <div style="background-color: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #e2e8f0;">
+                    <ul style="list-style: none; padding: 0; margin: 0;">
+                      <li style="margin-bottom: 8px;"><strong>รหัสคำขอ:</strong> ${selectedRequest.id}</li>
+                      <li style="margin-bottom: 8px;"><strong>พนักงานผู้ขอลา:</strong> ${requester?.fullname || 'พนักงาน'}</li>
+                      <li style="margin-bottom: 8px;"><strong>ประเภทการลา:</strong> ${selectedRequest.leave_type}</li>
+                      <li style="margin-bottom: 8px;"><strong>วันที่ลา:</strong> ${selectedRequest.date_start.split('-').reverse().join('-')} ถึง ${selectedRequest.date_end.split('-').reverse().join('-')}</li>
+                      <li style="margin-bottom: 8px;"><strong>ช่วงเวลา:</strong> ${periodText}</li>
+                      <li style="margin-bottom: 8px;"><strong>จำนวนวัน:</strong> ${selectedRequest.leave_duration} วัน</li>
+                      <li style="margin-bottom: 0;"><strong>เหตุผลการลา:</strong> ${selectedRequest.description || '-'}</li>
+                    </ul>
+                  </div>
+                  <p>กรุณาเข้าสู่ระบบเพื่อตรวจสอบและพิจารณาอนุมัติคำขอ:</p>
+                  <p><a href="http://localhost:3000" style="display: inline-block; background-color: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">เข้าสู่ระบบ</a></p>
+                  <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
+                  <p style="font-size: 12px; color: #64748b;"><i>นี่คืออีเมลอัตโนมัติจากระบบ Leave Management System กรุณาอย่าตอบกลับ</i></p>
+                </div>
+              `;
+              sendEmailNotification({
+                to: nextApprover.email,
+                subject: `📢 แจ้งเตือน: ขออนุมัติการลาจาก ${requester?.fullname || 'พนักงาน'} (รหัส: ${selectedRequest.id})`,
+                body: htmlBody
+              });
+            }
           }
         }
       } else {
-        // Step สุดท้าย อนุมัติเสร็จสมบูรณ์ -> ยิง LINE Push 1:1 แจ้งเตือนผู้ขอลา!
-        const requester = users.find(u => u.id === selectedRequest.user_id);
-        if (requester && requester.line_user_id) {
-          await sendLinePushToUser(
-            requester.line_user_id,
-            `🎉 ใบขอลาของคุณ (${selectedRequest.leave_type}) เลขที่ ${selectedRequest.id} ได้รับการอนุมัติเรียบร้อยแล้วค่ะ!`
-          );
+        // Step สุดท้าย อนุมัติเสร็จสมบูรณ์ -> ยิง LINE Push 1:1 และ Email แจ้งเตือนผู้ขอลา!
+        if (requester) {
+          if (requester.line_user_id) {
+            await sendLinePushToUser(
+              requester.line_user_id,
+              `🎉 ใบขอลาของคุณ (${selectedRequest.leave_type}) เลขที่ ${selectedRequest.id} ได้รับการอนุมัติเรียบร้อยแล้วค่ะ!`
+            );
+          }
+          if (requester.email) {
+            const htmlBody = `
+              <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.6;">
+                <h2 style="color: #059669;">✅ อนุมัติการลา</h2>
+                <p>เรียน คุณ${requester.fullname},</p>
+                <p>คำขออนุมัติการลาของคุณได้รับการพิจารณา <strong>"อนุมัติ"</strong> ครบทุกขั้นตอนเรียบร้อยแล้ว โดยมีรายละเอียดดังนี้:</p>
+                <div style="background-color: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #e2e8f0;">
+                  <ul style="list-style: none; padding: 0; margin: 0;">
+                    <li style="margin-bottom: 8px;"><strong>รหัสคำขอ:</strong> ${selectedRequest.id}</li>
+                    <li style="margin-bottom: 8px;"><strong>ประเภทการลา:</strong> ${selectedRequest.leave_type}</li>
+                    <li style="margin-bottom: 8px;"><strong>วันที่ลา:</strong> ${selectedRequest.date_start.split('-').reverse().join('-')} ถึง ${selectedRequest.date_end.split('-').reverse().join('-')}</li>
+                    <li style="margin-bottom: 0;"><strong>จำนวนวัน:</strong> ${selectedRequest.leave_duration} วัน</li>
+                  </ul>
+                </div>
+                <p><a href="http://localhost:3000" style="display: inline-block; background-color: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">ตรวจสอบประวัติการลาของคุณ</a></p>
+                <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
+                <p style="font-size: 12px; color: #64748b;"><i>นี่คืออีเมลอัตโนมัติจากระบบ Leave Management System กรุณาอย่าตอบกลับ</i></p>
+              </div>
+            `;
+            sendEmailNotification({
+              to: requester.email,
+              subject: `✅ อนุมัติ: คำขอลาของคุณได้รับการอนุมัติเรียบร้อยแล้ว (รหัส: ${selectedRequest.id})`,
+              body: htmlBody
+            });
+          }
         }
       }
     } else if (action === 'Rejected') {
       onRejectStep(selectedRequest.id, currentStepNum, comment);
 
-      // ปฏิเสธ -> ยิง LINE Push 1:1 แจ้งเตือนผู้ขอลา!
+      // ปฏิเสธ -> ยิง LINE Push 1:1 และ Email แจ้งเตือนผู้ขอลา!
       const requester = users.find(u => u.id === selectedRequest.user_id);
-      if (requester && requester.line_user_id) {
-        await sendLinePushToUser(
-          requester.line_user_id,
-          `❌ ใบขอลาของคุณ (${selectedRequest.leave_type}) เลขที่ ${selectedRequest.id} ถูกปฏิเสธการอนุมัติ (เหตุผล: ${comment || 'ไม่ระบุ'})`
-        );
+      if (requester) {
+        if (requester.line_user_id) {
+          await sendLinePushToUser(
+            requester.line_user_id,
+            `❌ ใบขอลาของคุณ (${selectedRequest.leave_type}) เลขที่ ${selectedRequest.id} ถูกปฏิเสธการอนุมัติ (เหตุผล: ${comment || 'ไม่ระบุ'})`
+          );
+        }
+        if (requester.email) {
+          const htmlBody = `
+            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.6;">
+              <h2 style="color: #ef4444;">❌ ไม่อนุมัติการลา</h2>
+              <p>เรียน คุณ${requester.fullname},</p>
+              <p>คำขออนุมัติการลาของคุณ <strong>"ไม่ได้รับการอนุมัติ"</strong> โดยมีรายละเอียดดังนี้:</p>
+              <div style="background-color: #fef2f2; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #fecaca;">
+                <ul style="list-style: none; padding: 0; margin: 0; color: #991b1b;">
+                  <li style="margin-bottom: 8px;"><strong>รหัสคำขอ:</strong> ${selectedRequest.id}</li>
+                  <li style="margin-bottom: 8px;"><strong>ประเภทการลา:</strong> ${selectedRequest.leave_type}</li>
+                  <li style="margin-bottom: 8px;"><strong>วันที่ลา:</strong> ${selectedRequest.date_start.split('-').reverse().join('-')} ถึง ${selectedRequest.date_end.split('-').reverse().join('-')}</li>
+                  <li style="margin-bottom: 8px;"><strong>ผู้ปฏิเสธคำขอ:</strong> ${currentUser?.fullname}</li>
+                  <li style="margin-bottom: 0;"><strong>เหตุผลที่ไม่อนุมัติ:</strong> ${comment || 'ไม่ระบุ'}</li>
+                </ul>
+              </div>
+              <p>หากมีข้อสงสัย กรุณาติดต่อหัวหน้างานหรือฝ่ายบุคคลค่ะ</p>
+              <p><a href="http://localhost:3000" style="display: inline-block; background-color: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">เข้าสู่ระบบ</a></p>
+              <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
+              <p style="font-size: 12px; color: #64748b;"><i>นี่คืออีเมลอัตโนมัติจากระบบ Leave Management System กรุณาอย่าตอบกลับ</i></p>
+            </div>
+          `;
+          sendEmailNotification({
+            to: requester.email,
+            subject: `❌ แจ้งผล: คำขอลาของคุณไม่ได้รับการอนุมัติ (รหัส: ${selectedRequest.id})`,
+            body: htmlBody
+          });
+        }
       }
     }
 
@@ -83,7 +185,7 @@ export default function ApprovalPage({ currentUser, requests, users, onApproveSt
         <div>
           <h2 className="text-2xl font-bold text-[var(--text-main)] flex items-center space-x-2">
             <span>การอนุมัติคำขอลางาน</span>
-            <span className="px-2.5 py-0.5 text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full font-normal">
+            <span className="px-2.5 py-0.5 text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full font-normal">
               1:1 LINE Notify Integrated
             </span>
           </h2>
@@ -96,7 +198,7 @@ export default function ApprovalPage({ currentUser, requests, users, onApproveSt
             onClick={() => setActiveSubTab('pending')}
             className={`px-4 py-2 text-xs font-semibold rounded-xl transition-all flex items-center space-x-2 ${
               activeSubTab === 'pending'
-                ? 'bg-emerald-500 text-[var(--text-main)] shadow-lg shadow-emerald-500/25'
+                ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25'
                 : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
             }`}
           >
@@ -112,7 +214,7 @@ export default function ApprovalPage({ currentUser, requests, users, onApproveSt
             onClick={() => setActiveSubTab('completed')}
             className={`px-4 py-2 text-xs font-semibold rounded-xl transition-all ${
               activeSubTab === 'completed'
-                ? 'bg-emerald-500 text-[var(--text-main)] shadow-lg shadow-emerald-500/25'
+                ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25'
                 : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
             }`}
           >
@@ -123,7 +225,7 @@ export default function ApprovalPage({ currentUser, requests, users, onApproveSt
 
       {/* Request Cards List */}
       {displayList.length > 0 ? (
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
           {displayList.map((req) => {
             const requester = users.find(u => u.id === req.user_id);
             const currentStepObj = req.approvers.find(a => a.step_number === req.current_step);
@@ -137,22 +239,28 @@ export default function ApprovalPage({ currentUser, requests, users, onApproveSt
                     <img
                       src={requester?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}
                       alt={requester?.fullname}
-                      className="w-10 h-10 rounded-xl object-cover ring-2 ring-emerald-500/30"
+                      className="w-14 h-14 rounded-xl object-cover ring-2 ring-blue-500/30"
                     />
                     <div>
                       <div className="font-semibold text-sm text-[var(--text-main)]">{requester?.fullname || req.user_id}</div>
                       <div className="text-xs text-[var(--text-muted)]">
-                        {requester?.agency_id || 'SMT'} • {requester?.department_id || 'ทั่วไป'}
+                        {agencies?.find(a => a.id === requester?.agency_id)?.name || requester?.agency_id || 'SMT'} • {departments?.find(d => d.id === requester?.department_id)?.name || requester?.department_id || 'ทั่วไป'}
                       </div>
                     </div>
                   </div>
 
                   <div className="flex items-center space-x-2">
-                    <span className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <span className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20">
                       {req.leave_type} ({req.leave_duration} วัน)
                     </span>
-                    <span className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                      {req.id} (Step {req.current_step}/{req.total_steps})
+                    <span className={`px-2.5 py-1 text-xs font-semibold rounded-lg border ${
+                      activeSubTab === 'completed'
+                        ? req.status === 'Rejected'
+                          ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                          : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                        : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                    }`}>
+                      {req.id} {activeSubTab === 'completed' ? (req.status === 'Rejected' ? '(ไม่อนุมัติ)' : '(อนุมัติแล้ว)') : `(Step ${req.current_step}/${req.total_steps})`}
                     </span>
                   </div>
                 </div>
@@ -165,7 +273,7 @@ export default function ApprovalPage({ currentUser, requests, users, onApproveSt
                   </div>
                   <div>
                     <span className="text-[var(--text-muted)]">ช่วงเวลาลางาน:</span>
-                    <p className="font-medium text-[var(--text-main)] mt-0.5">{req.date_start} ถึง {req.date_end}</p>
+                    <p className="font-medium text-[var(--text-main)] mt-0.5">{req.date_start ? req.date_start.split('-').reverse().join('-') : ''} ถึง {req.date_end ? req.date_end.split('-').reverse().join('-') : ''}</p>
                   </div>
                 </div>
 
@@ -173,22 +281,25 @@ export default function ApprovalPage({ currentUser, requests, users, onApproveSt
                 <div className="pt-3 border-t border-[var(--card-border)]/80">
                   <span className="text-[11px] font-semibold text-[var(--text-muted)] block mb-2">ขั้นตอนการอนุมัติ (Approval Chain):</span>
                   <div className="flex flex-wrap gap-2">
-                    {req.approvers.map((step) => (
-                      <div
-                        key={step.step_id}
-                        className={`px-3 py-1.5 rounded-xl border text-xs flex items-center space-x-2 ${
-                          step.status === 'Approved'
-                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-                            : step.status === 'Rejected'
-                            ? 'bg-rose-500/10 text-rose-400 border-rose-500/30'
-                            : 'bg-[var(--card-bg)] text-[var(--text-muted)] border-[var(--card-border)]'
-                        }`}
-                      >
-                        <span className="font-bold text-[10px]">Step {step.step_number}:</span>
-                        <span>{step.approver_name}</span>
-                        <span className="font-semibold text-[10px]">({step.status})</span>
-                      </div>
-                    ))}
+                    {[...req.approvers].sort((a, b) => a.step_number - b.step_number).map((step) => {
+                      const approverUser = users.find(u => u.id === step.approver_id);
+                      const approverName = approverUser ? approverUser.fullname : 'ผู้อนุมัติ';
+                      return (
+                        <div
+                          key={step.step_id}
+                          className={`px-3 py-1.5 rounded-xl border text-xs flex items-center space-x-2 ${
+                            step.status === 'Approved'
+                              ? 'bg-blue-500/10 text-blue-400 border-blue-500/30'
+                              : step.status === 'Rejected'
+                              ? 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+                              : 'bg-[var(--card-bg)] text-[var(--text-muted)] border-[var(--card-border)]'
+                          }`}
+                        >
+                          <span className="font-bold">{approverName}</span>
+                          <span className="font-semibold text-[10px]">({step.status})</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -197,10 +308,23 @@ export default function ApprovalPage({ currentUser, requests, users, onApproveSt
                   <div className="pt-3 border-t border-[var(--card-border)] flex justify-end space-x-3">
                     <button
                       onClick={() => setSelectedRequest(req)}
-                      className="py-2 px-5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-[var(--text-main)] text-xs font-semibold rounded-xl shadow-lg shadow-emerald-500/25 flex items-center space-x-2 transition-all"
+                      className="py-2 px-5 bg-gradient-to-r from-blue-500 to-sky-600 hover:from-blue-400 hover:to-sky-500 text-white text-xs font-semibold rounded-xl shadow-lg shadow-blue-500/25 flex items-center space-x-2 transition-all"
                     >
                       <CheckCircle2 className="w-4 h-4" />
                       <span>พิจารณาอนุมัติ</span>
+                    </button>
+                  </div>
+                )}
+                
+                {/* Action Buttons for Completed (SuperAdmin Only) */}
+                {activeSubTab === 'completed' && currentUser?.role === 'SuperAdmin' && (
+                  <div className="pt-3 border-t border-[var(--card-border)] flex justify-end space-x-3">
+                    <button
+                      onClick={() => setAdminEditRequest(req)}
+                      className="py-1.5 px-4 bg-amber-50 dark:bg-amber-500/10 hover:bg-amber-100 dark:hover:bg-amber-500/20 border border-amber-200 dark:border-amber-500/30 text-amber-600 dark:text-amber-400 text-[11px] font-bold rounded-lg transition-all flex items-center space-x-1.5"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                      <span>แก้ไขปรับปรุง</span>
                     </button>
                   </div>
                 )}
@@ -213,7 +337,6 @@ export default function ApprovalPage({ currentUser, requests, users, onApproveSt
         <div className="glass-card-clean rounded-2xl p-12 text-center text-[var(--text-muted)] space-y-2">
           <Clock className="w-10 h-10 text-[var(--text-muted)] mx-auto mb-2" />
           <p className="text-sm font-semibold text-[var(--text-muted)]">ไม่มีรายการคำขอลางานที่ต้องดำเนินการในขณะนี้</p>
-          <p className="text-xs text-[var(--text-muted)]">ระบบจะส่งการแจ้งเตือน 1:1 ผ่าน LINE เมื่อมีคำขอใหม่ส่งถึงคุณค่ะ</p>
         </div>
       )}
 
@@ -227,21 +350,43 @@ export default function ApprovalPage({ currentUser, requests, users, onApproveSt
               <button onClick={() => setSelectedRequest(null)} className="text-[var(--text-muted)] hover:text-[var(--text-main)]">✕</button>
             </div>
 
-            <div className="space-y-3 text-xs">
-              <div className="p-3 rounded-xl bg-[var(--card-bg)] border border-[var(--card-border)]">
-                <p className="text-[var(--text-muted)]">ผู้ขอลา: <span className="text-[var(--text-main)] font-semibold">{selectedRequest.user_id}</span></p>
-                <p className="text-[var(--text-muted)]">ประเภท: <span className="text-emerald-400 font-semibold">{selectedRequest.leave_type} ({selectedRequest.leave_duration} วัน)</span></p>
-                <p className="text-[var(--text-muted)]">เหตุผล: <span className="text-[var(--text-main)]">{selectedRequest.description}</span></p>
+            <div className="space-y-4 text-xs">
+              <div className="p-4 rounded-xl bg-[var(--card-bg)] border border-[var(--card-border)] flex items-start space-x-4">
+                <img 
+                  src={users.find(u => u.id === selectedRequest.user_id)?.avatar_url || `https://ui-avatars.com/api/?name=${selectedRequest.user_id}&background=random`} 
+                  alt="Requester" 
+                  className="w-16 h-16 rounded-full border border-[var(--card-border)] object-cover"
+                />
+                <div>
+                  <div className="font-bold text-sm text-[var(--text-main)]">
+                    {users.find(u => u.id === selectedRequest.user_id)?.fullname || selectedRequest.user_id}
+                  </div>
+                  <div className="text-xs text-[var(--text-muted)] mt-0.5 mb-1">
+                    {agencies?.find(a => a.id === users.find(u => u.id === selectedRequest.user_id)?.agency_id)?.name || users.find(u => u.id === selectedRequest.user_id)?.agency_id || 'SMT'} • {departments?.find(d => d.id === users.find(u => u.id === selectedRequest.user_id)?.department_id)?.name || users.find(u => u.id === selectedRequest.user_id)?.department_id || 'ทั่วไป'}
+                  </div>
+                  <div className="text-[var(--text-muted)] mt-1">
+                    ประเภท: <span className="text-blue-500 font-semibold">{selectedRequest.leave_type} ({selectedRequest.leave_duration} วัน)</span>
+                  </div>
+                  <div className="text-[var(--text-muted)] mt-0.5">
+                    ช่วงเวลาที่ลา: <span className="font-medium text-[var(--text-main)]">{selectedRequest.date_start ? selectedRequest.date_start.split('-').reverse().join('-') : ''} ถึง {selectedRequest.date_end ? selectedRequest.date_end.split('-').reverse().join('-') : ''}</span>
+                  </div>
+                  <div className="text-[var(--text-muted)] mt-0.5">
+                    เหตุผล: <span className="text-[var(--text-main)]">{selectedRequest.description}</span>
+                  </div>
+                </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1.5">หมายเหตุ / ความเห็นผู้อนุมัติ (Optional)</label>
+                <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1.5 flex items-center">
+                  หมายเหตุ / ความเห็นผู้อนุมัติ <span className="text-rose-500 ml-1">* (จำเป็นต้องระบุ)</span>
+                </label>
                 <textarea
                   rows={2}
-                  placeholder="ระบุข้อความหรือหมายเหตุเพิ่มเติม..."
+                  placeholder="ระบุข้อความหรือหมายเหตุเพิ่มเติม ก่อนกดยืนยัน..."
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
-                  className="w-full glass-input rounded-xl p-3 text-sm bg-[var(--card-bg)] border-[var(--card-border)] text-[var(--text-main)] focus:outline-none"
+                  className="w-full glass-input rounded-xl p-3 text-sm bg-[var(--card-bg)] border-[var(--card-border)] text-[var(--text-main)] focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                  required
                 />
               </div>
             </div>
@@ -250,7 +395,12 @@ export default function ApprovalPage({ currentUser, requests, users, onApproveSt
             <div className="flex items-center justify-end space-x-3 pt-3 border-t border-[var(--card-border)]">
               <button
                 onClick={() => handleAction('Rejected')}
-                className="py-2.5 px-4 bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/40 text-xs font-semibold rounded-xl flex items-center space-x-1.5 transition-all"
+                disabled={!comment.trim()}
+                className={`py-2.5 px-4 text-xs font-bold rounded-xl flex items-center space-x-1.5 transition-all ${
+                  !comment.trim() 
+                  ? 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500 cursor-not-allowed' 
+                  : 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/30'
+                }`}
               >
                 <XCircle className="w-4 h-4" />
                 <span>ปฏิเสธคำขอ</span>
@@ -258,7 +408,12 @@ export default function ApprovalPage({ currentUser, requests, users, onApproveSt
 
               <button
                 onClick={() => handleAction('Approved')}
-                className="py-2.5 px-5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-[var(--text-main)] text-xs font-semibold rounded-xl shadow-lg shadow-emerald-500/25 flex items-center space-x-1.5 transition-all"
+                disabled={!comment.trim()}
+                className={`py-2.5 px-5 text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 transition-all shadow-lg ${
+                  !comment.trim()
+                  ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 shadow-none cursor-not-allowed'
+                  : 'bg-gradient-to-r from-blue-500 to-sky-600 hover:from-blue-400 hover:to-sky-500 shadow-blue-500/25'
+                }`}
               >
                 <CheckCircle2 className="w-4 h-4" />
                 <span>ยืนยันอนุมัติ</span>
@@ -269,6 +424,18 @@ export default function ApprovalPage({ currentUser, requests, users, onApproveSt
         </div>
       )}
 
+      {/* Admin Edit Modal */}
+      <AdminEditLeaveModal 
+        isOpen={!!adminEditRequest}
+        onClose={() => setAdminEditRequest(null)}
+        request={adminEditRequest}
+        holidays={holidays}
+        onAdminAction={handleAdminAction}
+        isSubmitting={isSubmittingAdmin}
+        users={users}
+        agencies={agencies}
+        departments={departments}
+      />
     </div>
   );
 }

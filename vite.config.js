@@ -9,6 +9,13 @@ export default defineConfig({
   ],
   server: {
     port: 3000,
-    open: true
+    open: true,
+    proxy: {
+      '/line-api': {
+        target: 'https://api.line.me',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/line-api/, '')
+      }
+    }
   }
 });

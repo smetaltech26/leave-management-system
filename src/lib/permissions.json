@@ -1,0 +1,98 @@
+[
+  {
+    "เมนู": "หน้าหลัก",
+    "MenuItems": "sidebarManu1",
+    "SuperAdmin": true,
+    "Admin": true,
+    "SuperUser": true,
+    "User": true
+  },
+  {
+    "เมนู": "การขออนุญาตลา",
+    "MenuItems": "sidebarManu2",
+    "SuperAdmin": true,
+    "Admin": true,
+    "SuperUser": true,
+    "User": false
+  },
+  {
+    "เมนู": "ปฏิทินการลา",
+    "MenuItems": "sidebarManu3",
+    "SuperAdmin": true,
+    "Admin": true,
+    "SuperUser": true,
+    "User": false
+  },
+  {
+    "เมนู": "รายงาน",
+    "MenuItems": "sidebarManu5",
+    "SuperAdmin": true,
+    "Admin": true,
+    "SuperUser": true,
+    "User": false
+  },
+  {
+    "เมนู": "ผู้ใช้งานระบบ",
+    "MenuItems": "sidebarManu6",
+    "SuperAdmin": true,
+    "Admin": false,
+    "SuperUser": false,
+    "User": false
+  },
+  {
+    "เมนู": "ตั้งค่าหน่วยงาน",
+    "MenuItems": "sidebarManu7",
+    "SuperAdmin": true,
+    "Admin": false,
+    "SuperUser": false,
+    "User": false
+  },
+  {
+    "เมนู": "ตั้งค่าฝ่าย",
+    "MenuItems": "sidebarManu8",
+    "SuperAdmin": true,
+    "Admin": false,
+    "SuperUser": false,
+    "User": false
+  },
+  {
+    "เมนู": "ตั้งค่าวันลา",
+    "MenuItems": "sidebarManu9",
+    "SuperAdmin": true,
+    "Admin": false,
+    "SuperUser": false,
+    "User": false
+  },
+  {
+    "เมนู": "สิทธิการใช้งาน",
+    "MenuItems": "sidebarManu10",
+    "SuperAdmin": true,
+    "Admin": false,
+    "SuperUser": false,
+    "User": false
+  },
+  {
+    "เมนู": "ตั้งค่าวันหยุด",
+    "MenuItems": "sidebarManu11",
+    "SuperAdmin": true,
+    "Admin": false,
+    "SuperUser": false,
+    "User": false
+  },
+  {
+    "เมนู": "ตั้งค่าวันทำงาน",
+    "MenuItems": "sidebarManu12",
+    "SuperAdmin": true,
+    "Admin": false,
+    "SuperUser": false,
+    "User": false
+  },
+  {
+    "เมนู": "ตั้งค่าระบบ",
+    "MenuItems": "sidebarManu14",
+    "SuperAdmin": true,
+    "Admin": false,
+    "SuperUser": false,
+    "User": false
+  }
+]

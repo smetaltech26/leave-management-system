@@ -1,32 +1,40 @@
-import React from 'react';
-import { Calendar, Clock, CheckCircle2, XCircle, PlusCircle, Sparkles, Send, ShieldCheck, HeartPulse, Luggage } from 'lucide-react';
+import React, { useState } from 'react';
+import { Calendar, Clock, CheckCircle2, XCircle, PlusCircle, Sparkles, Send, ShieldCheck, HeartPulse, Luggage, Search, Edit2, Trash2, Eye } from 'lucide-react';
+import LeaveDetailsModal from './LeaveDetailsModal';
 
-export default function HomeDashboard({ currentUser, userPolicies, requests, onOpenLeaveModal, setActiveTab }) {
-  
+export default function HomeDashboard({ currentUser, userPolicies, requests, onDeleteRequest, onOpenLeaveModal, setActiveTab, agencies, departments, users }) {
+  const [selectedRequest, setSelectedRequest] = useState(null);
+
   const myPolicies = userPolicies.filter(p => p.user_id === currentUser?.id);
   const myRequests = requests.filter(r => r.user_id === currentUser?.id);
 
   const leaveTypesLabel = {
-    'Annual': { 
+    'ลาพักร้อน': { 
       name: 'ลาพักร้อน', 
       icon: Luggage, 
       badge: 'bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-500/40',
       bar: 'from-amber-500 to-orange-500'
     },
-    'Sick': { 
+    'ลาป่วย': { 
       name: 'ลาป่วย', 
       icon: HeartPulse, 
       badge: 'bg-rose-100 text-rose-900 border-rose-300 dark:bg-rose-500/20 dark:text-rose-300 dark:border-rose-500/40',
       bar: 'from-rose-500 to-pink-500'
     },
-    'Personal': { 
+    'ลากิจได้รับค่าจ้าง': { 
       name: 'ลากิจได้รับค่าจ้าง', 
       icon: ShieldCheck, 
       badge: 'bg-blue-100 text-blue-900 border-blue-300 dark:bg-blue-500/20 dark:text-blue-300 dark:border-blue-500/40',
       bar: 'from-blue-500 to-cyan-500'
     },
-    'Other': { 
-      name: 'อื่นๆ', 
+    'ลากิจไม่ได้รับค่าจ้าง': {
+      name: 'ลากิจไม่ได้รับค่าจ้าง', 
+      icon: ShieldCheck, 
+      badge: 'bg-slate-100 text-slate-900 border-slate-300 dark:bg-slate-500/20 dark:text-slate-300 dark:border-slate-500/40',
+      bar: 'from-slate-500 to-gray-500'
+    },
+    'ลาอื่นๆ': { 
+      name: 'ลาอื่นๆ', 
       icon: Calendar, 
       badge: 'bg-purple-100 text-purple-900 border-purple-300 dark:bg-purple-500/20 dark:text-purple-300 dark:border-purple-500/40',
       bar: 'from-purple-500 to-indigo-500'
@@ -37,28 +45,24 @@ export default function HomeDashboard({ currentUser, userPolicies, requests, onO
     <div className="space-y-7 animate-in fade-in duration-200">
       
       {/* Premium Hero Welcome Banner */}
-      <div className="rounded-3xl p-4 md:p-5 relative overflow-hidden bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-700 text-white shadow-xl shadow-teal-600/15">
+      <div className="rounded-[1.5rem] p-3 md:p-4 relative overflow-hidden bg-gradient-to-r from-blue-600 via-sky-600 to-cyan-700 text-white shadow-xl shadow-sky-600/15">
         <div className="absolute right-0 top-0 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
         
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-          <div className="space-y-2.5">
-            <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-white/20 backdrop-blur-md text-white text-xs md:text-sm font-bold border border-white/30">
-              <Sparkles className="w-4 h-4 text-amber-300" />
-              <span>ระบบลางานยุคใหม่ Clean & High-Contrast Typography</span>
-            </div>
-            <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight drop-shadow-sm">
-              สวัสดีค่ะคุณ {currentUser?.fullname} 👋
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+          <div className="space-y-1">
+            <h2 className="text-xl md:text-2xl font-extrabold tracking-tight drop-shadow-sm">
+              สวัสดีค่ะคุณ {currentUser?.fullname}
             </h2>
-            <p className="text-emerald-100 text-sm md:text-base font-semibold">
-              สังกัด: {currentUser?.agency_id || 'SMT'} | ฝ่าย: {currentUser?.department_id || 'ทั่วไป'} | ตำแหน่ง: {currentUser?.role}
+            <p className="text-blue-100 text-xs md:text-sm font-semibold">
+              สังกัด: {agencies?.find(a => a.id === currentUser?.agency_id)?.name || currentUser?.agency_id || 'SMT'} | ฝ่าย: {departments?.find(d => d.id === currentUser?.department_id)?.name || currentUser?.department_id || 'ทั่วไป'}
             </p>
           </div>
 
           <button
-            onClick={onOpenLeaveModal}
-            className="py-4 px-7 bg-white hover:bg-emerald-50 text-emerald-900 font-extrabold rounded-2xl shadow-xl flex items-center justify-center space-x-2.5 transition-all transform hover:scale-105 active:scale-95 shrink-0 text-base border-2 border-emerald-100"
+            onClick={() => onOpenLeaveModal()}
+            className="py-2 px-5 bg-white hover:bg-blue-50 text-blue-900 font-extrabold rounded-xl shadow-lg flex items-center justify-center space-x-2 transition-all transform hover:scale-105 active:scale-95 shrink-0 text-sm border border-blue-100"
           >
-            <PlusCircle className="w-6 h-6 text-emerald-600" />
+            <PlusCircle className="w-5 h-5 text-blue-600" />
             <span>ยื่นใบลาใหม่</span>
           </button>
         </div>
@@ -79,33 +83,39 @@ export default function HomeDashboard({ currentUser, userPolicies, requests, onO
                 name: pol.leave_type, 
                 icon: Calendar, 
                 badge: 'bg-slate-100 text-[var(--text-main)] border-slate-300 dark:bg-[var(--card-bg)] dark:text-[var(--text-main)]',
-                bar: 'from-teal-500 to-emerald-500'
+                bar: 'from-sky-500 to-blue-500'
               };
               const Icon = meta.icon;
-              const percentUsed = Math.min(100, (pol.used_days / pol.max_days) * 100);
+              const dynamicUsedDays = requests
+                .filter(r => r.user_id === currentUser?.id && r.leave_type === pol.leave_type && r.status !== 'Rejected')
+                .reduce((sum, r) => sum + Number(r.leave_duration), 0);
+                
+              const displayUsed = dynamicUsedDays;
+              const displayRemaining = Math.max(0, pol.max_days - displayUsed);
+              const percentUsed = Math.min(100, (displayUsed / pol.max_days) * 100);
 
               return (
-                <div key={pol.id} className="glass-card-clean-clean rounded-3xl p-6 md:p-7 border border-slate-200 dark:border-[var(--card-border)] relative space-y-5 shadow-lg">
+                <div key={pol.id} className="glass-card-clean-clean rounded-2xl p-4 md:p-5 border border-slate-200 dark:border-[var(--card-border)] relative space-y-3 shadow-sm">
                   
                   {/* Top Header */}
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-                        <Icon className="w-5 h-5" />
+                    <div className="flex items-center space-x-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                        <Icon className="w-4 h-4" />
                       </div>
-                      <span className="font-extrabold text-base md:text-lg text-[var(--text-main)] dark:text-[var(--text-main)]">{meta.name}</span>
+                      <span className="font-extrabold text-sm md:text-base text-[var(--text-main)] dark:text-[var(--text-main)]">{meta.name}</span>
                     </div>
-                    <span className="text-xs md:text-sm font-bold text-[var(--text-muted)] dark:text-[var(--text-muted)]">สิทธิ์ {pol.max_days} วัน</span>
+                    <span className="text-xs font-bold text-[var(--text-muted)] dark:text-[var(--text-muted)]">สิทธิ์ {pol.max_days} วัน</span>
                   </div>
 
                   {/* Big Number Display */}
                   <div className="flex items-baseline justify-between pt-1">
                     <div>
-                      <span className="text-5xl font-black text-[var(--text-main)] dark:text-[var(--text-main)] tracking-tight">{pol.remaining_days}</span>
-                      <span className="text-sm font-extrabold text-[var(--text-muted)] dark:text-[var(--text-muted)] ml-2">วันคงเหลือ</span>
+                      <span className="text-3xl font-black text-[var(--text-main)] dark:text-[var(--text-main)] tracking-tight">{displayRemaining}</span>
+                      <span className="text-xs font-extrabold text-[var(--text-muted)] dark:text-[var(--text-muted)] ml-1.5">วันคงเหลือ</span>
                     </div>
-                    <div className="text-xs md:text-sm font-bold text-[var(--text-muted)] dark:text-[var(--text-muted)]">
-                      ใช้ไป <span className="font-extrabold text-[var(--text-main)] dark:text-[var(--text-main)]">{pol.used_days}</span> วัน
+                    <div className="text-[10px] md:text-xs font-bold text-[var(--text-muted)] dark:text-[var(--text-muted)]">
+                      ใช้ไป <span className="font-extrabold text-[var(--text-main)] dark:text-[var(--text-main)]">{displayUsed}</span> วัน
                     </div>
                   </div>
 
@@ -130,78 +140,139 @@ export default function HomeDashboard({ currentUser, userPolicies, requests, onO
         </div>
       </div>
 
-      {/* Recent Leave Requests */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base md:text-lg font-extrabold text-[var(--text-main)] dark:text-[var(--text-main)] tracking-tight">
+      {/* Recent Leave Requests (Table Format) */}
+      <div className="bg-white dark:bg-[var(--card-bg)] rounded-3xl border border-slate-200 dark:border-[var(--card-border)] overflow-hidden shadow-sm">
+        <div className="p-4 border-b border-slate-200 dark:border-[var(--card-border)] bg-slate-50/50 dark:bg-slate-800/30 flex justify-between items-center">
+          <h3 className="text-base md:text-lg font-extrabold text-[var(--text-main)] flex items-center gap-2">
             🕒 ประวัติคำขอลางานล่าสุดของคุณ ({myRequests.length})
           </h3>
-          <button onClick={() => setActiveTab('calendar')} className="text-sm text-emerald-600 dark:text-emerald-400 font-extrabold hover:underline">
-            ดูปฏิทินทั้งหมด →
-          </button>
+
         </div>
 
-        {myRequests.length > 0 ? (
-          <div className="space-y-3.5">
-            {myRequests.map((req) => {
-              const meta = leaveTypesLabel[req.leave_type] || { name: req.leave_type };
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="bg-slate-50 dark:bg-slate-800/50 text-[var(--text-main)] border-b border-slate-200 dark:border-[var(--card-border)]">
+                <th className="py-4 px-4 font-bold whitespace-nowrap">รหัสคำขอ</th>
+                <th className="py-4 px-4 font-bold">พนักงาน</th>
+                <th className="py-4 px-4 font-bold text-center">ประเภท</th>
+                <th className="py-4 px-4 font-bold text-center">วันที่เริ่ม - สิ้นสุด</th>
+                <th className="py-4 px-4 font-bold text-center">จำนวน</th>
+                <th className="py-4 px-4 font-bold">เหตุผล</th>
+                <th className="py-4 px-4 font-bold text-center">สถานะ</th>
+                <th className="py-4 px-4 font-bold text-center">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-[var(--card-border)]">
+              {myRequests.length === 0 ? (
+                <tr>
+                  <td colSpan="8" className="py-12 text-center">
+                    <Send className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+                    <p className="text-slate-500 dark:text-slate-400 font-bold">คุณยังไม่มีคำขอลางานในขณะนี้</p>
+                  </td>
+                </tr>
+              ) : (
+                myRequests.map((req) => {
+                  const meta = leaveTypesLabel[req.leave_type] || { 
+                    name: req.leave_type,
+                    badge: 'bg-slate-100 text-slate-900 border-slate-300 dark:bg-slate-800 dark:text-slate-300'
+                  };
+                  
+                  // เงื่อนไขสามารถแก้ไข/ลบได้ เฉพาะเมื่อยังไม่มีการอนุมัติใดๆ (เช่น Pending และ current_step = 1)
+                  const canEditOrDelete = req.status === 'Pending' && req.current_step === 1;
 
-              return (
-                <div key={req.id} className="glass-card-clean-clean rounded-2xl p-5 border border-slate-200 dark:border-[var(--card-border)] flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
-                  <div className="flex items-start space-x-4">
-                    <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-black text-base shrink-0">
-                      {req.id.replace('LEV-', '#')}
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex items-center space-x-3">
-                        <span className="font-extrabold text-base text-[var(--text-main)] dark:text-[var(--text-main)]">{meta.name}</span>
-                        <span className="text-xs md:text-sm font-bold text-[var(--text-muted)] dark:text-[var(--text-muted)]">• {req.leave_duration} วัน</span>
-                      </div>
-                      <p className="text-sm text-[var(--text-main)] dark:text-[var(--text-main)] font-medium">{req.description}</p>
-                      <p className="text-xs font-semibold text-[var(--text-muted)] dark:text-[var(--text-muted)]">
-                        ช่วงเวลา: <span className="font-bold text-[var(--text-main)] dark:text-[var(--text-main)]">{req.date_start}</span> ถึง <span className="font-bold text-[var(--text-main)] dark:text-[var(--text-main)]">{req.date_end}</span>
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Status Badge */}
-                  <div className="flex items-center space-x-3 self-end md:self-center">
-                    {req.status === 'Pending' && (
-                      <span className="inline-flex items-center space-x-2 px-4 py-2 text-xs md:text-sm font-extrabold bg-amber-100 text-amber-900 border border-amber-300 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-500/40 rounded-xl">
-                        <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                        <span>รออนุมัติ Step {req.current_step}</span>
-                      </span>
-                    )}
-                    {req.status === 'Approved' && (
-                      <span className="inline-flex items-center space-x-2 px-4 py-2 text-xs md:text-sm font-extrabold bg-emerald-100 text-emerald-900 border border-emerald-300 dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-500/40 rounded-xl">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                        <span>อนุมัติแล้ว</span>
-                      </span>
-                    )}
-                    {req.status === 'Rejected' && (
-                      <span className="inline-flex items-center space-x-2 px-4 py-2 text-xs md:text-sm font-extrabold bg-rose-100 text-rose-900 border border-rose-300 dark:bg-rose-500/20 dark:text-rose-300 dark:border-rose-500/40 rounded-xl">
-                        <XCircle className="w-4 h-4 text-rose-600 dark:text-rose-400" />
-                        <span>ไม่อนุมัติ</span>
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="glass-card-clean-clean rounded-3xl p-10 text-center text-[var(--text-muted)] dark:text-[var(--text-muted)] space-y-3">
-            <Send className="w-10 h-10 text-[var(--text-muted)] dark:text-[var(--text-muted)] mx-auto mb-2" />
-            <p className="text-base font-bold">คุณยังไม่มีคำขอลางานในขณะนี้</p>
-            <button
-              onClick={onOpenLeaveModal}
-              className="text-sm text-emerald-600 dark:text-emerald-400 font-extrabold hover:underline"
-            >
-              + คลิกเพื่อยื่นใบลาใหม่
-            </button>
-          </div>
-        )}
+                  return (
+                    <tr key={req.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors group">
+                      <td className="py-3 px-4 font-mono text-blue-500 dark:text-blue-400 text-xs font-bold">{req.id}</td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-3">
+                          <img 
+                            src={currentUser?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser?.fullname)}&background=random`} 
+                            alt="" 
+                            className="w-12 h-12 rounded-full object-cover border-2 border-slate-100 dark:border-slate-800 shadow-sm" 
+                            onError={(e) => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser?.fullname)}&background=random`; }}
+                          />
+                          <div>
+                            <div className="font-bold text-[var(--text-main)] text-sm">{currentUser?.fullname}</div>
+                            <div className="text-xs text-[var(--text-muted)] mt-0.5">{agencies?.find(a => a.id === currentUser?.agency_id)?.name || currentUser?.agency_id || 'SMT'} | {departments?.find(d => d.id === currentUser?.department_id)?.name || currentUser?.department_id || 'ทั่วไป'}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex justify-center">
+                          <span className={`px-3 py-1.5 rounded-full text-xs font-bold flex items-center justify-center w-fit ${meta.badge.replace('border', '')}`}>{meta.name}</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-center text-xs text-[var(--text-muted)] leading-tight">
+                        <div className="font-bold text-[var(--text-main)] mb-1">{req.date_start ? req.date_start.split('-').reverse().join('-') : ''}</div>
+                        <div>ถึง</div>
+                        <div className="font-bold text-[var(--text-main)] mt-1">{req.date_end ? req.date_end.split('-').reverse().join('-') : ''}</div>
+                      </td>
+                      <td className="py-3 px-4 text-center font-bold text-[var(--text-main)]">{req.leave_duration} วัน</td>
+                      <td className="py-3 px-4 text-[var(--text-muted)] text-sm truncate max-w-[150px]" title={req.description}>{req.description}</td>
+                      <td className="py-3 px-4">
+                        <div className="flex justify-center">
+                          {req.status === 'Pending' && (
+                            <span className="px-3 py-1 bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 rounded-full text-xs font-bold flex items-center gap-1 w-fit"><Clock className="w-3 h-3"/> รออนุมัติ (ขั้น {req.current_step})</span>
+                          )}
+                          {req.status === 'Approved' && (
+                            <span className="px-3 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 rounded-full text-xs font-bold flex items-center gap-1 w-fit"><CheckCircle2 className="w-3 h-3"/> อนุมัติแล้ว</span>
+                          )}
+                          {req.status === 'Rejected' && (
+                            <span className="px-3 py-1 bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400 rounded-full text-xs font-bold flex items-center gap-1 w-fit"><XCircle className="w-3 h-3"/> ไม่อนุมัติ</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex justify-center gap-1.5">
+                          <button onClick={() => setSelectedRequest(req)} className="p-2 text-blue-600 bg-blue-100 dark:bg-blue-500/20 hover:bg-blue-200 dark:hover:bg-blue-500/40 rounded-lg transition-colors" title="ดูรายละเอียด">
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          
+                          {canEditOrDelete ? (
+                            <>
+                              <button onClick={() => onOpenLeaveModal(req)} className="p-2 text-amber-600 bg-amber-100 dark:bg-amber-500/20 hover:bg-amber-200 dark:hover:bg-amber-500/40 rounded-lg transition-colors" title="แก้ไขคำขอ">
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                              <button onClick={() => {
+                                if(window.confirm('คุณต้องการยกเลิก/ลบ คำขอลานี้ใช่หรือไม่?')) {
+                                  onDeleteRequest(req.id);
+                                }
+                              }} className="p-2 text-rose-600 bg-rose-100 dark:bg-rose-500/20 hover:bg-rose-200 dark:hover:bg-rose-500/40 rounded-lg transition-colors" title="ลบคำขอ">
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button disabled className="p-2 text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-lg cursor-not-allowed opacity-50" title="ไม่สามารถแก้ไขได้ (มีการดำเนินการแล้ว)">
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                              <button disabled className="p-2 text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-lg cursor-not-allowed opacity-50" title="ไม่สามารถลบได้ (มีการดำเนินการแล้ว)">
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
+
+      <LeaveDetailsModal
+        isOpen={!!selectedRequest}
+        onClose={() => setSelectedRequest(null)}
+        request={selectedRequest}
+        user={currentUser}
+        allPolicies={userPolicies}
+        users={users}
+        agencies={agencies}
+        departments={departments}
+      />
 
     </div>
   );

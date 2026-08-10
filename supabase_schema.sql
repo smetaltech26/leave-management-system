@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS public.leave_requests (
     date_start DATE NOT NULL,
     date_end DATE NOT NULL,
     leave_duration NUMERIC(5,2) NOT NULL, -- จำนวนวันลา เช่น 1, 0.5
+    leave_period TEXT DEFAULT 'Full' CHECK (leave_period IN ('Full', 'Morning', 'Afternoon')),
     policy_id UUID REFERENCES public.user_policies(id) ON DELETE SET NULL,
     status TEXT DEFAULT 'Pending' CHECK (status IN ('Pending', 'Approved', 'Rejected', 'Cancelled')),
     current_step INT DEFAULT 1 NOT NULL,

@@ -38,31 +38,33 @@ export default function LoginPage({ onLogin, users, theme = 'light', toggleTheme
 
       <div className="w-full max-w-md relative z-10 p-8 rounded-3xl shadow-2xl border border-white/80 dark:border-slate-800/50 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl transform transition-all hover:scale-[1.01]">
         
-        {/* Theme Toggle Button */}
-        <button 
-          onClick={toggleTheme} 
-          className="absolute top-4 right-4 p-2 rounded-full bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors shadow-sm"
-          title={theme === 'dark' ? "เปลี่ยนเป็นโหมดสว่าง" : "เปลี่ยนเป็นโหมดมืด"}
-        >
-          {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-        </button>
+        {/* Theme Toggle Button & New Version */}
+        <div className="absolute top-4 right-4 flex flex-col items-end space-y-2">
+          <button 
+            onClick={toggleTheme} 
+            className="p-2 rounded-full bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors shadow-sm"
+            title={theme === 'dark' ? "เปลี่ยนเป็นโหมดสว่าง" : "เปลี่ยนเป็นโหมดมืด"}
+          >
+            {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          </button>
+          <span className="text-blue-600 dark:text-blue-400 font-bold text-[10px] sm:text-xs animate-pulse bg-blue-100 dark:bg-blue-900/30 px-1.5 py-0.5 rounded-md shadow-sm border border-blue-200 dark:border-blue-800 pointer-events-none">
+            New Version ✨
+          </span>
+        </div>
 
-        {/* Logo Section */}
         {/* Logo Section */}
         <div className="flex flex-col items-center justify-center mb-10 relative">
           <div className="w-24 h-24 bg-white rounded-2xl shadow-xl flex items-center justify-center p-2 mb-6 border border-slate-100 overflow-hidden">
             <img src={logoUrl} alt="SMT Logo" className="w-full h-full object-contain" />
           </div>
-          <h1 className="text-3xl font-black text-slate-800 dark:text-slate-100 tracking-tight mb-2 text-center drop-shadow-sm relative inline-flex items-center justify-center flex-wrap gap-2">
-            <span>Leave Management <span className="text-blue-600 dark:text-blue-400">System</span></span>
-            <span className="text-blue-600 dark:text-blue-400 font-bold text-[10px] sm:text-xs animate-pulse bg-blue-100 dark:bg-blue-900/30 px-1.5 py-0.5 rounded-md shadow-sm border border-blue-200 dark:border-blue-800 pointer-events-none align-super">
-              New Version ✨
-            </span>
+          <h1 className="text-3xl font-black text-slate-800 dark:text-slate-100 tracking-tight mb-2 text-center drop-shadow-sm">
+            Leave Management <span className="text-blue-600 dark:text-blue-400">System</span>
           </h1>
           <p className="text-sm font-medium text-slate-600 dark:text-slate-300 text-center bg-white/80 dark:bg-slate-800/80 px-4 py-1.5 rounded-full shadow-sm border border-slate-100 dark:border-slate-700">
             ระบบจัดการคำขอลางานออนไลน์
           </p>
         </div>
+
 
         {/* Login Form */}
         <form onSubmit={handleLogin} className="space-y-6">

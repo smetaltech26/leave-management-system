@@ -511,9 +511,9 @@ export default function LeaveFormModal({ isOpen, onClose, currentUser, users, us
     {/* Approver Selection Modal (ซ้อนอีกชั้น) */}
     {showApproverModal && (
       <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-        <div className="bg-slate-50 dark:bg-slate-900 w-full max-w-3xl max-h-[90vh] rounded-[2rem] shadow-2xl flex flex-col overflow-hidden">
+        <div className="bg-slate-50 dark:bg-slate-900 w-full max-w-3xl max-h-[75vh] md:max-h-[85vh] rounded-[2rem] shadow-2xl flex flex-col overflow-hidden">
           {/* Header */}
-          <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900">
+          <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900 shrink-0">
             <h3 className="text-lg font-extrabold text-[var(--text-main)] dark:text-[var(--text-main)]">เลือกผู้อนุมัติ</h3>
             <button onClick={() => setShowApproverModal(false)} className="p-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 rounded-full transition-colors">
               <X className="w-5 h-5" />
@@ -595,7 +595,7 @@ export default function LeaveFormModal({ isOpen, onClose, currentUser, users, us
           </div>
           
           {/* Footer */}
-          <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-end space-x-3">
+          <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-end space-x-3 shrink-0">
             <button
               type="button"
               onClick={() => setShowApproverModal(false)}

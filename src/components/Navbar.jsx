@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Bell, User, LogOut, Shield, ChevronDown, Sun, Moon, Sparkles } from 'lucide-react';
+import logoUrl from '../assets/smt-logo.jpg';
 
 export default function Navbar({ currentUser, setCurrentUser, users, activeTab, setActiveTab, theme, toggleTheme }) {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -11,7 +12,7 @@ export default function Navbar({ currentUser, setCurrentUser, users, activeTab, 
         {/* Brand & Logo */}
         <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setActiveTab('home')}>
           <div className="w-10 h-10 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex items-center justify-center">
-            <img src="/smt-logo.jpg" alt="SMT Logo" className="w-full h-full object-cover" />
+            <img src={logoUrl} alt="SMT Logo" className="w-full h-full object-cover" />
           </div>
           <div>
             <div className="flex items-center space-x-2">

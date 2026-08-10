@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Lock, User, AlertCircle, ChevronRight, Eye, EyeOff, Moon, Sun } from 'lucide-react';
+import logoUrl from '../assets/smt-logo.jpg';
 
 export default function LoginPage({ onLogin, users, theme = 'light', toggleTheme }) {
   const [username, setUsername] = useState('');
@@ -53,7 +54,7 @@ export default function LoginPage({ onLogin, users, theme = 'light', toggleTheme
         {/* Logo Section */}
         <div className="flex flex-col items-center justify-center mb-10">
           <div className="w-24 h-24 bg-white rounded-2xl shadow-xl flex items-center justify-center p-2 mb-6 border border-slate-100 overflow-hidden">
-            <img src="/smt-logo.jpg" alt="SMT Logo" className="w-full h-full object-contain" />
+            <img src={logoUrl} alt="SMT Logo" className="w-full h-full object-contain" />
           </div>
           <h1 className="text-3xl font-black text-slate-800 dark:text-slate-100 tracking-tight mb-2 text-center drop-shadow-sm">
             Leave Management <span className="text-blue-600 dark:text-blue-400">System</span>

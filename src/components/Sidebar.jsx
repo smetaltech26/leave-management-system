@@ -116,7 +116,6 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, setCurre
             </span>
           </button>
         </div>
-        </div>
       </aside>
 
       {/* Mobile Drawer Overlay */}

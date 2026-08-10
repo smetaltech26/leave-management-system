@@ -281,10 +281,10 @@ export default function LeaveFormModal({ isOpen, onClose, currentUser, users, us
   return (
     <>
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--card-bg)]/60 backdrop-blur-md animate-in fade-in">
-      <div className="w-full max-w-2xl glass-card-clean-clean rounded-3xl p-6 md:p-8 border border-slate-200 dark:border-[var(--card-border)] shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <div className="w-[90vw] md:w-full md:max-w-2xl glass-card-clean-clean rounded-3xl p-6 md:p-8 border border-slate-200 dark:border-[var(--card-border)] shadow-2xl relative max-h-[85vh] md:max-h-[90vh] flex flex-col overflow-hidden">
         
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-[var(--card-border)] mb-6">
+        <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-[var(--card-border)] shrink-0">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-2xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
               <Calendar className="w-5 h-5" />
@@ -300,7 +300,7 @@ export default function LeaveFormModal({ isOpen, onClose, currentUser, users, us
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-5 overflow-y-auto custom-scrollbar flex-grow pr-2">
           
           {/* Leave Type Select */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

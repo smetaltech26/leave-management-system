@@ -281,7 +281,7 @@ export default function LeaveFormModal({ isOpen, onClose, currentUser, users, us
   return (
     <>
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-      <div className="bg-slate-50 dark:bg-slate-900 w-[90vw] md:w-full md:max-w-2xl max-h-[75vh] md:max-h-[85vh] rounded-[2rem] shadow-2xl flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800">
+      <div className="bg-slate-50 dark:bg-slate-900 w-[90vw] md:w-full md:max-w-2xl max-h-[calc(100dvh-2rem)] md:max-h-[85dvh] rounded-[2rem] shadow-2xl flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800">
         
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900 shrink-0">

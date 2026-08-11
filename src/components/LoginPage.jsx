@@ -11,6 +11,13 @@ export default function LoginPage({ onLogin, users, theme = 'light', toggleTheme
 
   const handleLogin = (e) => {
     e.preventDefault();
+    
+    // ปิด focus และเริ่มซ่อนคีย์บอร์ดทันที
+    const activeElement = document.activeElement;
+    if (activeElement instanceof HTMLElement) {
+      activeElement.blur();
+    }
+    
     setError('');
     setIsLoading(true);
 
@@ -23,6 +30,7 @@ export default function LoginPage({ onLogin, users, theme = 'light', toggleTheme
       );
 
       if (user) {
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
         onLogin(user);
       } else {
         setError('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');

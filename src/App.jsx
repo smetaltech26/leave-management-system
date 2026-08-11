@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import FormLogin from './components/FormLogin';
@@ -26,6 +26,7 @@ export default function App() {
 
   const [currentUser, setCurrentUser] = useState(null); 
   const [activeTab, setActiveTab] = useState('home');
+  const mainScrollRef = useRef(null);
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
   const [editingRequest, setEditingRequest] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -81,6 +82,81 @@ export default function App() {
     };
     loadData();
   }, []);
+
+  // เลื่อนจอขึ้นบนสุดเมื่อมีการเปลี่ยนหน้าหรือล็อกอิน
+  useLayoutEffect(() => {
+    if (!currentUser) return;
+    
+    const viewport = window.visualViewport;
+    let active = true;
+    let raf1 = 0;
+    let raf2 = 0;
+    let debounceId = 0;
+    let finishId = 0;
+    
+    const resetScroll = () => {
+      if (!active) return;
+      // ตัวเลื่อนของ document หน้า Login
+      const documentScroller = document.scrollingElement;
+      if (documentScroller) {
+        documentScroller.scrollTop = 0;
+        documentScroller.scrollLeft = 0;
+      }
+      // ตัวเลื่อนภายใน Dashboard
+      if (mainScrollRef.current) {
+        mainScrollRef.current.scrollTop = 0;
+        mainScrollRef.current.scrollLeft = 0;
+      }
+      window.scrollTo(0, 0);
+    };
+    
+    const scheduleReset = () => {
+      window.clearTimeout(debounceId);
+      debounceId = window.setTimeout(resetScroll, 80);
+    };
+    
+    function detachListeners() {
+      viewport?.removeEventListener('resize', scheduleReset);
+      viewport?.removeEventListener('scroll', scheduleReset);
+      window.removeEventListener('touchstart', stop);
+      window.removeEventListener('pointerdown', stop);
+    }
+    
+    function stop() {
+      if (!active) return;
+      active = false;
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+      window.clearTimeout(debounceId);
+      window.clearTimeout(finishId);
+      detachListeners();
+    }
+    
+    // รอบแรก: หลัง React commit
+    resetScroll();
+    
+    // รอบถัดไป: หลัง layout/paint เริ่มนิ่ง
+    raf1 = requestAnimationFrame(() => {
+      resetScroll();
+      raf2 = requestAnimationFrame(resetScroll);
+    });
+    
+    // รองรับ Chrome iOS ปรับ viewport หลังคีย์บอร์ดปิด
+    viewport?.addEventListener('resize', scheduleReset, { passive: true });
+    viewport?.addEventListener('scroll', scheduleReset, { passive: true });
+    
+    // ถ้าผู้ใช้เริ่มแตะ/เลื่อนเอง ให้หยุดทันที ไม่แย่งการควบคุม
+    window.addEventListener('touchstart', stop, { passive: true, once: true });
+    window.addEventListener('pointerdown', stop, { passive: true, once: true });
+    
+    // ทำงานเฉพาะช่วงเปลี่ยนหน้า ไม่ดึงผู้ใช้กลับตลอดเวลา
+    finishId = window.setTimeout(() => {
+      resetScroll();
+      stop();
+    }, 600);
+    
+    return stop;
+  }, [currentUser?.id, activeTab]);
 
   // ---------------------------------------------------------
   // Render: If not logged in, show LoginPage
@@ -388,7 +464,7 @@ export default function App() {
         />
 
         {/* Dynamic Page Views */}
-        <main className="flex-1 p-4 md:p-6 min-w-0 overflow-y-auto">
+        <main ref={mainScrollRef} className="flex-1 p-4 md:p-6 min-w-0 overflow-y-auto">
           {activeTab === 'home' && (
             <HomeDashboard
               currentUser={currentUser}

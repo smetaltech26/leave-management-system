@@ -60,27 +60,27 @@ export default function LeaveCalendar({ requests, holidays, users, departments, 
       </div>
 
       <div className="bg-[var(--card-bg)] p-4 md:p-6 rounded-2xl shadow-lg border border-[var(--card-border)]">
-        <div className="flex justify-between items-center mb-6">
-          <button onClick={prevMonth} className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg flex items-center space-x-2 text-sm font-bold transition-colors">
-            <ChevronLeft className="w-4 h-4" />
+        <div className="flex justify-between items-center mb-6 gap-1 sm:gap-2">
+          <button onClick={prevMonth} className="px-2 py-1.5 sm:px-3 sm:py-2 md:px-4 md:py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg flex items-center space-x-0.5 sm:space-x-2 text-[10px] sm:text-xs md:text-sm font-bold transition-colors whitespace-nowrap">
+            <ChevronLeft className="w-3 h-3 sm:w-4 sm:h-4" />
             <span>เดือนก่อนหน้า</span>
           </button>
           
-          <span className="text-xl md:text-2xl font-extrabold text-[var(--text-main)]">
-            {monthNames[month]} {year + 543}
+          <span className="text-sm sm:text-lg md:text-2xl font-extrabold text-[var(--text-main)] text-center whitespace-nowrap">
+            {monthNames[month]} {year}
           </span>
           
-          <button onClick={nextMonth} className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg flex items-center space-x-2 text-sm font-bold transition-colors">
+          <button onClick={nextMonth} className="px-2 py-1.5 sm:px-3 sm:py-2 md:px-4 md:py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg flex items-center space-x-0.5 sm:space-x-2 text-[10px] sm:text-xs md:text-sm font-bold transition-colors whitespace-nowrap">
             <span>เดือนถัดไป</span>
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
           </button>
         </div>
 
         {/* Calendar Grid */}
-        <div className="grid grid-cols-7 gap-1.5 md:gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-7 gap-3 md:gap-2">
           {calendarDays.map((dayNum, index) => {
             if (!dayNum) {
-              return <div key={index} className="h-28 md:h-32 rounded-xl bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-800/50"></div>;
+              return <div key={index} className="hidden md:block h-28 md:h-32 rounded-xl bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-800/50"></div>;
             }
 
             const dateStr = formatDateStr(dayNum);
@@ -119,14 +119,14 @@ export default function LeaveCalendar({ requests, holidays, users, departments, 
             }
 
             return (
-              <div key={index} className={`h-28 md:h-32 rounded-xl p-2 transition-all flex flex-col relative overflow-hidden ${borderClass} border`}>
+              <div key={index} className={`min-h-[6rem] md:min-h-0 md:h-32 rounded-xl p-3 md:p-2 transition-all flex flex-col relative overflow-hidden ${borderClass} border`}>
                 <div className="flex items-start justify-between mb-2">
-                  <span className={`text-sm md:text-base font-extrabold text-[var(--text-main)]`}>
+                  <span className={`text-lg md:text-base font-extrabold text-[var(--text-main)]`}>
                     {dayNum}
                   </span>
                   
                   <div className="flex flex-col items-end text-right">
-                    <span className="text-[9px] md:text-[10px] font-semibold text-slate-400">
+                    <span className="text-sm md:text-[10px] font-semibold text-slate-400">
                       {daysOfWeek[index % 7]}
                     </span>
                     {holiday && (
@@ -157,8 +157,8 @@ export default function LeaveCalendar({ requests, holidays, users, departments, 
 
       {selectedGroup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in" onClick={closeGroupModal}>
-          <div className="bg-white dark:bg-[var(--card-bg)] rounded-2xl shadow-2xl w-full max-w-4xl max-h-[80vh] flex flex-col overflow-hidden border border-slate-200 dark:border-[var(--card-border)]" onClick={e => e.stopPropagation()}>
-            <div className="p-4 md:p-5 border-b border-slate-200 dark:border-[var(--card-border)] flex justify-between items-center">
+          <div className="bg-white dark:bg-[var(--card-bg)] rounded-2xl shadow-2xl w-full max-w-4xl max-h-[calc(100dvh-2rem)] md:max-h-[80dvh] flex flex-col overflow-hidden border border-slate-200 dark:border-[var(--card-border)]" onClick={e => e.stopPropagation()}>
+            <div className="p-4 md:p-5 border-b border-slate-200 dark:border-[var(--card-border)] flex justify-between items-center shrink-0">
               <h2 className="text-xl font-bold text-[var(--text-main)]">
                 ข้อมูลการลาประจำวันที่ {selectedGroup.dateStr.split('-').reverse().join('/')}
               </h2>
@@ -168,79 +168,81 @@ export default function LeaveCalendar({ requests, holidays, users, departments, 
             </div>
             
             <div className="p-4 md:p-6 overflow-y-auto custom-scrollbar flex-grow">
-              <div className="mb-6 p-4 rounded-xl shadow-sm border border-blue-500/20 bg-blue-500 text-white">
+              <div className="mb-6 p-4 rounded-xl shadow-sm border border-blue-500/20 bg-blue-500 dark:bg-blue-500/10 dark:border-blue-500/20">
                 <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
-                    <Users className="w-6 h-6 text-white" />
+                  <div className="w-12 h-12 rounded-full bg-white/20 dark:bg-blue-500/20 flex items-center justify-center">
+                    <Users className="w-6 h-6 text-white dark:text-blue-400" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-xl">{selectedGroup.dept}</h3>
-                    <p className="text-sm text-blue-100 font-medium">พนักงานที่ลาทั้งหมด {selectedGroup.reqs.length} รายการ</p>
+                    <h3 className="font-bold text-xl text-white dark:text-blue-400">{selectedGroup.dept}</h3>
+                    <p className="text-sm font-medium text-blue-100 dark:text-blue-300">พนักงานที่ลาทั้งหมด {selectedGroup.reqs.length} รายการ</p>
                   </div>
                 </div>
               </div>
 
-              <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
-                <table className="w-full text-left border-collapse min-w-[600px]">
-                  <thead>
-                    <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
-                      <th className="p-3 text-xs font-bold text-slate-500 dark:text-slate-400">พนักงาน</th>
-                      <th className="p-3 text-xs font-bold text-slate-500 dark:text-slate-400 text-center">ประเภทการลา</th>
-                      <th className="p-3 text-xs font-bold text-slate-500 dark:text-slate-400 text-center">ช่วงเวลา</th>
-                      <th className="p-3 text-xs font-bold text-slate-500 dark:text-slate-400 text-center">สถานะ</th>
-                      <th className="p-3 text-xs font-bold text-slate-500 dark:text-slate-400 text-center">จัดการ</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {selectedGroup.reqs.map(req => (
-                      <tr key={req.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                        <td className="p-3">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-center font-bold text-slate-400 dark:text-slate-500 text-xs overflow-hidden shrink-0">
-                               <img src={req.requester?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(req.requester?.fullname || 'U')}&background=0D8ABC&color=fff`} className="w-full h-full object-cover" />
-                            </div>
-                            <div>
-                              <h3 className="font-bold text-[var(--text-main)] text-[14px] leading-tight">
-                                {req.requester ? req.requester.fullname : req.user_id}
-                              </h3>
-                              <span className="text-[10px] text-[var(--text-muted)] font-medium">
-                                รหัส: {req.id}
-                              </span>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="p-3 text-center">
-                          <span className="text-xs font-bold text-[var(--text-main)] bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg">
-                            {req.leave_type}
-                          </span>
-                        </td>
-                        <td className="p-3 text-center">
-                          <div className="flex flex-col items-center justify-center gap-1">
-                            <span className="text-xs text-[var(--text-muted)] font-medium">
-                              {req.date_start === req.date_end 
-                                ? req.date_start.split('-').reverse().join('/')
-                                : `${req.date_start.split('-').reverse().join('/')} - ${req.date_end.split('-').reverse().join('/')}`}
+              <div className="flex flex-col space-y-4">
+                {selectedGroup.reqs.map(req => (
+                  <div key={req.id} className="bg-white dark:bg-[var(--card-bg)] rounded-2xl p-4 border border-[var(--card-border)] shadow-sm hover:shadow-md transition-all flex flex-col gap-4">
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="relative">
+                          <img 
+                            src={req.requester?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(req.requester?.fullname || 'U')}&background=0D8ABC&color=fff`} 
+                            alt={req.requester?.fullname}
+                            className="w-12 h-12 rounded-full object-cover ring-2 ring-blue-500/20"
+                          />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-bold text-blue-500 bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded-md">
+                              {req.id}
                             </span>
                           </div>
-                        </td>
-                        <td className="p-3 text-center">
-                          {getStatusBadge(req.status)}
-                        </td>
-                        <td className="p-3 text-center">
-                          <button
-                            onClick={() => openDetailsModal(req)}
-                            className="p-1.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-blue-100 dark:hover:bg-blue-500/20 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors mx-auto block"
-                            title="ดูรายละเอียด"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                          <h3 className="font-bold text-[var(--text-main)] text-sm mt-0.5">{req.requester ? req.requester.fullname : req.user_id}</h3>
+                        </div>
+                      </div>
+                      
+                      <div className="flex flex-col items-end gap-2">
+                        <span className="px-2 py-1 bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 rounded-md text-[10px] font-bold">
+                          {req.leave_type}
+                        </span>
+                        {getStatusBadge(req.status)}
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 border border-slate-100 dark:border-slate-700/50">
+                      <div className="text-xs text-center">
+                        <div className="text-[var(--text-muted)] font-medium mb-1">เริ่มต้น</div>
+                        <div className="font-bold text-[var(--text-main)]">{req.date_start ? req.date_start.split('-').reverse().join('-') : ''}</div>
+                      </div>
+                      <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 flex flex-col items-center">
+                        <span>{req.leave_duration || '1'} วัน</span>
+                        <div className="w-12 h-px bg-slate-300 dark:bg-slate-700 my-1"></div>
+                      </div>
+                      <div className="text-xs text-center">
+                        <div className="text-[var(--text-muted)] font-medium mb-1">สิ้นสุด</div>
+                        <div className="font-bold text-[var(--text-main)]">{req.date_end ? req.date_end.split('-').reverse().join('-') : ''}</div>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between items-center gap-2">
+                      <div className="text-xs text-[var(--text-muted)] truncate flex-1" title={req.description}>
+                        <span className="font-bold">เหตุผล: </span>{req.description || 'ไม่ระบุ'}
+                      </div>
+                      <div className="flex gap-1.5 shrink-0">
+                        <button onClick={() => openDetailsModal(req)} className="p-2 text-blue-600 bg-blue-100 dark:bg-blue-500/20 hover:bg-blue-200 dark:hover:bg-blue-500/40 rounded-lg transition-colors" title="ดูรายละเอียด">
+                          <Eye className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
+            
+            {/* Empty Footer for Spacing */}
+            <div className="p-4 border-t border-slate-200 dark:border-[var(--card-border)] bg-white dark:bg-[var(--card-bg)] shrink-0 min-h-[72px]"></div>
           </div>
         </div>
       )}

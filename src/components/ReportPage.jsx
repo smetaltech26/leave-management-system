@@ -182,7 +182,135 @@ export default function ReportPage({ requests, users, agencies, departments }) {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Mobile View: Cards */}
+        <div className="md:hidden flex flex-col space-y-4 p-4 bg-slate-50/30 dark:bg-slate-900/10">
+          {displayedRequests.length === 0 ? (
+            <div className="py-8 text-center text-[var(--text-muted)]">ไม่พบข้อมูล</div>
+          ) : (
+            displayedRequests.map((r) => {
+              const reqUser = users.find(u => u.id === r.user_id);
+              return (
+                <div key={r.id} className="bg-white dark:bg-[var(--card-bg)] rounded-2xl p-4 border border-[var(--card-border)] shadow-sm hover:shadow-md transition-all flex flex-col gap-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="relative shrink-0">
+                        <img 
+                          src={reqUser?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(reqUser?.fullname || r.user_id)}&background=random`} 
+                          alt={reqUser?.fullname}
+                          className="w-12 h-12 rounded-full object-cover ring-2 ring-blue-500/20"
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="text-[10px] font-bold text-blue-500 bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded-md">
+                            {r.id}
+                          </span>
+                        </div>
+                        <h3 className="font-bold text-[var(--text-main)] text-sm truncate">{reqUser?.fullname || r.user_id}</h3>
+                        <div className="text-xs text-[var(--text-muted)] truncate">{agencies?.find(a => a.id === reqUser?.agency_id)?.name || reqUser?.agency_id || 'SMT'} | {departments?.find(d => d.id === reqUser?.department_id)?.name || reqUser?.department_id || 'ทั่วไป'}</div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-row sm:flex-col items-center sm:items-end gap-2 shrink-0">
+                      <LeaveTypeBadge type={r.leave_type} />
+                      <StatusBadge status={r.status} />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 border border-slate-100 dark:border-slate-700/50">
+                    <div className="text-xs text-center">
+                      <div className="text-[var(--text-muted)] font-medium mb-1">เริ่มต้น</div>
+                      <div className="font-bold text-[var(--text-main)]">{r.date_start ? r.date_start.split('-').reverse().join('-') : ''}</div>
+                    </div>
+                    <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 flex flex-col items-center">
+                      <span>{r.leave_duration} วัน</span>
+                      <div className="w-12 h-px bg-slate-300 dark:bg-slate-700 my-1"></div>
+                    </div>
+                    <div className="text-xs text-center">
+                      <div className="text-[var(--text-muted)] font-medium mb-1">สิ้นสุด</div>
+                      <div className="font-bold text-[var(--text-main)]">{r.date_end ? r.date_end.split('-').reverse().join('-') : ''}</div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center gap-2">
+                    <div className="text-xs text-[var(--text-muted)] truncate flex-1" title={r.description}>
+                      <span className="font-bold">เหตุผล: </span>{r.description || 'ไม่ระบุ'}
+                    </div>
+                    <div className="flex gap-1.5 shrink-0">
+                      <span className="px-3 py-1 bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 rounded-lg text-xs font-bold">
+                        {r.leave_period === 'Morning' ? 'ช่วงเช้า' : r.leave_period === 'Afternoon' ? 'ช่วงบ่าย' : 'ทั้งวัน'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+          {displayedRequests.length > 0 && displayedRequests.length < itemsPerPage && (
+            Array.from({ length: itemsPerPage - displayedRequests.length }).map((_, i) => {
+              const r = displayedRequests[0];
+              const reqUser = users.find(u => u.id === r.user_id);
+              return (
+                <div key={`empty-card-${i}`} className="invisible pointer-events-none select-none bg-white dark:bg-[var(--card-bg)] rounded-2xl p-4 border border-[var(--card-border)] flex flex-col gap-4" aria-hidden="true">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="relative shrink-0">
+                        <img 
+                          src={reqUser?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(reqUser?.fullname || r.user_id)}&background=random`} 
+                          alt={reqUser?.fullname}
+                          className="w-12 h-12 rounded-full object-cover ring-2 ring-blue-500/20"
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="text-[10px] font-bold text-blue-500 bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded-md">
+                            {r.id}
+                          </span>
+                        </div>
+                        <h3 className="font-bold text-[var(--text-main)] text-sm truncate">{reqUser?.fullname || r.user_id}</h3>
+                        <div className="text-xs text-[var(--text-muted)] truncate">{agencies?.find(a => a.id === reqUser?.agency_id)?.name || reqUser?.agency_id || 'SMT'} | {departments?.find(d => d.id === reqUser?.department_id)?.name || reqUser?.department_id || 'ทั่วไป'}</div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-row sm:flex-col items-center sm:items-end gap-2 shrink-0">
+                      <LeaveTypeBadge type={r.leave_type} />
+                      <StatusBadge status={r.status} />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 border border-slate-100 dark:border-slate-700/50">
+                    <div className="text-xs text-center">
+                      <div className="text-[var(--text-muted)] font-medium mb-1">เริ่มต้น</div>
+                      <div className="font-bold text-[var(--text-main)]">{r.date_start ? r.date_start.split('-').reverse().join('-') : ''}</div>
+                    </div>
+                    <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 flex flex-col items-center">
+                      <span>{r.leave_duration} วัน</span>
+                      <div className="w-12 h-px bg-slate-300 dark:bg-slate-700 my-1"></div>
+                    </div>
+                    <div className="text-xs text-center">
+                      <div className="text-[var(--text-muted)] font-medium mb-1">สิ้นสุด</div>
+                      <div className="font-bold text-[var(--text-main)]">{r.date_end ? r.date_end.split('-').reverse().join('-') : ''}</div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center gap-2">
+                    <div className="text-xs text-[var(--text-muted)] truncate flex-1" title={r.description}>
+                      <span className="font-bold">เหตุผล: </span>{r.description || 'ไม่ระบุ'}
+                    </div>
+                    <div className="flex gap-1.5 shrink-0">
+                      <span className="px-3 py-1 bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 rounded-lg text-xs font-bold">
+                        {r.leave_period === 'Morning' ? 'ช่วงเช้า' : r.leave_period === 'Afternoon' ? 'ช่วงบ่าย' : 'ทั้งวัน'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Desktop View: Table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800/50 text-[var(--text-main)] border-b border-slate-200 dark:border-[var(--card-border)]">
@@ -231,6 +359,15 @@ export default function ReportPage({ requests, users, agencies, departments }) {
                     </tr>
                   );
                 })
+              )}
+              {displayedRequests.length > 0 && displayedRequests.length < itemsPerPage && (
+                Array.from({ length: itemsPerPage - displayedRequests.length }).map((_, i) => (
+                  <tr key={`empty-row-${i}`} className="border-none pointer-events-none">
+                    <td className="py-4 px-6" colSpan="8">
+                      <div className="h-12 w-12 opacity-0"></div>
+                    </td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>

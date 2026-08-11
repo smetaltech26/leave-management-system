@@ -183,11 +183,8 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
       {/* Title Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-[var(--text-main)] flex items-center space-x-2">
+          <h2 className="text-2xl font-bold text-[var(--text-main)] flex items-center space-x-2 whitespace-nowrap">
             <span>การอนุมัติคำขอลางาน</span>
-            <span className="px-2.5 py-0.5 text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full font-normal">
-              1:1 LINE Notify Integrated
-            </span>
           </h2>
           <p className="text-xs text-[var(--text-muted)] mt-1">รายการคำขอลางานที่รอให้คุณตรวจสอบและอนุมัติตามลำดับขั้นตอน</p>
         </div>

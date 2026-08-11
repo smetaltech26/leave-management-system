@@ -307,22 +307,24 @@ export default function LeaveFormModal({ isOpen, onClose, currentUser, users, us
         
         {/* Success Popup Overlay */}
         {showSuccessPopup && (
-          <div className="absolute inset-0 z-[100] bg-white dark:bg-slate-900 flex flex-col items-center justify-center p-6 animate-in fade-in zoom-in duration-300">
-            <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-500/20 rounded-full flex items-center justify-center mb-6">
-              <CheckCircle2 className="w-10 h-10 text-emerald-500" />
+          <div className="absolute inset-0 z-[100] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-300">
+            <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[2rem] shadow-2xl p-8 flex flex-col items-center text-center animate-in zoom-in-95 duration-300">
+              <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-500/20 rounded-full flex items-center justify-center mb-6 shadow-inner">
+                <CheckCircle2 className="w-10 h-10 text-emerald-500" />
+              </div>
+              <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 mb-2">
+                ส่งคำขอลาเรียบร้อยแล้ว
+              </h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
+                คำขอของคุณถูกส่งไปยังผู้อนุมัติตามลำดับขั้นตอนเรียบร้อยแล้ว
+              </p>
+              <button
+                onClick={handleSuccessOk}
+                className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold rounded-2xl transition-all shadow-lg shadow-emerald-500/30 active:scale-95"
+              >
+                ตกลง (OK)
+              </button>
             </div>
-            <h2 className="text-2xl font-black text-slate-800 dark:text-slate-100 mb-2 text-center">
-              ส่งคำขอลาเรียบร้อยแล้ว
-            </h2>
-            <p className="text-slate-500 dark:text-slate-400 text-center mb-8 max-w-xs">
-              คำขอของคุณถูกส่งไปยังผู้อนุมัติตามลำดับขั้นตอนเรียบร้อยแล้ว
-            </p>
-            <button
-              onClick={handleSuccessOk}
-              className="w-full max-w-xs py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold rounded-2xl transition-all shadow-lg shadow-emerald-500/30 active:scale-95"
-            >
-              ตกลง (OK)
-            </button>
           </div>
         )}
         

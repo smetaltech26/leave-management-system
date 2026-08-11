@@ -75,70 +75,72 @@ export default function LeaveDetailsModal({ isOpen, onClose, request, user, allP
         {/* Content */}
         <div className="p-6 flex-1 min-h-0 overflow-y-auto custom-scrollbar space-y-6 bg-slate-50 dark:bg-slate-900">
           
-          <div className="rounded-2xl bg-[var(--card-bg)] border border-[var(--card-border)] shadow-sm flex flex-col overflow-hidden min-w-0">
-            {/* User Info & Status */}
-            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 p-4 min-w-0 border-b border-slate-100 dark:border-slate-800">
-              <div className="flex items-center space-x-4 min-w-0">
+          <div className="rounded-3xl bg-[var(--card-bg)] border border-[var(--card-border)] shadow-sm flex flex-col overflow-hidden min-w-0">
+            
+            {/* Top row: 2 columns */}
+            <div className="grid grid-cols-1 md:grid-cols-2 border-b border-slate-100 dark:border-slate-800">
+              
+              {/* Left col: User Info */}
+              <div className="p-6 flex flex-col items-start relative">
+                {/* Badge top right of this cell */}
+                <div className="absolute top-6 right-6">
+                  {request.status === 'Approved' ? (
+                    <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-blue-50 text-blue-600 border border-blue-100 flex items-center shadow-sm">
+                      <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> อนุมัติแล้ว
+                    </span>
+                  ) : request.status === 'Rejected' ? (
+                    <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-rose-50 text-rose-600 border border-rose-100 flex items-center shadow-sm">
+                      <XCircle className="w-3.5 h-3.5 mr-1" /> ไม่อนุมัติ
+                    </span>
+                  ) : (
+                    <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-600 border border-amber-100 flex items-center shadow-sm">
+                      <Clock className="w-3.5 h-3.5 mr-1" /> รออนุมัติ
+                    </span>
+                  )}
+                </div>
+
                 <img 
                   src={user?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullname || request.user_id)}&background=random`}
                   alt="Profile" 
-                  className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 rounded-full border-4 border-slate-100 dark:border-slate-800 shadow-md"
+                  className="w-16 h-16 shrink-0 rounded-full border-2 border-slate-100 dark:border-slate-800 shadow-sm mb-4"
                 />
-                <div className="min-w-0">
-                  <h3 className="text-base sm:text-lg font-bold text-[var(--text-main)] truncate">{user?.fullname || request.user_id}</h3>
-                  <p className="text-xs sm:text-sm text-[var(--text-muted)] truncate">{agencies?.find(a => a.id === user?.agency_id)?.name || 'ไม่ระบุสังกัด'} | {departments?.find(d => d.id === user?.department_id)?.name || 'ไม่ระบุฝ่าย'}</p>
-                </div>
+                <h3 className="text-base font-extrabold text-[var(--text-main)] truncate max-w-[80%]">{user?.fullname || request.user_id}</h3>
+                <p className="text-xs text-[var(--text-muted)] truncate max-w-full">{agencies?.find(a => a.id === user?.agency_id)?.name || 'ไม่ระบุสังกัด'} | {departments?.find(d => d.id === user?.department_id)?.name || 'ไม่ระบุฝ่าย'}</p>
               </div>
-              <div className="flex flex-col items-end shrink-0">
-                {request.status === 'Approved' ? (
-                  <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200 flex items-center shadow-sm">
-                    <CheckCircle2 className="w-4 h-4 mr-1.5" /> อนุมัติแล้ว
-                  </span>
-                ) : request.status === 'Rejected' ? (
-                  <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-rose-100 text-rose-700 border border-rose-200 flex items-center shadow-sm">
-                    <XCircle className="w-4 h-4 mr-1.5" /> ไม่อนุมัติ
-                  </span>
-                ) : (
-                  <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700 border border-amber-200 flex items-center shadow-sm">
-                    <Clock className="w-4 h-4 mr-1.5" /> รออนุมัติ (ขั้น {request.current_step}/{request.total_steps})
-                  </span>
-                )}
-              </div>
-            </div>
 
-            {/* Leave Info */}
-            <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100 dark:divide-slate-800">
-              <div className="p-4">
-                <div className="text-xs font-bold text-[var(--text-muted)] mb-1 uppercase tracking-wider">ประเภทการลา</div>
-                <div className={`font-semibold text-base ${typeInfo.color}`}>{typeInfo.name}</div>
-                <div className="mt-4 text-xs font-bold text-[var(--text-muted)] mb-1 uppercase tracking-wider">ช่วงเวลาที่ลา</div>
-                <div className="font-semibold text-[var(--text-main)] text-sm">
+              {/* Right col: Leave Details */}
+              <div className="p-6 flex flex-col justify-center border-t md:border-t-0 md:border-l border-slate-100 dark:border-slate-800">
+                <div className="text-xs font-bold text-[var(--text-muted)] mb-1">ประเภทการลา</div>
+                <div className={`font-bold text-base ${typeInfo.color} mb-5`}>{typeInfo.name}</div>
+                
+                <div className="text-xs font-bold text-[var(--text-muted)] mb-1">ช่วงเวลาที่ลา</div>
+                <div className="font-bold text-[var(--text-main)] text-sm">
                   {request.date_start === request.date_end 
                     ? formatDate(request.date_start) 
                     : `${formatDate(request.date_start)} ถึง ${formatDate(request.date_end)}`}
                 </div>
-                <div className="text-xs text-[var(--text-muted)] mt-0.5">
-                  จำนวน {request.leave_duration} วัน {request.leave_period === 'Morning' ? '(เช้า)' : request.leave_period === 'Afternoon' ? '(บ่าย)' : '(ทั้งวัน)'}
+                <div className="text-xs text-[var(--text-muted)] mt-1 font-medium">
+                  จำนวน {request.leave_duration} วัน {request.leave_period === 'Morning' ? '(เช้า)' : request.leave_period === 'Afternoon' ? '(บ่าย)' : ''}
                 </div>
               </div>
+            </div>
 
-              {/* Quota Progress (If policy exists) */}
-              <div className="p-4 flex flex-col justify-center">
-                {policy ? (
-                  <>
-                    <div className="flex justify-between items-end mb-2">
-                      <div className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">โควตาวันลาคงเหลือ</div>
-                      <div className={`text-2xl font-black ${typeInfo.color}`}>{remaining} <span className="text-xs font-medium text-[var(--text-muted)]">วัน</span></div>
-                    </div>
-                    <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5 mb-2 overflow-hidden shadow-inner">
-                      <div className={`${typeInfo.bg} h-2.5 rounded-full transition-all duration-500`} style={{ width: `${Math.min(percentage, 100)}%` }}></div>
-                    </div>
-                    <div className="text-xs text-[var(--text-muted)] font-medium text-right">ใช้ไปแล้ว {used}/{quota} วัน ({percentage}%)</div>
-                  </>
-                ) : (
-                  <div className="text-center text-[var(--text-muted)] text-sm font-medium opacity-60">ไม่มีข้อมูลโควตา</div>
-                )}
-              </div>
+            {/* Bottom row: Quota */}
+            <div className="p-6">
+              {policy ? (
+                <>
+                  <div className="flex justify-between items-end mb-3">
+                    <div className="text-sm font-bold text-[var(--text-main)]">โควตาวันลาคงเหลือ</div>
+                    <div className={`text-3xl font-black ${typeInfo.color}`}>{remaining} <span className="text-sm font-bold text-[var(--text-main)]">วัน</span></div>
+                  </div>
+                  <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-3 mb-3 overflow-hidden shadow-inner">
+                    <div className={`${typeInfo.bg} h-3 rounded-full transition-all duration-500`} style={{ width: `${Math.min(percentage, 100)}%` }}></div>
+                  </div>
+                  <div className="text-xs text-[var(--text-muted)] font-medium text-right">ใช้ไปแล้ว {used}/{quota} วัน ({percentage}%)</div>
+                </>
+              ) : (
+                <div className="text-center text-[var(--text-muted)] text-sm font-medium opacity-60 py-2">ไม่มีข้อมูลโควตา</div>
+              )}
             </div>
           </div>
 

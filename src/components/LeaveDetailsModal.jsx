@@ -82,23 +82,6 @@ export default function LeaveDetailsModal({ isOpen, onClose, request, user, allP
               
               {/* Left col: User Info */}
               <div className="p-4 sm:p-6 flex flex-col items-start relative">
-                {/* Badge top right of this cell */}
-                <div className="absolute top-4 sm:top-6 right-4 sm:right-6">
-                  {request.status === 'Approved' ? (
-                    <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-blue-50 text-blue-600 border border-blue-100 flex items-center shadow-sm">
-                      <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> อนุมัติแล้ว
-                    </span>
-                  ) : request.status === 'Rejected' ? (
-                    <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-rose-50 text-rose-600 border border-rose-100 flex items-center shadow-sm">
-                      <XCircle className="w-3.5 h-3.5 mr-1" /> ไม่อนุมัติ
-                    </span>
-                  ) : (
-                    <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-600 border border-amber-100 flex items-center shadow-sm">
-                      <Clock className="w-3.5 h-3.5 mr-1" /> รออนุมัติ
-                    </span>
-                  )}
-                </div>
-
                 <img 
                   src={user?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullname || request.user_id)}&background=random`}
                   alt="Profile" 
@@ -106,6 +89,23 @@ export default function LeaveDetailsModal({ isOpen, onClose, request, user, allP
                 />
                 <h3 className="text-sm sm:text-base font-extrabold text-[var(--text-main)] truncate max-w-full">{user?.fullname || request.user_id}</h3>
                 <p className="text-[10px] sm:text-xs text-[var(--text-muted)] truncate max-w-full">{agencies?.find(a => a.id === user?.agency_id)?.name || 'ไม่ระบุสังกัด'} | {departments?.find(d => d.id === user?.department_id)?.name || 'ไม่ระบุฝ่าย'}</p>
+                
+                {/* Status Badge */}
+                <div className="mt-3">
+                  {request.status === 'Approved' ? (
+                    <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-blue-50 text-blue-600 border border-blue-100 flex items-center shadow-sm w-fit">
+                      <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> อนุมัติแล้ว
+                    </span>
+                  ) : request.status === 'Rejected' ? (
+                    <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-rose-50 text-rose-600 border border-rose-100 flex items-center shadow-sm w-fit">
+                      <XCircle className="w-3.5 h-3.5 mr-1" /> ไม่อนุมัติ
+                    </span>
+                  ) : (
+                    <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-600 border border-amber-100 flex items-center shadow-sm w-fit">
+                      <Clock className="w-3.5 h-3.5 mr-1" /> รออนุมัติ
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Right col: Leave Details */}

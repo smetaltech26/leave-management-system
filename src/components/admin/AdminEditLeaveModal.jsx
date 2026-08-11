@@ -78,8 +78,8 @@ export default function AdminEditLeaveModal({ isOpen, onClose, request, holidays
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in">
-      <div className="bg-white dark:bg-[var(--card-bg)] w-full max-w-lg rounded-3xl border border-[var(--card-border)] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-[100] flex items-start md:items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in">
+      <div className="bg-white dark:bg-[var(--card-bg)] w-full max-w-lg rounded-[2rem] border border-[var(--card-border)] shadow-2xl overflow-hidden flex flex-col max-h-[calc(100svh-2rem)] md:max-h-[90vh] min-h-0 relative">
         <div className="flex justify-between items-center p-5 border-b border-[var(--card-border)]">
           <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
             <AlertTriangle className="w-5 h-5" />
@@ -90,7 +90,7 @@ export default function AdminEditLeaveModal({ isOpen, onClose, request, holidays
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto custom-scrollbar space-y-5 flex-1">
+        <div className="p-6 flex-1 min-h-0 overflow-y-auto custom-scrollbar space-y-5">
           <div className="flex items-center space-x-5 p-5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-[var(--card-border)]">
             <img 
               src={users?.find(u => u.id === request.user_id)?.avatar_url || `https://ui-avatars.com/api/?name=${users?.find(u => u.id === request.user_id)?.fullname || request.user_id}&background=random`} 
@@ -155,20 +155,20 @@ export default function AdminEditLeaveModal({ isOpen, onClose, request, holidays
           </div>
         </div>
 
-        <div className="p-5 border-t border-[var(--card-border)] bg-slate-50 dark:bg-slate-800/30 grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <button onClick={handleRevert} disabled={isSubmitting} className="flex flex-col items-center justify-center gap-1 p-3 rounded-xl border border-amber-200 bg-amber-50 text-amber-600 hover:bg-amber-100 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400 dark:hover:bg-amber-500/20 transition-colors disabled:opacity-50">
-            <RefreshCcw className="w-5 h-5" />
-            <span className="text-[11px] font-bold">ดึงกลับ (Pending)</span>
+        <div className="p-4 border-t border-[var(--card-border)] bg-slate-50 dark:bg-slate-800/30 grid grid-cols-3 gap-2 shrink-0">
+          <button onClick={handleRevert} disabled={isSubmitting} className="flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-xl border border-amber-200 bg-amber-50 text-amber-600 hover:bg-amber-100 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400 dark:hover:bg-amber-500/20 transition-colors disabled:opacity-50">
+            <RefreshCcw className="w-4 h-4" />
+            <span className="text-[10px] font-bold text-center leading-tight">ดึงกลับ<br/>(Pending)</span>
           </button>
           
-          <button onClick={handleCancel} disabled={isSubmitting} className="flex flex-col items-center justify-center gap-1 p-3 rounded-xl border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-400 dark:hover:bg-rose-500/20 transition-colors disabled:opacity-50">
-            <Ban className="w-5 h-5" />
-            <span className="text-[11px] font-bold">ยกเลิกการลา</span>
+          <button onClick={handleCancel} disabled={isSubmitting} className="flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-xl border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-400 dark:hover:bg-rose-500/20 transition-colors disabled:opacity-50">
+            <Ban className="w-4 h-4" />
+            <span className="text-[10px] font-bold text-center leading-tight">ยกเลิกการลา</span>
           </button>
 
-          <button onClick={handleUpdate} disabled={isSubmitting} className="flex flex-col items-center justify-center gap-1 p-3 rounded-xl border border-blue-600 bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-500/30 transition-all disabled:opacity-50">
-            <Save className="w-5 h-5" />
-            <span className="text-[11px] font-bold">บันทึกวันลา</span>
+          <button onClick={handleUpdate} disabled={isSubmitting} className="flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-xl border border-blue-600 bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-500/30 transition-all disabled:opacity-50">
+            <Save className="w-4 h-4" />
+            <span className="text-[10px] font-bold text-center leading-tight">บันทึกวันลา</span>
           </button>
         </div>
 

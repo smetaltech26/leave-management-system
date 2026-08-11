@@ -30,11 +30,34 @@ export default function LoginPage({ onLogin, users, theme = 'light', toggleTheme
       );
 
       if (user) {
-        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-        onLogin(user);
-      } else {
-        setError('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+        const resetLoginViewport = () => {
+          const documentScroller = document.scrollingElement;
+          if (documentScroller) {
+            documentScroller.scrollTop = 0;
+            documentScroller.scrollLeft = 0;
+          }
+          window.scrollTo({
+            top: 0,
+            left: 0,
+            behavior: 'auto',
+          });
+        };
+        
+        // หน้า Login ยังอยู่และยังเลื่อนได้
+        resetLoginViewport();
+        
+        // รอให้ WebKit วาดตำแหน่งบนสุดจริงก่อนเปลี่ยน DOM
+        requestAnimationFrame(() => {
+          resetLoginViewport();
+          requestAnimationFrame(() => {
+            resetLoginViewport();
+            onLogin(user);
+          });
+        });
+        return;
       }
+      
+      setError('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
       setIsLoading(false);
     }, 800); // จำลอง delay
   };

@@ -433,7 +433,7 @@ export default function App() {
   };
 
   return (
-    <div className="h-[100dvh] w-full flex flex-col ambient-light-bg transition-colors duration-300 overflow-hidden relative">
+    <div className="min-h-[100dvh] md:h-[100dvh] w-full flex flex-col ambient-light-bg transition-colors duration-300 overflow-visible md:overflow-hidden relative">
       
       {/* Top Navbar */}
       <Navbar
@@ -448,7 +448,7 @@ export default function App() {
       />
 
       {/* Main Content Body */}
-      <div className="flex-1 flex w-full px-0 md:px-2 lg:px-6 pb-0 overflow-hidden relative">
+      <div className="flex-1 flex w-full px-0 md:px-2 lg:px-6 pb-0 overflow-visible md:overflow-hidden relative md:min-h-0">
         
         {/* Sidebar */}
         <Sidebar 
@@ -464,7 +464,7 @@ export default function App() {
         />
 
         {/* Dynamic Page Views */}
-        <main ref={mainScrollRef} className="flex-1 p-4 md:p-6 min-w-0 overflow-y-auto">
+        <main ref={mainScrollRef} className="flex-1 p-4 md:p-6 min-w-0 overflow-visible md:overflow-y-auto md:min-h-0">
           {activeTab === 'home' && (
             <HomeDashboard
               currentUser={currentUser}

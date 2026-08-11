@@ -73,7 +73,7 @@ export default function LeaveDetailsModal({ isOpen, onClose, request, user, allP
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto custom-scrollbar flex-grow space-y-6 bg-slate-50 dark:bg-slate-900">
+        <div className="p-6 pb-24 md:pb-6 overflow-y-auto custom-scrollbar flex-grow space-y-6 bg-slate-50 dark:bg-slate-900">
           
           {/* User Info & Status */}
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 p-4 rounded-2xl bg-[var(--card-bg)] border border-[var(--card-border)] shadow-sm min-w-0">

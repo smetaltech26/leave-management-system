@@ -167,7 +167,7 @@ export default function LeaveCalendar({ requests, holidays, users, departments, 
               </button>
             </div>
             
-            <div className="p-4 md:p-6 overflow-y-auto custom-scrollbar flex-grow">
+            <div className="p-4 md:p-6 pb-24 md:pb-6 overflow-y-auto custom-scrollbar flex-grow">
               <div className="mb-6 p-4 rounded-xl shadow-sm border border-blue-500/20 bg-blue-500 dark:bg-blue-500/10 dark:border-blue-500/20">
                 <div className="flex items-center space-x-4">
                   <div className="w-12 h-12 rounded-full bg-white/20 dark:bg-blue-500/20 flex items-center justify-center">

@@ -87,75 +87,35 @@ export default function App() {
   useLayoutEffect(() => {
     if (!currentUser) return;
     
-    const viewport = window.visualViewport;
-    let active = true;
-    let raf1 = 0;
-    let raf2 = 0;
-    let debounceId = 0;
-    let finishId = 0;
+    // วิธีแก้ปัญหา iOS Safari/Chrome Scroll Bug แบบขั้นเด็ดขาด
+    // 1. ซ่อน overflow ชั่วคราวเพื่อรีเซ็ต Visual Viewport
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
     
-    const resetScroll = () => {
-      if (!active) return;
-      // ตัวเลื่อนของ document หน้า Login
-      const documentScroller = document.scrollingElement;
-      if (documentScroller) {
-        documentScroller.scrollTop = 0;
-        documentScroller.scrollLeft = 0;
-      }
-      // ตัวเลื่อนภายใน Dashboard
+    // 2. บังคับเลื่อนไปที่ 1px ก่อน แล้วกลับมา 0 เพื่อกระตุ้น iOS WKWebView
+    window.scrollTo(0, 1);
+    
+    const timer1 = setTimeout(() => {
+      document.body.style.overflow = originalOverflow;
+      window.scrollTo(0, 0);
+      
+      // รีเซ็ต scroller ภายในด้วยเผื่อหน้าจอใหญ่
       if (mainScrollRef.current) {
         mainScrollRef.current.scrollTop = 0;
-        mainScrollRef.current.scrollLeft = 0;
       }
+    }, 50);
+    
+    // สำรองอีกรอบเผื่อคีย์บอร์ดยังหุบไม่เสร็จ
+    const timer2 = setTimeout(() => {
       window.scrollTo(0, 0);
+      if (mainScrollRef.current) mainScrollRef.current.scrollTop = 0;
+    }, 400);
+    
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      document.body.style.overflow = originalOverflow;
     };
-    
-    const scheduleReset = () => {
-      window.clearTimeout(debounceId);
-      debounceId = window.setTimeout(resetScroll, 80);
-    };
-    
-    function detachListeners() {
-      viewport?.removeEventListener('resize', scheduleReset);
-      viewport?.removeEventListener('scroll', scheduleReset);
-      window.removeEventListener('touchstart', stop);
-      window.removeEventListener('pointerdown', stop);
-    }
-    
-    function stop() {
-      if (!active) return;
-      active = false;
-      cancelAnimationFrame(raf1);
-      cancelAnimationFrame(raf2);
-      window.clearTimeout(debounceId);
-      window.clearTimeout(finishId);
-      detachListeners();
-    }
-    
-    // รอบแรก: หลัง React commit
-    resetScroll();
-    
-    // รอบถัดไป: หลัง layout/paint เริ่มนิ่ง
-    raf1 = requestAnimationFrame(() => {
-      resetScroll();
-      raf2 = requestAnimationFrame(resetScroll);
-    });
-    
-    // รองรับ Chrome iOS ปรับ viewport หลังคีย์บอร์ดปิด
-    viewport?.addEventListener('resize', scheduleReset, { passive: true });
-    viewport?.addEventListener('scroll', scheduleReset, { passive: true });
-    
-    // ถ้าผู้ใช้เริ่มแตะ/เลื่อนเอง ให้หยุดทันที ไม่แย่งการควบคุม
-    window.addEventListener('touchstart', stop, { passive: true, once: true });
-    window.addEventListener('pointerdown', stop, { passive: true, once: true });
-    
-    // ทำงานเฉพาะช่วงเปลี่ยนหน้า ไม่ดึงผู้ใช้กลับตลอดเวลา
-    finishId = window.setTimeout(() => {
-      resetScroll();
-      stop();
-    }, 600);
-    
-    return stop;
   }, [currentUser?.id, activeTab]);
 
   // ---------------------------------------------------------

@@ -278,6 +278,21 @@ export default function LeaveFormModal({ isOpen, onClose, currentUser, users, us
     }
   };
 
+  const toggleApprover = (userId) => {
+    if (selectedApprover1 === userId) setSelectedApprover1('');
+    else if (selectedApprover2 === userId) setSelectedApprover2('');
+    else if (selectedApprover3 === userId) setSelectedApprover3('');
+    else if (!selectedApprover1) setSelectedApprover1(userId);
+    else if (!selectedApprover2) setSelectedApprover2(userId);
+    else if (!selectedApprover3) setSelectedApprover3(userId);
+  };
+
+  const isApproverSelected = (userId) => {
+    return selectedApprover1 === userId || selectedApprover2 === userId || selectedApprover3 === userId;
+  };
+  
+  const selectedApproversCount = [selectedApprover1, selectedApprover2, selectedApprover3].filter(Boolean).length;
+
   return (
     <>
     <div className="fixed inset-0 z-50 flex items-start md:items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
@@ -512,18 +527,18 @@ export default function LeaveFormModal({ isOpen, onClose, currentUser, users, us
 
     {/* Approver Selection Modal (ซ้อนอีกชั้น) */}
     {showApproverModal && (
-      <div className="fixed inset-0 z-[60] flex items-center justify-center px-4 pt-4 pb-[max(5rem,env(safe-area-inset-bottom))] md:pb-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-        <div className="bg-slate-50 dark:bg-slate-900 w-full max-w-3xl max-h-[75vh] md:max-h-[85vh] rounded-[2rem] shadow-2xl flex flex-col overflow-hidden">
+      <div className="fixed inset-0 z-[60] flex items-start md:items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+        <div className="bg-slate-50 dark:bg-slate-900 w-full max-w-3xl max-h-[calc(100svh-2rem)] md:max-h-[85vh] min-h-0 rounded-[2rem] shadow-2xl flex flex-col overflow-hidden">
           {/* Header */}
           <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900 shrink-0">
-            <h3 className="text-lg font-extrabold text-[var(--text-main)] dark:text-[var(--text-main)]">เลือกผู้อนุมัติ</h3>
+            <h3 className="text-lg font-extrabold text-[var(--text-main)] dark:text-[var(--text-main)]">เลือกผู้อนุมัติ (เลือก 3 คน)</h3>
             <button onClick={() => setShowApproverModal(false)} className="p-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 rounded-full transition-colors">
               <X className="w-5 h-5" />
             </button>
           </div>
           
           {/* Body */}
-          <div className="p-6 overflow-y-auto space-y-8 flex-1">
+          <div className="p-6 flex-1 min-h-0 overflow-y-auto space-y-8">
             
             {/* หัวหน้า (SuperUser) */}
             <div className="space-y-4">
@@ -532,8 +547,8 @@ export default function LeaveFormModal({ isOpen, onClose, currentUser, users, us
                 {users.filter(u => u.role === 'SuperUser').map(u => (
                   <div 
                     key={u.id}
-                    onClick={() => setSelectedApprover1(selectedApprover1 === u.id ? '' : u.id)}
-                    className={`flex items-center justify-between p-3 rounded-2xl border-2 cursor-pointer transition-all ${selectedApprover1 === u.id ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-[var(--card-bg)] hover:border-emerald-300'}`}
+                    onClick={() => toggleApprover(u.id)}
+                    className={`flex items-center justify-between p-3 rounded-2xl border-2 cursor-pointer transition-all ${isApproverSelected(u.id) ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-[var(--card-bg)] hover:border-emerald-300'}`}
                   >
                     <div className="flex items-center space-x-3">
                       <img src={u.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.fullname)}`} className="w-14 h-14 rounded-full object-cover" />
@@ -542,7 +557,7 @@ export default function LeaveFormModal({ isOpen, onClose, currentUser, users, us
                         <div className="text-[11px] text-slate-500">{agencies?.find(a => a.id === u.agency_id)?.name || u.agency_id || 'SMT'} | {departments?.find(d => d.id === u.department_id)?.name || u.department_id || 'ทั่วไป'}</div>
                       </div>
                     </div>
-                    {selectedApprover1 === u.id && <CheckCircle2 className="w-5 h-5 text-emerald-500" />}
+                    {isApproverSelected(u.id) && <CheckCircle2 className="w-5 h-5 text-emerald-500" />}
                   </div>
                 ))}
               </div>
@@ -555,8 +570,8 @@ export default function LeaveFormModal({ isOpen, onClose, currentUser, users, us
                 {users.filter(u => u.role === 'Admin').map(u => (
                   <div 
                     key={u.id}
-                    onClick={() => setSelectedApprover2(selectedApprover2 === u.id ? '' : u.id)}
-                    className={`flex items-center justify-between p-3 rounded-2xl border-2 cursor-pointer transition-all ${selectedApprover2 === u.id ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-[var(--card-bg)] hover:border-emerald-300'}`}
+                    onClick={() => toggleApprover(u.id)}
+                    className={`flex items-center justify-between p-3 rounded-2xl border-2 cursor-pointer transition-all ${isApproverSelected(u.id) ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-[var(--card-bg)] hover:border-emerald-300'}`}
                   >
                     <div className="flex items-center space-x-3">
                       <img src={u.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.fullname)}`} className="w-14 h-14 rounded-full object-cover" />
@@ -565,7 +580,7 @@ export default function LeaveFormModal({ isOpen, onClose, currentUser, users, us
                         <div className="text-[11px] text-slate-500">{agencies?.find(a => a.id === u.agency_id)?.name || u.agency_id || 'SMT'} | {departments?.find(d => d.id === u.department_id)?.name || u.department_id || 'ทั่วไป'}</div>
                       </div>
                     </div>
-                    {selectedApprover2 === u.id && <CheckCircle2 className="w-5 h-5 text-emerald-500" />}
+                    {isApproverSelected(u.id) && <CheckCircle2 className="w-5 h-5 text-emerald-500" />}
                   </div>
                 ))}
               </div>
@@ -578,8 +593,8 @@ export default function LeaveFormModal({ isOpen, onClose, currentUser, users, us
                 {users.filter(u => u.role === 'SuperAdmin').map(u => (
                   <div 
                     key={u.id}
-                    onClick={() => setSelectedApprover3(selectedApprover3 === u.id ? '' : u.id)}
-                    className={`flex items-center justify-between p-3 rounded-2xl border-2 cursor-pointer transition-all ${selectedApprover3 === u.id ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-[var(--card-bg)] hover:border-emerald-300'}`}
+                    onClick={() => toggleApprover(u.id)}
+                    className={`flex items-center justify-between p-3 rounded-2xl border-2 cursor-pointer transition-all ${isApproverSelected(u.id) ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-[var(--card-bg)] hover:border-emerald-300'}`}
                   >
                     <div className="flex items-center space-x-3">
                       <img src={u.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.fullname)}`} className="w-14 h-14 rounded-full object-cover" />
@@ -588,7 +603,7 @@ export default function LeaveFormModal({ isOpen, onClose, currentUser, users, us
                         <div className="text-[11px] text-slate-500">{agencies?.find(a => a.id === u.agency_id)?.name || u.agency_id || 'SMT'} | {departments?.find(d => d.id === u.department_id)?.name || u.department_id || 'ทั่วไป'}</div>
                       </div>
                     </div>
-                    {selectedApprover3 === u.id && <CheckCircle2 className="w-5 h-5 text-emerald-500" />}
+                    {isApproverSelected(u.id) && <CheckCircle2 className="w-5 h-5 text-emerald-500" />}
                   </div>
                 ))}
               </div>
@@ -597,21 +612,27 @@ export default function LeaveFormModal({ isOpen, onClose, currentUser, users, us
           </div>
           
           {/* Footer */}
-          <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-end space-x-3 shrink-0">
-            <button
-              type="button"
-              onClick={() => setShowApproverModal(false)}
-              className="px-6 py-2.5 rounded-xl text-sm font-bold bg-rose-500 hover:bg-rose-600 text-white transition-colors"
-            >
-              ยกเลิก
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowApproverModal(false)}
-              className="px-6 py-2.5 rounded-xl text-sm font-bold bg-emerald-500 hover:bg-emerald-600 text-white transition-colors shadow-lg shadow-emerald-500/30"
-            >
-              ยืนยัน
-            </button>
+          <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-between items-center shrink-0">
+            <span className={`text-sm font-bold ${selectedApproversCount === 3 ? 'text-emerald-500' : 'text-amber-500'}`}>
+              เลือกแล้ว {selectedApproversCount}/3
+            </span>
+            <div className="flex space-x-3">
+              <button
+                type="button"
+                onClick={() => setShowApproverModal(false)}
+                className="px-6 py-2.5 rounded-xl text-sm font-bold bg-rose-500 hover:bg-rose-600 text-white transition-colors"
+              >
+                ยกเลิก
+              </button>
+              <button
+                type="button"
+                disabled={selectedApproversCount !== 3}
+                onClick={() => setShowApproverModal(false)}
+                className="px-6 py-2.5 rounded-xl text-sm font-bold bg-emerald-500 hover:bg-emerald-600 text-white transition-colors shadow-lg shadow-emerald-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                ยืนยัน
+              </button>
+            </div>
           </div>
         </div>
       </div>

@@ -424,7 +424,7 @@ export default function App() {
         />
 
         {/* Dynamic Page Views */}
-        <main ref={mainScrollRef} className="flex-1 p-4 md:p-6 min-w-0 overflow-visible md:overflow-y-auto md:min-h-0">
+        <main ref={mainScrollRef} className="flex-1 p-4 md:p-6 pb-24 md:pb-6 min-w-0 overflow-visible md:overflow-y-auto md:min-h-0">
           {activeTab === 'home' && (
             <HomeDashboard
               currentUser={currentUser}

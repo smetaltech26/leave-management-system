@@ -62,7 +62,7 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, setCurre
     <>
       {/* Desktop Sidebar */}
       <aside className="group w-[5.5rem] hover:w-64 glass-panel-clean border-r border-slate-200 dark:border-[var(--card-border)] py-6 px-3 hidden md:flex flex-col justify-between min-h-[calc(100vh-65px)] transition-all duration-300 relative z-40 overflow-hidden">
-        <div className="space-y-6">
+        <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0 space-y-6 pb-4">
 
 
           {/* Navigation Links */}
@@ -128,7 +128,7 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, setCurre
 
       {/* Mobile Drawer */}
       <aside className={`fixed top-0 left-0 bottom-0 w-72 glass-panel-clean border-r border-slate-200 dark:border-[var(--card-border)] py-6 px-3 flex flex-col justify-between z-50 transform transition-transform duration-300 md:hidden ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="space-y-6">
+        <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0 space-y-6 pb-4">
           <div className="flex items-center justify-between px-2 mb-4">
             <span className="font-bold text-[var(--text-main)] text-lg">เมนูหลัก</span>
             <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-[var(--text-muted)] hover:text-slate-800 dark:hover:text-slate-200">

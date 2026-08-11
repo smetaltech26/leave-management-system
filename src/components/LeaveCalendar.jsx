@@ -156,8 +156,8 @@ export default function LeaveCalendar({ requests, holidays, users, departments, 
       </div>
 
       {selectedGroup && (
-        <div className="fixed top-0 left-0 w-full h-[100dvh] z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in" onClick={closeGroupModal}>
-          <div className="bg-white dark:bg-[var(--card-bg)] rounded-2xl shadow-2xl w-full max-w-4xl max-h-[calc(100dvh-2rem)] md:max-h-[80dvh] flex flex-col overflow-hidden border border-slate-200 dark:border-[var(--card-border)]" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 pt-4 pb-[max(5rem,env(safe-area-inset-bottom))] md:pb-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in" onClick={closeGroupModal}>
+          <div className="bg-white dark:bg-[var(--card-bg)] rounded-2xl shadow-2xl w-full max-w-4xl max-h-full md:max-h-[80dvh] flex flex-col overflow-hidden border border-slate-200 dark:border-[var(--card-border)]" onClick={e => e.stopPropagation()}>
             <div className="p-4 md:p-5 border-b border-slate-200 dark:border-[var(--card-border)] flex justify-between items-center shrink-0">
               <h2 className="text-xl font-bold text-[var(--text-main)]">
                 ข้อมูลการลาประจำวันที่ {selectedGroup.dateStr.split('-').reverse().join('/')}
@@ -167,7 +167,7 @@ export default function LeaveCalendar({ requests, holidays, users, departments, 
               </button>
             </div>
             
-            <div className="p-4 md:p-6 pb-24 md:pb-6 overflow-y-auto custom-scrollbar flex-grow">
+            <div className="p-4 md:p-6 overflow-y-auto custom-scrollbar flex-grow">
               <div className="mb-6 p-4 rounded-xl shadow-sm border border-blue-500/20 bg-blue-500 dark:bg-blue-500/10 dark:border-blue-500/20">
                 <div className="flex items-center space-x-4">
                   <div className="w-12 h-12 rounded-full bg-white/20 dark:bg-blue-500/20 flex items-center justify-center">

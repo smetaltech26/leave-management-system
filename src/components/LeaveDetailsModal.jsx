@@ -53,8 +53,8 @@ export default function LeaveDetailsModal({ isOpen, onClose, request, user, allP
   const typeInfo = leaveTypeMap[request.leave_type] || { name: request.leave_type, color: 'text-slate-500', bg: 'bg-slate-500' };
 
   return (
-    <div className="fixed top-0 left-0 w-full h-[100dvh] z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in duration-200" onClick={onClose}>
-      <div className="bg-slate-50 dark:bg-slate-900 rounded-[2rem] shadow-2xl w-[90vw] md:w-full md:max-w-2xl max-h-[calc(100dvh-2rem)] md:max-h-[85dvh] flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800 relative" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4 pt-4 pb-[max(5rem,env(safe-area-inset-bottom))] md:pb-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in duration-200" onClick={onClose}>
+      <div className="bg-slate-50 dark:bg-slate-900 rounded-[2rem] shadow-2xl w-[90vw] md:w-full md:max-w-2xl max-h-full md:max-h-[85dvh] flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800 relative" onClick={e => e.stopPropagation()}>
         
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900 shrink-0">
@@ -73,7 +73,7 @@ export default function LeaveDetailsModal({ isOpen, onClose, request, user, allP
         </div>
 
         {/* Content */}
-        <div className="p-6 pb-24 md:pb-6 overflow-y-auto custom-scrollbar flex-grow space-y-6 bg-slate-50 dark:bg-slate-900">
+        <div className="p-6 overflow-y-auto custom-scrollbar flex-grow space-y-6 bg-slate-50 dark:bg-slate-900">
           
           {/* User Info & Status */}
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 p-4 rounded-2xl bg-[var(--card-bg)] border border-[var(--card-border)] shadow-sm min-w-0">

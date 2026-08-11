@@ -156,7 +156,7 @@ export default function LeaveCalendar({ requests, holidays, users, departments, 
       </div>
 
       {selectedGroup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in" onClick={closeGroupModal}>
+        <div className="fixed top-0 left-0 w-full h-[100dvh] z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in" onClick={closeGroupModal}>
           <div className="bg-white dark:bg-[var(--card-bg)] rounded-2xl shadow-2xl w-full max-w-4xl max-h-[calc(100dvh-2rem)] md:max-h-[80dvh] flex flex-col overflow-hidden border border-slate-200 dark:border-[var(--card-border)]" onClick={e => e.stopPropagation()}>
             <div className="p-4 md:p-5 border-b border-slate-200 dark:border-[var(--card-border)] flex justify-between items-center shrink-0">
               <h2 className="text-xl font-bold text-[var(--text-main)]">

@@ -53,7 +53,7 @@ export default function LeaveDetailsModal({ isOpen, onClose, request, user, allP
   const typeInfo = leaveTypeMap[request.leave_type] || { name: request.leave_type, color: 'text-slate-500', bg: 'bg-slate-500' };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in duration-200" onClick={onClose}>
+    <div className="fixed top-0 left-0 w-full h-[100dvh] z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in duration-200" onClick={onClose}>
       <div className="bg-slate-50 dark:bg-slate-900 rounded-[2rem] shadow-2xl w-[90vw] md:w-full md:max-w-2xl max-h-[calc(100dvh-2rem)] md:max-h-[85dvh] flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800 relative" onClick={e => e.stopPropagation()}>
         
         {/* Header */}

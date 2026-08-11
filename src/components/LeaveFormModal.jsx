@@ -94,6 +94,7 @@ export default function LeaveFormModal({ isOpen, onClose, currentUser, users, us
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [showApproverModal, setShowApproverModal] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
   // หาโควตาจาก userPolicies หรือใช้ค่าเริ่มต้น
   const currentPolicy = userPolicies.find(p => p.user_id === currentUser?.id && p.leave_type === leaveType);
@@ -270,12 +271,18 @@ export default function LeaveFormModal({ isOpen, onClose, currentUser, users, us
       }
       
       setIsSubmitting(false);
-      onClose();
+      setShowSuccessPopup(true);
     } catch (error) {
       console.error("Form submit error:", error);
       setIsSubmitting(false);
       // The error alert is already handled in App.jsx
     }
+  };
+
+  const handleSuccessOk = () => {
+    setShowSuccessPopup(false);
+    onClose();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const toggleApprover = (userId) => {
@@ -297,6 +304,27 @@ export default function LeaveFormModal({ isOpen, onClose, currentUser, users, us
     <>
     <div className="fixed inset-0 z-50 flex items-start md:items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
       <div className="bg-slate-50 dark:bg-slate-900 w-[90vw] md:w-full md:max-w-2xl max-h-[calc(100svh-2rem)] md:max-h-[85dvh] min-h-0 rounded-[2rem] shadow-2xl flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800">
+        
+        {/* Success Popup Overlay */}
+        {showSuccessPopup && (
+          <div className="absolute inset-0 z-[100] bg-white dark:bg-slate-900 flex flex-col items-center justify-center p-6 animate-in fade-in zoom-in duration-300">
+            <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-500/20 rounded-full flex items-center justify-center mb-6">
+              <CheckCircle2 className="w-10 h-10 text-emerald-500" />
+            </div>
+            <h2 className="text-2xl font-black text-slate-800 dark:text-slate-100 mb-2 text-center">
+              ส่งคำขอลาเรียบร้อยแล้ว
+            </h2>
+            <p className="text-slate-500 dark:text-slate-400 text-center mb-8 max-w-xs">
+              คำขอของคุณถูกส่งไปยังผู้อนุมัติตามลำดับขั้นตอนเรียบร้อยแล้ว
+            </p>
+            <button
+              onClick={handleSuccessOk}
+              className="w-full max-w-xs py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold rounded-2xl transition-all shadow-lg shadow-emerald-500/30 active:scale-95"
+            >
+              ตกลง (OK)
+            </button>
+          </div>
+        )}
         
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900 shrink-0">

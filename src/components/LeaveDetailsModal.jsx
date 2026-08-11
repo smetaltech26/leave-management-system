@@ -78,12 +78,12 @@ export default function LeaveDetailsModal({ isOpen, onClose, request, user, allP
           <div className="rounded-3xl bg-[var(--card-bg)] border border-[var(--card-border)] shadow-sm flex flex-col overflow-hidden min-w-0">
             
             {/* Top row: 2 columns */}
-            <div className="grid grid-cols-1 md:grid-cols-2 border-b border-slate-100 dark:border-slate-800">
+            <div className="grid grid-cols-2 border-b border-slate-100 dark:border-slate-800">
               
               {/* Left col: User Info */}
-              <div className="p-6 flex flex-col items-start relative">
+              <div className="p-4 sm:p-6 flex flex-col items-start relative">
                 {/* Badge top right of this cell */}
-                <div className="absolute top-6 right-6">
+                <div className="absolute top-4 sm:top-6 right-4 sm:right-6">
                   {request.status === 'Approved' ? (
                     <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-blue-50 text-blue-600 border border-blue-100 flex items-center shadow-sm">
                       <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> อนุมัติแล้ว
@@ -102,14 +102,14 @@ export default function LeaveDetailsModal({ isOpen, onClose, request, user, allP
                 <img 
                   src={user?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullname || request.user_id)}&background=random`}
                   alt="Profile" 
-                  className="w-16 h-16 shrink-0 rounded-full border-2 border-slate-100 dark:border-slate-800 shadow-sm mb-4"
+                  className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-full border-2 border-slate-100 dark:border-slate-800 shadow-sm mb-3 sm:mb-4"
                 />
-                <h3 className="text-base font-extrabold text-[var(--text-main)] truncate max-w-[80%]">{user?.fullname || request.user_id}</h3>
-                <p className="text-xs text-[var(--text-muted)] truncate max-w-full">{agencies?.find(a => a.id === user?.agency_id)?.name || 'ไม่ระบุสังกัด'} | {departments?.find(d => d.id === user?.department_id)?.name || 'ไม่ระบุฝ่าย'}</p>
+                <h3 className="text-sm sm:text-base font-extrabold text-[var(--text-main)] truncate max-w-full">{user?.fullname || request.user_id}</h3>
+                <p className="text-[10px] sm:text-xs text-[var(--text-muted)] truncate max-w-full">{agencies?.find(a => a.id === user?.agency_id)?.name || 'ไม่ระบุสังกัด'} | {departments?.find(d => d.id === user?.department_id)?.name || 'ไม่ระบุฝ่าย'}</p>
               </div>
 
               {/* Right col: Leave Details */}
-              <div className="p-6 flex flex-col justify-center border-t md:border-t-0 md:border-l border-slate-100 dark:border-slate-800">
+              <div className="p-4 sm:p-6 flex flex-col justify-center border-l border-slate-100 dark:border-slate-800">
                 <div className="text-xs font-bold text-[var(--text-muted)] mb-1">ประเภทการลา</div>
                 <div className={`font-bold text-base ${typeInfo.color} mb-5`}>{typeInfo.name}</div>
                 

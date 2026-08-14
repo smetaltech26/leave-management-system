@@ -206,6 +206,57 @@ export const rejectStep = async (requestId, stepNumber, comment) => {
 // 4. User Policies (Quotas)
 // ==========================================
 
+export const createUserPolicy = async (policyData) => {
+  const currentYear = new Date().getFullYear();
+  const payload = {
+    user_id: policyData.user_id,
+    leave_type: policyData.leave_type,
+    max_days: Number(policyData.max_days) || 0,
+    used_days: Number(policyData.used_days) || 0,
+    year: Number(policyData.year) || currentYear
+  };
+  
+  const { data, error } = await supabase
+    .from('user_policies')
+    .insert([payload])
+    .select()
+    .single();
+    
+  if (error) throw error;
+  return data;
+};
+
+export const updateUserPolicy = async (id, policyData) => {
+  const payload = {
+    user_id: policyData.user_id,
+    leave_type: policyData.leave_type,
+    max_days: Number(policyData.max_days) || 0,
+    used_days: Number(policyData.used_days) || 0
+  };
+  if (policyData.year) {
+    payload.year = Number(policyData.year);
+  }
+  
+  const { data, error } = await supabase
+    .from('user_policies')
+    .update(payload)
+    .eq('id', id)
+    .select()
+    .single();
+    
+  if (error) throw error;
+  return data;
+};
+
+export const deleteUserPolicy = async (id) => {
+  const { error } = await supabase
+    .from('user_policies')
+    .delete()
+    .eq('id', id);
+    
+  if (error) throw error;
+};
+
 export const updateUserPolicyUsedDays = async (userId, leaveType, diffAmount) => {
   // Fetch current policy
   const { data: policy, error: fetchError } = await supabase
@@ -229,8 +280,6 @@ export const updateUserPolicyUsedDays = async (userId, leaveType, diffAmount) =>
       
     if (updateError) throw updateError;
   } else if (diffAmount > 0) {
-    // If no policy exists for some reason, and we are adding used days (which implies they are requesting leave)
-    // we might need to insert one. (In a real app, HR sets policies first. For now, we'll let it fail or handle it.)
     console.warn("No user policy found to update for:", userId, leaveType);
   }
 };

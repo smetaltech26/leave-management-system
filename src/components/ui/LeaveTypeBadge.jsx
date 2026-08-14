@@ -9,7 +9,9 @@ import {
   Shield, 
   GraduationCap, 
   Sparkles, 
-  Heart
+  Heart,
+  UserX,
+  AlertCircle
 } from 'lucide-react';
 
 /**
@@ -17,6 +19,16 @@ import {
  */
 export const getLeaveTypeMeta = (type = '') => {
   const t = (type || '').toLowerCase().trim();
+  
+  if (t.includes('ขาดงาน') || t.includes('ขาด') || t.includes('absent')) {
+    return {
+      name: type || 'ขาดงาน',
+      icon: UserX,
+      iconColor: 'text-rose-600 dark:text-rose-400',
+      iconBg: 'bg-rose-50 dark:bg-rose-500/10 border border-rose-200/60 dark:border-rose-500/20',
+      bar: 'from-rose-500 to-red-600'
+    };
+  }
   
   if (t.includes('พักร้อน') || t.includes('annual') || t.includes('vacation')) {
     return {

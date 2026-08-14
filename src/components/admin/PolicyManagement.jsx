@@ -2,11 +2,13 @@ import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { ShieldAlert, Plus, Trash2, Edit2, X, Save, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useModal } from '../../contexts/ModalContext';
+import * as api from '../../services/supabaseApi';
 
 export default function PolicyManagement({ userPolicies, setUserPolicies, users, agencies = [], departments = [], leaveTypes = [] }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPolicy, setEditingPolicy] = useState(null);
-  const { showConfirm } = useModal();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { showConfirm, showAlert } = useModal();
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 24;
@@ -56,23 +58,26 @@ export default function PolicyManagement({ userPolicies, setUserPolicies, users,
     max_days: 30,
     used_days: 0,
     remaining_days: 30,
-    year: new Date().getFullYear() - 543
+    year: new Date().getFullYear()
   });
 
   const handleOpenModal = (policy = null) => {
     if (policy) {
       setEditingPolicy(policy);
-      setFormData(policy);
+      setFormData({
+        ...policy,
+        year: policy.year || new Date().getFullYear()
+      });
     } else {
       setEditingPolicy(null);
       setFormData({
-        id: `POL-${Date.now()}`,
+        id: '',
         user_id: users && users.length > 0 ? users[0].id : '',
-        leave_type: 'ลาป่วย',
+        leave_type: leaveTypes && leaveTypes.length > 0 ? leaveTypes[0].name : 'ลาพักร้อน',
         max_days: 30,
         used_days: 0,
         remaining_days: 30,
-        year: new Date().getFullYear() - 543
+        year: new Date().getFullYear()
       });
     }
     setIsModalOpen(true);
@@ -83,26 +88,56 @@ export default function PolicyManagement({ userPolicies, setUserPolicies, users,
     setEditingPolicy(null);
   };
 
-  const handleSavePolicy = (e) => {
+  const handleSavePolicy = async (e) => {
     e.preventDefault();
-    
-    // คำนวณ remaining_days อัตโนมัติในกรณีแก้ไข
-    const updatedForm = {
-      ...formData,
-      remaining_days: formData.max_days - formData.used_days
-    };
-
-    if (editingPolicy) {
-      setUserPolicies(prev => prev.map(p => p.id === editingPolicy.id ? updatedForm : p));
-    } else {
-      setUserPolicies(prev => [...prev, updatedForm]);
+    if (!formData.user_id || !formData.leave_type) {
+      await showAlert("กรุณาระบุข้อมูลพนักงานและประเภทการลาให้ครบถ้วนค่ะ");
+      return;
     }
-    handleCloseModal();
+
+    setIsSubmitting(true);
+    try {
+      const currentYear = new Date().getFullYear();
+      const payload = {
+        user_id: formData.user_id,
+        leave_type: formData.leave_type,
+        max_days: Number(formData.max_days) || 0,
+        used_days: Number(formData.used_days) || 0,
+        year: Number(formData.year) || currentYear
+      };
+
+      if (editingPolicy) {
+        const updated = await api.updateUserPolicy(editingPolicy.id, payload);
+        setUserPolicies(prev => prev.map(p => p.id === editingPolicy.id ? { 
+          ...p, 
+          ...updated, 
+          remaining_days: (Number(updated.max_days) || 0) - (Number(updated.used_days) || 0) 
+        } : p));
+      } else {
+        const created = await api.createUserPolicy(payload);
+        setUserPolicies(prev => [...prev, { 
+          ...created, 
+          remaining_days: (Number(created.max_days) || 0) - (Number(created.used_days) || 0) 
+        }]);
+      }
+      handleCloseModal();
+    } catch (err) {
+      console.error("Save Policy Error:", err);
+      await showAlert("เกิดข้อผิดพลาดในการบันทึกโควตาวันลา: " + (err.message || err));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleDeletePolicy = async (id) => {
     if (await showConfirm('ต้องการลบสิทธิ์โควตาวันลานี้ใช่หรือไม่?')) {
-      setUserPolicies(prev => prev.filter(p => p.id !== id));
+      try {
+        await api.deleteUserPolicy(id);
+        setUserPolicies(prev => prev.filter(p => p.id !== id));
+      } catch (err) {
+        console.error("Delete Policy Error:", err);
+        await showAlert("เกิดข้อผิดพลาดในการลบโควตาวันลา: " + (err.message || err));
+      }
     }
   };
 
@@ -284,12 +319,12 @@ export default function PolicyManagement({ userPolicies, setUserPolicies, users,
               </div>
 
               <div className="pt-4 flex gap-3 shrink-0">
-                <button type="button" onClick={handleCloseModal} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                <button type="button" onClick={handleCloseModal} disabled={isSubmitting} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors disabled:opacity-50">
                   ยกเลิก
                 </button>
-                <button type="submit" className="flex-1 py-3 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-700 flex items-center justify-center gap-2 shadow-lg shadow-purple-500/30 transition-colors">
+                <button type="submit" disabled={isSubmitting} className="flex-1 py-3 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-700 flex items-center justify-center gap-2 shadow-lg shadow-purple-500/30 transition-colors disabled:opacity-50">
                   <Save className="w-4 h-4" />
-                  บันทึกข้อมูล
+                  {isSubmitting ? 'กำลังบันทึก...' : 'บันทึกข้อมูล'}
                 </button>
               </div>
             </form>

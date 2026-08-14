@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Calendar, Clock, CheckCircle2, XCircle, PlusCircle, Sparkles, Send, ShieldCheck, HeartPulse, Luggage, Search, Edit2, Trash2, Eye, RefreshCcw } from 'lucide-react';
 import LeaveDetailsModal from './LeaveDetailsModal';
+import LeaveTypeBadge, { getLeaveTypeMeta } from './ui/LeaveTypeBadge';
 import { useModal } from '../contexts/ModalContext';
 
 export default function HomeDashboard({ currentUser, userPolicies, requests, onDeleteRequest, onOpenLeaveModal, setActiveTab, agencies, departments, users, onRefresh, leaveTypes = [] }) {
@@ -10,56 +11,6 @@ export default function HomeDashboard({ currentUser, userPolicies, requests, onD
 
   const myPolicies = userPolicies.filter(p => p.user_id === currentUser?.id);
   const myRequests = requests.filter(r => r.user_id === currentUser?.id);
-
-  const leaveTypesLabel = {
-    'ลาพักร้อน': { 
-      name: 'ลาพักร้อน', 
-      icon: Luggage, 
-      badge: 'bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-500/40',
-      bar: 'from-amber-500 to-orange-500'
-    },
-    'ลาป่วย': { 
-      name: 'ลาป่วย', 
-      icon: HeartPulse, 
-      badge: 'bg-rose-100 text-rose-900 border-rose-300 dark:bg-rose-500/20 dark:text-rose-300 dark:border-rose-500/40',
-      bar: 'from-rose-500 to-pink-500'
-    },
-    'ลากิจได้รับค่าจ้าง': { 
-      name: 'ลากิจได้รับค่าจ้าง', 
-      icon: ShieldCheck, 
-      badge: 'bg-blue-100 text-blue-900 border-blue-300 dark:bg-blue-500/20 dark:text-blue-300 dark:border-blue-500/40',
-      bar: 'from-blue-500 to-cyan-500'
-    },
-    'ลากิจไม่ได้รับค่าจ้าง': {
-      name: 'ลากิจไม่ได้รับค่าจ้าง', 
-      icon: ShieldCheck, 
-      badge: 'bg-slate-100 text-slate-900 border-slate-300 dark:bg-slate-500/20 dark:text-slate-300 dark:border-slate-500/40',
-      bar: 'from-slate-500 to-gray-500'
-    },
-    'ลาอื่นๆ': { 
-      name: 'ลาอื่นๆ', 
-      icon: Calendar, 
-      badge: 'bg-purple-100 text-purple-900 border-purple-300 dark:bg-purple-500/20 dark:text-purple-300 dark:border-purple-500/40',
-      bar: 'from-purple-500 to-indigo-500'
-    },
-  };
-
-  // Enhance leaveTypesLabel with dynamic leaveTypes from DB
-  const dynamicLeaveTypeMap = { ...leaveTypesLabel };
-  leaveTypes.forEach(lt => {
-    if (!dynamicLeaveTypeMap[lt.name]) {
-      dynamicLeaveTypeMap[lt.name] = {
-        name: lt.name,
-        icon: Calendar,
-        badge: `${lt.bg} ${lt.color} bg-opacity-20 border border-current/20`,
-        bar: `${lt.bg.replace('bg-', 'from-')} to-blue-500`
-      };
-    } else {
-      // Overwrite colors if they exist in DB
-      dynamicLeaveTypeMap[lt.name].badge = `${lt.bg} ${lt.color} bg-opacity-20 border border-current/20`;
-      dynamicLeaveTypeMap[lt.name].bar = `${lt.bg.replace('bg-', 'from-')} to-blue-500`;
-    }
-  });
 
   return (
     <div className="space-y-7 animate-in fade-in duration-200">
@@ -117,12 +68,7 @@ export default function HomeDashboard({ currentUser, userPolicies, requests, onD
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {myPolicies.length > 0 ? (
             myPolicies.map((pol) => {
-              const meta = dynamicLeaveTypeMap[pol.leave_type] || { 
-                name: pol.leave_type, 
-                icon: FileText, 
-                badge: 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200',
-                bar: 'from-slate-400 to-slate-500'
-              };
+              const meta = getLeaveTypeMeta(pol.leave_type);
               const Icon = meta.icon;
               const dynamicUsedDays = requests
                 .filter(r => r.user_id === currentUser?.id && r.leave_type === pol.leave_type && r.status !== 'Rejected')
@@ -138,7 +84,7 @@ export default function HomeDashboard({ currentUser, userPolicies, requests, onD
                   {/* Top Header */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${meta.iconBg} ${meta.iconColor}`}>
                         <Icon className="w-4 h-4" />
                       </div>
                       <span className="font-extrabold text-sm md:text-base text-[var(--text-main)] dark:text-[var(--text-main)]">{meta.name}</span>
@@ -212,11 +158,6 @@ export default function HomeDashboard({ currentUser, userPolicies, requests, onD
                 </tr>
               ) : (
                 myRequests.map((req) => {
-                  const meta = dynamicLeaveTypeMap[req.leave_type] || {
-                    name: req.leave_type,
-                    badge: 'bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
-                  };
-                  
                   const canEditOrDelete = req.status === 'Pending' && req.current_step === 1;
 
                   return (
@@ -238,7 +179,7 @@ export default function HomeDashboard({ currentUser, userPolicies, requests, onD
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex justify-center">
-                          <span className={`px-3 py-1.5 rounded-full text-xs font-bold flex items-center justify-center w-fit ${meta.badge.replace('border', '')}`}>{meta.name}</span>
+                          <LeaveTypeBadge type={req.leave_type} />
                         </div>
                       </td>
                       <td className="py-3 px-4 text-center text-xs text-[var(--text-muted)] leading-tight">
@@ -274,7 +215,7 @@ export default function HomeDashboard({ currentUser, userPolicies, requests, onD
                               </button>
                               <button onClick={async () => {
                                 if(await showConfirm('คุณต้องการยกเลิก/ลบ คำขอลานี้ใช่หรือไม่?')) {
-                                  onDeleteRequest(req.id);
+                                   onDeleteRequest(req.id);
                                 }
                               }} className="p-2 text-rose-600 bg-rose-100 dark:bg-rose-500/20 hover:bg-rose-200 dark:hover:bg-rose-500/40 rounded-lg transition-colors" title="ลบคำขอ">
                                 <Trash2 className="w-4 h-4" />
@@ -309,11 +250,6 @@ export default function HomeDashboard({ currentUser, userPolicies, requests, onD
             </div>
           ) : (
             myRequests.map((req) => {
-              const meta = dynamicLeaveTypeMap[req.leave_type] || { 
-                name: req.leave_type,
-                badge: 'bg-slate-100 text-slate-900 border-slate-300 dark:bg-slate-800 dark:text-slate-300'
-              };
-              
               const canEditOrDelete = req.status === 'Pending' && req.current_step === 1;
 
               return (
@@ -333,7 +269,7 @@ export default function HomeDashboard({ currentUser, userPolicies, requests, onD
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-2">
-                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center justify-center w-fit ${meta.badge.replace('border', '')}`}>{meta.name}</span>
+                      <LeaveTypeBadge type={req.leave_type} size="sm" />
                       
                       {req.status === 'Pending' && (
                         <span className="px-2 py-1 bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 rounded-md text-[10px] font-bold flex items-center gap-1 w-fit"><Clock className="w-2.5 h-2.5"/> ขั้น {req.current_step}</span>

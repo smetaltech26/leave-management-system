@@ -3,6 +3,7 @@ import { CheckCircle2, XCircle, Clock, FileText, User, MessageSquare, AlertCircl
 import { notifyLeaveApprover, sendLinePushToUser } from '../lib/lineNotify';
 import { sendEmailNotification } from '../services/emailService';
 import AdminEditLeaveModal from './admin/AdminEditLeaveModal';
+import LeaveTypeBadge from './ui/LeaveTypeBadge';
 import { useModal } from '../contexts/ModalContext';
 
 export default function ApprovalPage({ currentUser, requests, users, agencies = [], departments = [], onApproveStep, onRejectStep, onAdminEditRequest, holidays = [], onRefresh, leaveTypes = [] }) {
@@ -319,8 +320,9 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
                   </div>
 
                   <div className="flex items-center space-x-2">
-                    <span className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                      {req.leave_type} ({req.leave_duration} วัน)
+                    <LeaveTypeBadge type={req.leave_type} />
+                    <span className="px-2 py-0.5 text-xs font-semibold rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                      {req.leave_duration} วัน
                     </span>
                     <span className={`px-2.5 py-1 text-xs font-semibold rounded-lg border ${
                       activeSubTab === 'completed'
@@ -501,8 +503,10 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
                   <div className="text-xs text-[var(--text-muted)] mt-0.5 mb-1">
                     {agencies?.find(a => a.id === users.find(u => u.id === selectedRequest.user_id)?.agency_id)?.name || users.find(u => u.id === selectedRequest.user_id)?.agency_id || 'SMT'} • {departments?.find(d => d.id === users.find(u => u.id === selectedRequest.user_id)?.department_id)?.name || users.find(u => u.id === selectedRequest.user_id)?.department_id || 'ทั่วไป'}
                   </div>
-                  <div className="text-[var(--text-muted)] mt-1">
-                    ประเภท: <span className="text-blue-500 font-semibold">{selectedRequest.leave_type} ({selectedRequest.leave_duration} วัน)</span>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-[var(--text-muted)] text-xs">ประเภท:</span>
+                    <LeaveTypeBadge type={selectedRequest.leave_type} />
+                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">({selectedRequest.leave_duration} วัน)</span>
                   </div>
                   <div className="text-[var(--text-muted)] mt-0.5">
                     ช่วงเวลาที่ลา: <span className="font-medium text-[var(--text-main)]">{selectedRequest.date_start ? selectedRequest.date_start.split('-').reverse().join('-') : ''} ถึง {selectedRequest.date_end ? selectedRequest.date_end.split('-').reverse().join('-') : ''}</span>

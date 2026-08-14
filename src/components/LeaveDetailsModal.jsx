@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { X, CheckCircle2, Clock, XCircle, FileText, User, Calendar, Activity } from 'lucide-react';
+import LeaveTypeBadge, { getLeaveTypeMeta } from './ui/LeaveTypeBadge';
 import { supabase } from '../lib/supabase';
 
 export default function LeaveDetailsModal({ isOpen, onClose, request, user, allPolicies = [], users, agencies, departments, leaveTypes = [] }) {
@@ -40,21 +41,8 @@ export default function LeaveDetailsModal({ isOpen, onClose, request, user, allP
   const remaining = policy ? Number(policy.remaining_days) : 0;
   const percentage = quota > 0 ? Math.round((used / quota) * 100) : 0;
 
-  const leaveTypeMap = {
-    'Annual': { name: 'ลาพักร้อน', color: 'text-blue-500', bg: 'bg-blue-500' },
-    'Sick': { name: 'ลาป่วย', color: 'text-rose-500', bg: 'bg-rose-500' },
-    'Personal': { name: 'ลากิจ', color: 'text-purple-500', bg: 'bg-purple-500' },
-    'Other': { name: 'ลาอื่นๆ', color: 'text-amber-500', bg: 'bg-amber-500' },
-    'Maternity': { name: 'ลาคลอด', color: 'text-pink-500', bg: 'bg-pink-500' },
-    'Study': { name: 'ลาศึกษา', color: 'text-orange-500', bg: 'bg-orange-500' },
-    'Military': { name: 'ลาทหาร', color: 'text-sky-500', bg: 'bg-sky-500' },
-  };
-
-  // Build dynamic type info
-  const dbType = leaveTypes.find(t => t.name === request.leave_type);
-  const typeInfo = dbType 
-    ? { name: dbType.name, color: dbType.color, bg: dbType.bg }
-    : leaveTypeMap[request.leave_type] || { name: request.leave_type, color: 'text-slate-500', bg: 'bg-slate-500' };
+  const meta = getLeaveTypeMeta(request.leave_type);
+  const Icon = meta.icon;
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-start md:items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in duration-200" onClick={onClose}>
@@ -63,8 +51,8 @@ export default function LeaveDetailsModal({ isOpen, onClose, request, user, allP
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900 shrink-0">
           <div className="flex items-center space-x-3 min-w-0">
-            <div className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center bg-slate-100 dark:bg-slate-800 shadow-inner`}>
-              <FileText className={`w-5 h-5 ${typeInfo.color}`} />
+            <div className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center ${meta.iconBg}`}>
+              <Icon className={`w-5 h-5 ${meta.iconColor}`} />
             </div>
             <div className="min-w-0 pr-2">
               <h2 className="text-sm md:text-base lg:text-lg font-bold text-[var(--text-main)] leading-tight">รายละเอียดคำขอ {request.id}</h2>
@@ -114,8 +102,10 @@ export default function LeaveDetailsModal({ isOpen, onClose, request, user, allP
 
               {/* Right col: Leave Details */}
               <div className="p-4 sm:p-6 flex flex-col justify-center border-l border-slate-100 dark:border-slate-800">
-                <div className="text-xs font-bold text-[var(--text-muted)] mb-1">ประเภทการลา</div>
-                <div className={`font-bold text-base ${typeInfo.color} mb-5`}>{typeInfo.name}</div>
+                <div className="text-xs font-bold text-[var(--text-muted)] mb-1.5">ประเภทการลา</div>
+                <div className="mb-5">
+                  <LeaveTypeBadge type={request.leave_type} size="md" />
+                </div>
                 
                 <div className="text-xs font-bold text-[var(--text-muted)] mb-1">ช่วงเวลาที่ลา</div>
                 <div className="font-bold text-[var(--text-main)] text-sm">
@@ -135,10 +125,10 @@ export default function LeaveDetailsModal({ isOpen, onClose, request, user, allP
                 <>
                   <div className="flex justify-between items-end mb-3">
                     <div className="text-sm font-bold text-[var(--text-main)]">โควตาวันลาคงเหลือ</div>
-                    <div className={`text-3xl font-black ${typeInfo.color}`}>{remaining} <span className="text-sm font-bold text-[var(--text-main)]">วัน</span></div>
+                    <div className={`text-3xl font-black ${meta.iconColor}`}>{remaining} <span className="text-sm font-bold text-[var(--text-main)]">วัน</span></div>
                   </div>
                   <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-3 mb-3 overflow-hidden shadow-inner">
-                    <div className={`${typeInfo.bg} h-3 rounded-full transition-all duration-500`} style={{ width: `${Math.min(percentage, 100)}%` }}></div>
+                    <div className={`h-3 rounded-full bg-gradient-to-r ${meta.bar} transition-all duration-500`} style={{ width: `${Math.min(percentage, 100)}%` }}></div>
                   </div>
                   <div className="text-xs text-[var(--text-muted)] font-medium text-right">ใช้ไปแล้ว {used}/{quota} วัน ({percentage}%)</div>
                 </>

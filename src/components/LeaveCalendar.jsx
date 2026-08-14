@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, Users, X, Info, CheckCircle2, XCircle, Clock, Eye } from 'lucide-react';
 import LeaveDetailsModal from './LeaveDetailsModal';
+import LeaveTypeBadge from './ui/LeaveTypeBadge';
 
 export default function LeaveCalendar({ requests, holidays, users, departments, agencies, userPolicies }) {
   const [currentMonth, setCurrentMonth] = useState(new Date(2026, 7, 1)); // สิงหาคม 2026
@@ -207,9 +208,7 @@ export default function LeaveCalendar({ requests, holidays, users, departments, 
                       </div>
                       
                       <div className="flex flex-col items-end gap-2">
-                        <span className="px-2 py-1 bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 rounded-md text-[10px] font-bold">
-                          {req.leave_type}
-                        </span>
+                        <LeaveTypeBadge type={req.leave_type} size="sm" />
                         {getStatusBadge(req.status)}
                       </div>
                     </div>

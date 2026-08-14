@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Download, PieChart, TrendingUp, Filter, Search, Calendar, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import LeaveTypeBadge from './ui/LeaveTypeBadge';
 
 export default function ReportPage({ requests, users, agencies, departments, leaveTypes = [] }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -102,23 +103,6 @@ export default function ReportPage({ requests, users, agencies, departments, lea
     if (s === 'approved') return <span className="px-3 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 rounded-full text-xs font-bold flex items-center justify-center gap-1 w-fit"><CheckCircle2 className="w-3 h-3"/> อนุมัติ</span>;
     if (s === 'rejected') return <span className="px-3 py-1 bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400 rounded-full text-xs font-bold flex items-center justify-center gap-1 w-fit"><AlertCircle className="w-3 h-3"/> ไม่อนุมัติ</span>;
     return <span className="px-3 py-1 bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 rounded-full text-xs font-bold flex items-center justify-center gap-1 w-fit"><Clock className="w-3 h-3"/> รออนุมัติ</span>;
-  };
-
-  const LeaveTypeBadge = ({ type }) => {
-    let colorClass = "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300";
-    
-    // First try dynamic lookup
-    const foundType = leaveTypes.find(lt => lt.name === type);
-    if (foundType) {
-      colorClass = `${foundType.bg} ${foundType.color} bg-opacity-10 border border-current/20`;
-    } else {
-      // Fallback
-      if (type.includes('พักร้อน')) colorClass = "bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30";
-      else if (type.includes('ป่วย')) colorClass = "bg-rose-50 text-rose-600 border border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/30";
-      else if (type.includes('ลากิจ')) colorClass = "bg-amber-50 text-amber-600 border border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/30";
-    }
-    
-    return <span className={`px-3 py-1.5 rounded-full text-xs font-bold flex items-center justify-center w-fit ${colorClass}`}>{type}</span>;
   };
 
   return (

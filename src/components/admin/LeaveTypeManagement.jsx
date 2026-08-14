@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Tag, Plus, Edit2, Trash2, X, Save, Search, Palette } from 'lucide-react';
 import { useModal } from '../../contexts/ModalContext';
 import * as api from '../../services/supabaseApi';
+import LeaveTypeBadge, { getLeaveTypeMeta } from '../ui/LeaveTypeBadge';
 
 export default function LeaveTypeManagement({ leaveTypes, setLeaveTypes }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -132,33 +133,36 @@ export default function LeaveTypeManagement({ leaveTypes, setLeaveTypes }) {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {filteredTypes.map(type => (
-          <div key={type.id} className="bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 hover:shadow-md transition-shadow group flex flex-col justify-between h-full">
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${type.bg} bg-opacity-20`}>
-                <Palette className={`w-5 h-5 ${type.color}`} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-bold text-[var(--text-main)] truncate text-base">{type.name}</h3>
-                <div className="mt-1 flex items-center gap-1.5">
-                  <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide uppercase ${type.bg} ${type.color} bg-opacity-10 border border-current/20`}>
-                    Preview Badge
-                  </span>
+        {filteredTypes.map(type => {
+          const meta = getLeaveTypeMeta(type.name);
+          const Icon = meta.icon;
+
+          return (
+            <div key={type.id} className="bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 hover:shadow-md transition-shadow group flex flex-col justify-between h-full">
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${meta.iconBg}`}>
+                  <Icon className={`w-5 h-5 ${meta.iconColor}`} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-[var(--text-main)] truncate text-base">{type.name}</h3>
+                  <div className="mt-1 flex items-center gap-1.5">
+                    <LeaveTypeBadge type={type.name} size="sm" />
+                  </div>
                 </div>
               </div>
+              <div className="flex items-center gap-2 mt-5 border-t border-slate-100 dark:border-slate-800 pt-4">
+                <button onClick={() => handleOpenModal(type)} className="flex-1 flex justify-center items-center gap-1.5 px-3 py-1.5 text-sm text-amber-600 bg-amber-50 dark:bg-amber-500/10 hover:bg-amber-100 dark:hover:bg-amber-500/20 rounded-lg transition-colors font-medium">
+                  <Edit2 className="w-4 h-4" />
+                  แก้ไข
+                </button>
+                <button onClick={() => handleDelete(type.id)} className="flex-1 flex justify-center items-center gap-1.5 px-3 py-1.5 text-sm text-rose-600 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 rounded-lg transition-colors font-medium">
+                  <Trash2 className="w-4 h-4" />
+                  ลบ
+                </button>
+              </div>
             </div>
-            <div className="flex items-center gap-2 mt-5 border-t border-slate-100 dark:border-slate-800 pt-4">
-              <button onClick={() => handleOpenModal(type)} className="flex-1 flex justify-center items-center gap-1.5 px-3 py-1.5 text-sm text-amber-600 bg-amber-50 dark:bg-amber-500/10 hover:bg-amber-100 dark:hover:bg-amber-500/20 rounded-lg transition-colors font-medium">
-                <Edit2 className="w-4 h-4" />
-                แก้ไข
-              </button>
-              <button onClick={() => handleDelete(type.id)} className="flex-1 flex justify-center items-center gap-1.5 px-3 py-1.5 text-sm text-rose-600 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 rounded-lg transition-colors font-medium">
-                <Trash2 className="w-4 h-4" />
-                ลบ
-              </button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
         {filteredTypes.length === 0 && (
           <div className="col-span-full py-12 text-center text-[var(--text-muted)] bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
             <Tag className="w-12 h-12 mx-auto mb-3 text-slate-300" />

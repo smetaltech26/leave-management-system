@@ -490,6 +490,7 @@ export default function App() {
               agencies={agencies}
               departments={departments}
               leaveTypes={leaveTypes}
+              userPolicies={userPolicies}
             />
           )}
 

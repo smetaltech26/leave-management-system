@@ -3,22 +3,32 @@ import { X, CheckCircle2, Clock, XCircle, FileText, User, Calendar, Activity } f
 import LeaveTypeBadge, { getLeaveTypeMeta } from './ui/LeaveTypeBadge';
 import { supabase } from '../lib/supabase';
 
-export default function LeaveDetailsModal({ isOpen, onClose, request, user, allPolicies = [], users, agencies, departments, leaveTypes = [] }) {
+export default function LeaveDetailsModal({ 
+  isOpen, 
+  onClose, 
+  request, 
+  user, 
+  allPolicies = [], 
+  users = [], 
+  agencies = [], 
+  departments = [], 
+  leaveTypes = [] 
+}) {
   const [approvalSteps, setApprovalSteps] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen && request) {
       // ดึงข้อมูลขั้นตอนการอนุมัติจาก request object โดยตรง (รองรับข้อมูลที่เพิ่งสร้างใหม่)
-      if (request.approvers && request.approvers.length > 0) {
+      if (request.approvers && Array.isArray(request.approvers) && request.approvers.length > 0) {
         // Map ข้อมูลให้อยู่ในโครงสร้างเดียวกับที่ UI ต้องการ
         const mappedSteps = request.approvers.map(a => ({
           ...a,
           approver: {
             fullname: a.approver_name || a.approver_id,
-            avatar_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(a.approver_name || a.approver_id)}&background=random`
+            avatar_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(a.approver_name || a.approver_id || 'Approver')}&background=random`
           }
-        })).sort((a, b) => a.step_number - b.step_number);
+        })).sort((a, b) => (Number(a.step_number) || 0) - (Number(b.step_number) || 0));
         setApprovalSteps(mappedSteps);
       } else {
         setApprovalSteps([]);
@@ -28,21 +38,36 @@ export default function LeaveDetailsModal({ isOpen, onClose, request, user, allP
 
   if (!isOpen || !request) return null;
 
+  const targetUser = user || (users || []).find(u => u && u.id === request.user_id);
+
   const formatDate = (dateStr) => {
-    if (!dateStr) return '';
-    const [year, month, day] = dateStr.split('-');
-    return `${day}/${month}/${year.slice(-2)}`;
+    if (!dateStr || typeof dateStr !== 'string') return dateStr || '';
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) return dateStr;
+    const [year, month, day] = parts;
+    return `${day}/${month}/${year ? year.slice(-2) : ''}`;
   };
 
   // Calculate Policy Usage (if policies are provided)
-  const policy = allPolicies.find(p => p.leave_type === request.leave_type && p.user_id === request.user_id);
-  const quota = policy ? Number(policy.max_days) : 0;
-  const used = policy ? Number(policy.used_days) : 0;
-  const remaining = policy ? Number(policy.remaining_days) : 0;
+  const policy = (allPolicies || []).find(p => p && p.leave_type === request.leave_type && (p.user_id === request.user_id || p.user_id === targetUser?.id));
+  const quota = policy ? Number(policy.max_days) || 0 : 0;
+  const used = policy ? Number(policy.used_days) || 0 : 0;
+  const remaining = policy ? Number(policy.remaining_days) || 0 : 0;
   const percentage = quota > 0 ? Math.round((used / quota) * 100) : 0;
 
   const meta = getLeaveTypeMeta(request.leave_type);
   const Icon = meta.icon;
+
+  const formatCreatedAt = () => {
+    if (!request.created_at) return 'ไม่ระบุ';
+    try {
+      const d = new Date(request.created_at);
+      if (isNaN(d.getTime())) return String(request.created_at);
+      return d.toLocaleString('th-TH');
+    } catch (e) {
+      return String(request.created_at);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-start md:items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in duration-200" onClick={onClose}>
@@ -56,7 +81,7 @@ export default function LeaveDetailsModal({ isOpen, onClose, request, user, allP
             </div>
             <div className="min-w-0 pr-2">
               <h2 className="text-sm md:text-base lg:text-lg font-bold text-[var(--text-main)] leading-tight">รายละเอียดคำขอ {request.id}</h2>
-              <p className="text-[10px] sm:text-xs text-[var(--text-muted)] font-medium truncate mt-0.5">ยื่นเมื่อ: {new Date(request.created_at).toLocaleString('th-TH')}</p>
+              <p className="text-[10px] sm:text-xs text-[var(--text-muted)] font-medium truncate mt-0.5">ยื่นเมื่อ: {formatCreatedAt()}</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 rounded-full transition-colors">
@@ -75,12 +100,16 @@ export default function LeaveDetailsModal({ isOpen, onClose, request, user, allP
               {/* Left col: User Info */}
               <div className="p-4 sm:p-6 flex flex-col items-start relative">
                 <img 
-                  src={user?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullname || request.user_id)}&background=random`}
+                  src={targetUser?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(targetUser?.fullname || request.user_id || 'User')}&background=random`}
                   alt="Profile" 
-                  className="w-24 h-24 sm:w-28 sm:h-28 shrink-0 rounded-full border-2 border-slate-100 dark:border-slate-800 shadow-sm mb-3 sm:mb-4"
+                  className="w-24 h-24 sm:w-28 sm:h-28 shrink-0 rounded-full border-2 border-slate-100 dark:border-slate-800 shadow-sm mb-3 sm:mb-4 object-cover"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(targetUser?.fullname || request.user_id || 'User')}&background=random`;
+                  }}
                 />
-                <h3 className="text-sm sm:text-base font-extrabold text-[var(--text-main)] truncate max-w-full">{user?.fullname || request.user_id}</h3>
-                <p className="text-[10px] sm:text-xs text-[var(--text-muted)] truncate max-w-full">{agencies?.find(a => a.id === user?.agency_id)?.name || 'ไม่ระบุสังกัด'} | {departments?.find(d => d.id === user?.department_id)?.name || 'ไม่ระบุฝ่าย'}</p>
+                <h3 className="text-sm sm:text-base font-extrabold text-[var(--text-main)] truncate max-w-full">{targetUser?.fullname || request.user_id}</h3>
+                <p className="text-[10px] sm:text-xs text-[var(--text-muted)] truncate max-w-full">{agencies?.find(a => a?.id === targetUser?.agency_id)?.name || targetUser?.agency_id || 'ไม่ระบุสังกัด'} | {departments?.find(d => d?.id === targetUser?.department_id)?.name || targetUser?.department_id || 'ไม่ระบุฝ่าย'}</p>
                 
                 {/* Status Badge */}
                 <div className="mt-3">
@@ -197,12 +226,17 @@ export default function LeaveDetailsModal({ isOpen, onClose, request, user, allP
                         {step.action_date && (
                           <div className="text-[10px] text-[var(--text-muted)] flex items-center mt-2">
                             <Clock className="w-3 h-3 mr-1" /> ดำเนินการเมื่อ {(() => {
-                              const d = new Date(step.action_date);
-                              let dtStr = d.toLocaleString('en-GB').replace(',', '');
-                              if (d.getHours() === 0 && d.getMinutes() === 0 && d.getSeconds() === 0) {
-                                return d.toLocaleDateString('en-GB');
+                              try {
+                                const d = new Date(step.action_date);
+                                if (isNaN(d.getTime())) return String(step.action_date);
+                                let dtStr = d.toLocaleString('en-GB').replace(',', '');
+                                if (d.getHours() === 0 && d.getMinutes() === 0 && d.getSeconds() === 0) {
+                                  return d.toLocaleDateString('en-GB');
+                                }
+                                return dtStr;
+                              } catch (e) {
+                                return String(step.action_date);
                               }
-                              return dtStr;
                             })()}
                           </div>
                         )}

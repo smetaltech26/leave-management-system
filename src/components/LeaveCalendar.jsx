@@ -3,7 +3,16 @@ import { ChevronLeft, ChevronRight, Users, X, Info, CheckCircle2, XCircle, Clock
 import LeaveDetailsModal from './LeaveDetailsModal';
 import LeaveTypeBadge from './ui/LeaveTypeBadge';
 
-export default function LeaveCalendar({ requests, holidays, users, departments, agencies, userPolicies }) {
+export default function LeaveCalendar({ 
+  requests = [], 
+  holidays = [], 
+  users = [], 
+  departments = [], 
+  agencies = [], 
+  userPolicies = [], 
+  leaveTypes = [],
+  currentUser 
+}) {
   const [currentMonth, setCurrentMonth] = useState(new Date(2026, 7, 1)); // สิงหาคม 2026
   const [selectedGroup, setSelectedGroup] = useState(null); 
   const [selectedRequestDetails, setSelectedRequestDetails] = useState(null);
@@ -251,11 +260,14 @@ export default function LeaveCalendar({ requests, holidays, users, departments, 
 
       {isDetailsModalOpen && selectedRequestDetails && (
         <LeaveDetailsModal
-          isOpen={true}
+          isOpen={isDetailsModalOpen}
           request={selectedRequestDetails}
-          user={selectedRequestDetails.requester}
-          allPolicies={userPolicies}
-          onClose={() => setIsDetailsModalOpen(false)}
+          user={selectedRequestDetails.requester || users.find(u => u.id === selectedRequestDetails.user_id)}
+          allPolicies={userPolicies || []}
+          onClose={() => {
+            setIsDetailsModalOpen(false);
+            setSelectedRequestDetails(null);
+          }}
           users={users}
           agencies={agencies}
           departments={departments}

@@ -81,6 +81,7 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
         role: user.role,
         line_user_id: user.line_user_id || '',
         avatar_url: user.avatar_url || '',
+        employee_id: user.employee_id || '',
       });
     } else {
       setEditingUser(null);
@@ -94,6 +95,7 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
         role: 'Employee',
         line_user_id: '',
         avatar_url: '',
+        employee_id: '',
       });
     }
     setIsModalOpen(true);
@@ -124,7 +126,8 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
         ...formData,
         password_hash: formData.password,
         agency_id: formData.agency,
-        department_id: formData.department
+        department_id: formData.department,
+        employee_id: formData.employee_id
       };
       setUsers(prev => prev.map(u => u.id === editingUser.id ? updatedUser : u));
     } else {
@@ -134,6 +137,7 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
         password_hash: formData.password,
         agency_id: formData.agency,
         department_id: formData.department,
+        employee_id: formData.employee_id,
         avatar_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.fullname)}&background=random`,
       };
       setUsers(prev => [...prev, newUser]);
@@ -245,8 +249,16 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
                     <div className="flex items-center gap-3">
                       <img src={user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullname)}&background=random`} alt="Avatar" className="w-14 h-14 rounded-xl object-cover shrink-0" />
                       <div>
-                        <p className="font-bold text-[var(--text-main)]">{user.fullname}</p>
-                        <p className="text-[10px] text-[var(--text-muted)]">{user.email}</p>
+                        <div className="font-bold text-[var(--text-main)] text-sm">{user.fullname}</div>
+                        <div className="text-xs text-[var(--text-muted)] flex items-center gap-2 mt-1">
+                          <span>{user.id}</span>
+                          {user.employee_id && (
+                            <>
+                              <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700"></span>
+                              <span>ID: {user.employee_id}</span>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </td>
@@ -421,12 +433,22 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
             <form onSubmit={handleSaveUser} className="p-6 flex-1 min-h-0 overflow-y-auto space-y-4 custom-scrollbar">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-[var(--text-muted)] mb-1.5 uppercase">รหัสพนักงาน</label>
+                  <label className="block text-xs font-bold text-[var(--text-muted)] mb-1.5 uppercase">UID (รหัสระบบ)</label>
                   <input 
                     type="text" 
                     value={formData.id} 
                     disabled
                     className="w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700 rounded-xl text-sm" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-[var(--text-muted)] mb-1.5 uppercase">ID (รหัสพนักงาน)</label>
+                  <input 
+                    type="text" 
+                    value={formData.employee_id} 
+                    onChange={(e) => setFormData({...formData, employee_id: e.target.value})}
+                    placeholder="เช่น 150, 272"
+                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-950 text-[var(--text-main)] border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none" 
                   />
                 </div>
                 <div>

@@ -65,7 +65,7 @@ export default function HomeDashboard({ currentUser, userPolicies, requests, onD
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
           {myPolicies.length > 0 ? (
             myPolicies.map((pol) => {
               const meta = getLeaveTypeMeta(pol.leave_type);
@@ -79,33 +79,41 @@ export default function HomeDashboard({ currentUser, userPolicies, requests, onD
               const percentUsed = Math.min(100, (displayUsed / pol.max_days) * 100);
 
               return (
-                <div key={pol.id} className="glass-card-clean-clean rounded-2xl p-4 md:p-5 border border-slate-200 dark:border-[var(--card-border)] relative space-y-3 shadow-sm">
+                <div key={pol.id} className="glass-card-clean-clean rounded-2xl p-3 sm:p-4 md:p-5 border border-slate-200 dark:border-[var(--card-border)] relative space-y-2.5 sm:space-y-3 shadow-sm flex flex-col justify-between">
                   
                   {/* Top Header */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2.5">
-                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${meta.iconBg} ${meta.iconColor}`}>
-                        <Icon className="w-4 h-4" />
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-2">
+                    <div className="flex items-center space-x-1.5 sm:space-x-2.5 min-w-0">
+                      <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl flex items-center justify-center shrink-0 ${meta.iconBg} ${meta.iconColor}`}>
+                        <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       </div>
-                      <span className="font-extrabold text-sm md:text-base text-[var(--text-main)] dark:text-[var(--text-main)]">{meta.name}</span>
+                      <span className="font-extrabold text-xs sm:text-sm md:text-base text-[var(--text-main)] dark:text-[var(--text-main)] truncate" title={meta.name}>
+                        {meta.name}
+                      </span>
                     </div>
-                    <span className="text-xs font-bold text-[var(--text-muted)] dark:text-[var(--text-muted)]">สิทธิ์ {pol.max_days} วัน</span>
+                    <span className="text-[10px] sm:text-xs font-bold text-[var(--text-muted)] dark:text-[var(--text-muted)] shrink-0 self-start sm:self-auto">
+                      สิทธิ์ {pol.max_days} วัน
+                    </span>
                   </div>
 
                   {/* Big Number Display */}
-                  <div className="flex items-baseline justify-between pt-1">
-                    <div>
-                      <span className="text-3xl font-black text-[var(--text-main)] dark:text-[var(--text-main)] tracking-tight">{displayRemaining}</span>
-                      <span className="text-xs font-extrabold text-[var(--text-muted)] dark:text-[var(--text-muted)] ml-1.5">วันคงเหลือ</span>
+                  <div className="flex items-baseline justify-between pt-0.5 sm:pt-1">
+                    <div className="flex items-baseline">
+                      <span className="text-2xl sm:text-3xl font-black text-[var(--text-main)] dark:text-[var(--text-main)] tracking-tight">
+                        {displayRemaining}
+                      </span>
+                      <span className="text-[10px] sm:text-xs font-extrabold text-[var(--text-muted)] dark:text-[var(--text-muted)] ml-1">
+                        วันคงเหลือ
+                      </span>
                     </div>
-                    <div className="text-[10px] md:text-xs font-bold text-[var(--text-muted)] dark:text-[var(--text-muted)]">
+                    <div className="text-[9px] sm:text-[10px] md:text-xs font-bold text-[var(--text-muted)] dark:text-[var(--text-muted)] shrink-0">
                       ใช้ไป <span className="font-extrabold text-[var(--text-main)] dark:text-[var(--text-main)]">{displayUsed}</span> วัน
                     </div>
                   </div>
 
                   {/* Clean Progress Bar */}
-                  <div className="space-y-2">
-                    <div className="w-full bg-slate-200 dark:bg-[var(--card-bg)] h-3 rounded-full overflow-hidden border border-slate-300/50 dark:border-[var(--card-border)]">
+                  <div className="space-y-1 sm:space-y-2">
+                    <div className="w-full bg-slate-200 dark:bg-[var(--card-bg)] h-2 sm:h-3 rounded-full overflow-hidden border border-slate-300/50 dark:border-[var(--card-border)]">
                       <div
                         className={`h-full bg-gradient-to-r ${meta.bar} transition-all duration-500 rounded-full`}
                         style={{ width: `${percentUsed}%` }}

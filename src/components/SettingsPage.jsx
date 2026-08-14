@@ -5,9 +5,10 @@ import PolicyManagement from './admin/PolicyManagement';
 import HolidayManagement from './admin/HolidayManagement';
 import AgencyManagement from './admin/AgencyManagement';
 import DepartmentManagement from './admin/DepartmentManagement';
+import LeaveTypeManagement from './admin/LeaveTypeManagement';
 
-export default function SettingsPage({ userPolicies, setUserPolicies, holidays, setHolidays, users, agencies, setAgencies, departments, setDepartments }) {
-  const [activeSubTab, setActiveSubTab] = useState('policies'); // policies | holidays | database
+export default function SettingsPage({ userPolicies, setUserPolicies, holidays, setHolidays, users, agencies, setAgencies, departments, setDepartments, leaveTypes, setLeaveTypes }) {
+  const [activeSubTab, setActiveSubTab] = useState('policies'); // policies | leavetypes | holidays | database
   const isConfigured = isSupabaseConfigured();
 
   return (
@@ -31,6 +32,14 @@ export default function SettingsPage({ userPolicies, setUserPolicies, holidays, 
             }`}
           >
             โควตาวันลา
+          </button>
+          <button
+            onClick={() => setActiveSubTab('leavetypes')}
+            className={`px-3 py-2 text-xs font-semibold rounded-xl transition-all ${
+              activeSubTab === 'leavetypes' ? 'bg-blue-500 text-white shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+            }`}
+          >
+            ประเภทการลา
           </button>
           <button
             onClick={() => setActiveSubTab('holidays')}
@@ -69,7 +78,13 @@ export default function SettingsPage({ userPolicies, setUserPolicies, holidays, 
 
       {activeSubTab === 'policies' && (
         <div className="glass-card-clean rounded-3xl p-6 border border-[var(--card-border)] bg-white dark:bg-[var(--card-bg)] shadow-sm">
-          <PolicyManagement userPolicies={userPolicies} setUserPolicies={setUserPolicies} users={users} agencies={agencies} departments={departments} />
+          <PolicyManagement userPolicies={userPolicies} setUserPolicies={setUserPolicies} users={users} agencies={agencies} departments={departments} leaveTypes={leaveTypes} />
+        </div>
+      )}
+
+      {activeSubTab === 'leavetypes' && (
+        <div className="glass-card-clean rounded-3xl p-6 border border-[var(--card-border)] bg-white dark:bg-[var(--card-bg)] shadow-sm">
+          <LeaveTypeManagement leaveTypes={leaveTypes} setLeaveTypes={setLeaveTypes} />
         </div>
       )}
 

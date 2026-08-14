@@ -1,11 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { Search, Plus, Edit2, Trash2, Shield, User, MapPin, X, Save, Users, UserCheck, Hourglass, Eye, Upload, ChevronLeft, ChevronRight } from 'lucide-react';
 import UserProfileModal from './UserProfileModal';
+import { useModal } from '../../contexts/ModalContext';
 
-export default function UserManagement({ users, setUsers, pendingCount = 0, userPolicies = [], requests = [], agencies = [], departments = [] }) {
+export default function UserManagement({ users, setUsers, pendingCount = 0, userPolicies = [], requests = [], agencies = [], departments = [], leaveTypes = [] }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 20;
+  const itemsPerPage = 24;
+  const { showConfirm } = useModal();
+
+  const desktopPaginationRef = useRef(null);
+  const mobilePaginationRef = useRef(null);
+  const activePaginationRef = useRef(null);
+  const clickYRef = useRef(null);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [viewingUser, setViewingUser] = useState(null);
@@ -41,6 +49,24 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentUsers = filteredUsers.slice(startIndex, startIndex + itemsPerPage);
+
+  const handlePageChange = (newPage, type) => {
+    const ref = type === 'mobile' ? mobilePaginationRef : desktopPaginationRef;
+    if (ref.current) {
+      clickYRef.current = ref.current.getBoundingClientRect().top;
+      activePaginationRef.current = ref;
+    }
+    setCurrentPage(newPage);
+  };
+
+  useLayoutEffect(() => {
+    if (clickYRef.current !== null && activePaginationRef.current?.current) {
+      const newTop = activePaginationRef.current.current.getBoundingClientRect().top;
+      const diff = newTop - clickYRef.current;
+      window.scrollBy(0, diff);
+      clickYRef.current = null;
+    }
+  }, [currentPage, currentUsers]);
 
   const handleOpenModal = (user = null) => {
     if (user) {
@@ -115,8 +141,8 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
     handleCloseModal();
   };
 
-  const handleDeleteUser = (id) => {
-    if(window.confirm('คุณต้องการลบพนักงานรหัสนี้ใช่หรือไม่?')) {
+  const handleDeleteUser = async (id) => {
+    if(await showConfirm('คุณต้องการลบพนักงานรหัสนี้ใช่หรือไม่?')) {
       setUsers(prev => prev.filter(u => u.id !== id));
     }
   };
@@ -198,8 +224,8 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
         />
       </div>
 
-      {/* ตารางข้อมูล */}
-      <div className="bg-white dark:bg-[var(--card-bg)] rounded-2xl shadow-sm border border-slate-200 dark:border-[var(--card-border)] overflow-hidden">
+      {/* ตารางข้อมูล (Desktop) */}
+      <div className="hidden md:block bg-white dark:bg-[var(--card-bg)] rounded-2xl shadow-sm border border-slate-200 dark:border-[var(--card-border)] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -272,13 +298,13 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
         </div>
         
         {filteredUsers.length > 0 && (
-          <div className="p-4 border-t border-slate-200 dark:border-[var(--card-border)] bg-slate-50/50 dark:bg-[var(--card-bg)] flex flex-col items-center justify-center gap-4">
-            <span className="text-sm text-[var(--text-muted)]">
+          <div ref={desktopPaginationRef} className="hidden md:flex p-4 border-t border-slate-200 dark:border-[var(--card-border)] bg-slate-50/50 dark:bg-[var(--card-bg)] flex-col items-center justify-center gap-4">
+            <span className="text-sm text-[var(--text-muted)] text-center">
               แสดง {startIndex + 1} ถึง {Math.min(startIndex + itemsPerPage, filteredUsers.length)} จากทั้งหมด {filteredUsers.length} รายการ
             </span>
             <div className="flex items-center gap-2">
               <button 
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                onClick={() => handlePageChange(Math.max(1, currentPage - 1), 'desktop')}
                 disabled={currentPage === 1}
                 className="px-4 py-2 border border-slate-200 dark:border-[var(--card-border)] rounded-lg text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50 transition-colors text-[var(--text-main)]"
               >
@@ -286,7 +312,7 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
               </button>
               <span className="text-sm font-bold px-3 text-[var(--text-main)]">หน้า {currentPage} / {totalPages}</span>
               <button 
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1), 'desktop')}
                 disabled={currentPage === totalPages}
                 className="px-4 py-2 border border-slate-200 dark:border-[var(--card-border)] rounded-lg text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50 transition-colors text-[var(--text-main)]"
               >
@@ -297,11 +323,93 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
         )}
       </div>
 
+      {/* Card List (Mobile) */}
+      <div 
+        className="md:hidden space-y-4"
+        style={{ overflowAnchor: 'none' }}
+      >
+        {currentUsers.map(user => (
+          <div key={user.id} className="bg-white dark:bg-[var(--card-bg)] p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-[var(--card-border)]">
+            <div className="flex items-center gap-3 mb-4">
+              <img src={user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullname)}&background=random`} alt="Avatar" className="w-14 h-14 rounded-xl object-cover shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-[var(--text-main)] truncate">{user.fullname}</p>
+                <p className="text-xs text-[var(--text-muted)] font-medium mb-1">{user.id}</p>
+                <span className={`px-2 py-0.5 text-[10px] font-bold rounded-md border inline-block ${
+                      user.role === 'SuperAdmin' ? 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-500/20 dark:text-purple-300' :
+                      user.role === 'Admin' ? 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-500/20 dark:text-rose-300' :
+                      user.role === 'SuperUser' ? 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/20 dark:text-amber-300' :
+                      user.role === 'Manager' ? 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/20 dark:text-amber-300' :
+                      'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-700 dark:text-slate-300'
+                    }`}>
+                      {user.role}
+                </span>
+              </div>
+            </div>
+            
+            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 mb-4 space-y-2 text-xs">
+              <div className="flex justify-between items-center text-[var(--text-muted)]">
+                <span>อีเมล:</span>
+                <span className="font-medium text-[var(--text-main)] truncate max-w-[60%]">{user.email || '-'}</span>
+              </div>
+              <div className="flex justify-between items-center text-[var(--text-muted)]">
+                <span>หน่วยงาน/ฝ่าย:</span>
+                <span className="font-medium text-[var(--text-main)] text-right truncate max-w-[60%]">
+                  {agencies?.find(a => a.id === user.agency_id)?.name || user.agency_id || '-'} / {departments?.find(d => d.id === user.department_id)?.name || user.department_id || '-'}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex justify-center gap-2 pt-4 border-t border-slate-100 dark:border-slate-800">
+              <button onClick={() => setViewingUser(user)} className="flex-1 flex items-center justify-center gap-1.5 p-2.5 text-blue-600 bg-blue-100 dark:bg-blue-500/20 hover:bg-blue-200 dark:hover:bg-blue-500/40 rounded-xl transition-colors font-semibold text-xs">
+                <Eye className="w-4 h-4" /> ดู
+              </button>
+              <button onClick={() => handleOpenModal(user)} className="flex-1 flex items-center justify-center gap-1.5 p-2.5 text-amber-600 bg-amber-100 dark:bg-amber-500/20 hover:bg-amber-200 dark:hover:bg-amber-500/40 rounded-xl transition-colors font-semibold text-xs">
+                <Edit2 className="w-4 h-4" /> แก้ไข
+              </button>
+              <button onClick={() => handleDeleteUser(user.id)} className="flex-1 flex items-center justify-center gap-1.5 p-2.5 text-rose-600 bg-rose-100 dark:bg-rose-500/20 hover:bg-rose-200 dark:hover:bg-rose-500/40 rounded-xl transition-colors font-semibold text-xs">
+                <Trash2 className="w-4 h-4" /> ลบ
+              </button>
+            </div>
+          </div>
+        ))}
+
+        {currentUsers.length === 0 && (
+          <div className="p-8 text-center text-[var(--text-muted)] bg-white dark:bg-[var(--card-bg)] rounded-2xl shadow-sm border border-slate-200 dark:border-[var(--card-border)]">ไม่พบข้อมูลพนักงาน</div>
+        )}
+        
+        {/* Pagination (Mobile) */}
+        {filteredUsers.length > 0 && (
+          <div ref={mobilePaginationRef} className="pt-4 pb-2 flex flex-col items-center justify-center gap-3">
+             <span className="text-xs text-[var(--text-muted)]">
+              แสดง {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredUsers.length)} จาก {filteredUsers.length}
+            </span>
+            <div className="flex items-center justify-between w-full">
+              <button 
+                onClick={() => handlePageChange(Math.max(1, currentPage - 1), 'mobile')}
+                disabled={currentPage === 1}
+                className="px-4 py-2 border border-slate-200 dark:border-[var(--card-border)] bg-white dark:bg-[var(--card-bg)] rounded-xl text-sm font-medium disabled:opacity-50 text-[var(--text-main)] shadow-sm"
+              >
+                ย้อนกลับ
+              </button>
+              <span className="text-sm font-bold text-[var(--text-main)]">{currentPage} / {totalPages}</span>
+              <button 
+                onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1), 'mobile')}
+                disabled={currentPage === totalPages}
+                className="px-4 py-2 border border-slate-200 dark:border-[var(--card-border)] bg-white dark:bg-[var(--card-bg)] rounded-xl text-sm font-medium disabled:opacity-50 text-[var(--text-main)] shadow-sm"
+              >
+                ถัดไป
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Modal เพิ่ม/แก้ไขพนักงาน */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800">
-            <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
+        <div className="fixed inset-0 z-50 flex items-start md:items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-md max-h-[calc(100svh-2rem)] md:max-h-[85dvh] min-h-0 rounded-3xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 flex flex-col">
+            <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 shrink-0">
               <h3 className="font-bold text-lg text-[var(--text-main)]">
                 {editingUser ? 'แก้ไขข้อมูลพนักงาน' : 'เพิ่มพนักงานใหม่'}
               </h3>
@@ -310,7 +418,7 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
               </button>
             </div>
 
-            <form onSubmit={handleSaveUser} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+            <form onSubmit={handleSaveUser} className="p-6 flex-1 min-h-0 overflow-y-auto space-y-4 custom-scrollbar">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-[var(--text-muted)] mb-1.5 uppercase">รหัสพนักงาน</label>
@@ -436,7 +544,7 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
                 <p className="text-[10px] text-[var(--text-muted)] mt-1">ใช้สำหรับส่งข้อความแจ้งเตือนสถานะการลาตรงเข้า LINE ส่วนตัว</p>
               </div>
 
-              <div className="pt-4 flex gap-3">
+              <div className="pt-4 flex gap-3 shrink-0">
                 <button type="button" onClick={handleCloseModal} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
                   ยกเลิก
                 </button>
@@ -457,6 +565,7 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
           requests={requests} 
           agencies={agencies}
           departments={departments}
+          leaveTypes={leaveTypes}
           onClose={() => setViewingUser(null)} 
         />
       )}

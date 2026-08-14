@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { ShieldCheck, Info, Save, Loader2 } from 'lucide-react';
 import * as api from '../../services/supabaseApi';
+import { useModal } from '../../contexts/ModalContext';
 
 export default function PermissionsPage({ permissions, setPermissions }) {
   const roles = ["SuperAdmin", "Admin", "SuperUser", "User"];
   const [isSaving, setIsSaving] = useState(false);
+  const { showAlert } = useModal();
 
   const handleToggle = (menuItemCode, role) => {
     setPermissions(prev => prev.map(perm => {
@@ -22,10 +24,10 @@ export default function PermissionsPage({ permissions, setPermissions }) {
     try {
       setIsSaving(true);
       await api.updateRolePermissions(permissions);
-      alert('บันทึกสิทธิ์การใช้งานเรียบร้อยแล้ว');
+      await showAlert('บันทึกสิทธิ์การใช้งานเรียบร้อยแล้ว', { type: 'success', title: 'สำเร็จ' });
     } catch (err) {
       console.error("Error saving permissions:", err);
-      alert('เกิดข้อผิดพลาดในการบันทึกสิทธิ์: ' + err.message);
+      await showAlert('เกิดข้อผิดพลาดในการบันทึกสิทธิ์: ' + err.message);
     } finally {
       setIsSaving(false);
     }

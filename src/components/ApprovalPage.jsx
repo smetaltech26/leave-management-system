@@ -1,22 +1,51 @@
-import React, { useState } from 'react';
-import { CheckCircle2, XCircle, Clock, FileText, User, MessageSquare, AlertCircle, Sparkles, Edit2 } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { CheckCircle2, XCircle, Clock, FileText, User, MessageSquare, AlertCircle, Sparkles, Edit2, RefreshCcw } from 'lucide-react';
 import { notifyLeaveApprover, sendLinePushToUser } from '../lib/lineNotify';
 import { sendEmailNotification } from '../services/emailService';
 import AdminEditLeaveModal from './admin/AdminEditLeaveModal';
+import { useModal } from '../contexts/ModalContext';
 
-export default function ApprovalPage({ currentUser, requests, users, agencies = [], departments = [], onApproveStep, onRejectStep, onAdminEditRequest, holidays = [] }) {
+export default function ApprovalPage({ currentUser, requests, users, agencies = [], departments = [], onApproveStep, onRejectStep, onAdminEditRequest, holidays = [], onRefresh, leaveTypes = [] }) {
   const [activeSubTab, setActiveSubTab] = useState('pending'); // pending | completed
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [comment, setComment] = useState('');
   
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [successType, setSuccessType] = useState('');
+  const [isSubmittingAction, setIsSubmittingAction] = useState(false);
+  const [adminSuccessMsg, setAdminSuccessMsg] = useState('');
+  const [showAdminSuccessPopup, setShowAdminSuccessPopup] = useState(false);
+  
   const [adminEditRequest, setAdminEditRequest] = useState(null);
   const [isSubmittingAdmin, setIsSubmittingAdmin] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const { showAlert } = useModal();
+
+  const [currentPageCompleted, setCurrentPageCompleted] = useState(1);
+  const itemsPerPage = 24;
+  const paginationRef = useRef(null);
+
+  const handleRefresh = async () => {
+    if (isRefreshing || !onRefresh) return;
+    setIsRefreshing(true);
+    try {
+      await onRefresh();
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const handleAdminAction = async (request, actionType, updates) => {
     setIsSubmittingAdmin(true);
     try {
-      await onAdminEditRequest(request, actionType, updates);
+      const msg = await onAdminEditRequest(request, actionType, updates);
       setAdminEditRequest(null);
+      setAdminSuccessMsg(msg);
+      setShowAdminSuccessPopup(true);
+    } catch (err) {
+      console.error(err);
+      await showAlert("เกิดข้อผิดพลาดในการดำเนินการ: " + err.message);
     } finally {
       setIsSubmittingAdmin(false);
     }
@@ -31,19 +60,35 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
 
   // คำขอที่อนุมัติไปแล้ว
   const completedByMe = requests.filter(r => {
+    // ถ้าเป็น SuperAdmin ให้เห็นคำขอทั้งหมดที่ "Approved" หรือ "Rejected" แล้ว
+    if (currentUser?.role === 'SuperAdmin') {
+      return r.status === 'Approved' || r.status === 'Rejected';
+    }
     return r.approvers.some(a => a.approver_id === currentUser?.id && a.status !== 'Pending');
   });
 
-  const displayList = activeSubTab === 'pending' ? pendingForMe : completedByMe;
+  // Calculate pagination for completed tab
+  const totalCompletedItems = completedByMe.length;
+  const totalCompletedPages = Math.ceil(totalCompletedItems / itemsPerPage) || 1;
+  const safeCurrentPage = Math.min(currentPageCompleted, totalCompletedPages);
+
+  const currentCompletedList = completedByMe.slice(
+    (safeCurrentPage - 1) * itemsPerPage,
+    safeCurrentPage * itemsPerPage
+  );
+
+  const displayList = activeSubTab === 'pending' ? pendingForMe : currentCompletedList;
 
   const handleAction = async (action) => {
-    if (!selectedRequest) return;
-
-    const currentStepNum = selectedRequest.current_step;
+    if (!selectedRequest || isSubmittingAction) return;
+    setIsSubmittingAction(true);
+    
+    try {
+      const currentStepNum = selectedRequest.current_step;
     const isFinalStep = currentStepNum >= selectedRequest.approvers.length;
 
     if (action === 'Approved') {
-      onApproveStep(selectedRequest.id, currentStepNum, comment);
+      await onApproveStep(selectedRequest.id, currentStepNum, comment);
       const requester = users.find(u => u.id === selectedRequest.user_id);
 
       // ถ้ายังไม่ใช่ Step สุดท้าย -> ยิง LINE Push 1:1 และ Email หาผู้อนุมัติ Step ถัดไป!
@@ -132,7 +177,7 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
         }
       }
     } else if (action === 'Rejected') {
-      onRejectStep(selectedRequest.id, currentStepNum, comment);
+      await onRejectStep(selectedRequest.id, currentStepNum, comment);
 
       // ปฏิเสธ -> ยิง LINE Push 1:1 และ Email แจ้งเตือนผู้ขอลา!
       const requester = users.find(u => u.id === selectedRequest.user_id);
@@ -173,6 +218,17 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
       }
     }
 
+    setSuccessType(action === 'Approved' ? 'approved' : 'rejected');
+    setShowSuccessPopup(true);
+    } catch (error) {
+      console.error("Action error:", error);
+    } finally {
+      setIsSubmittingAction(false);
+    }
+  };
+
+  const handleSuccessOk = () => {
+    setShowSuccessPopup(false);
     setSelectedRequest(null);
     setComment('');
   };
@@ -189,8 +245,21 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
           <p className="text-xs text-[var(--text-muted)] mt-1">รายการคำขอลางานที่รอให้คุณตรวจสอบและอนุมัติตามลำดับขั้นตอน</p>
         </div>
 
-        {/* Sub Tabs */}
-        <div className="flex p-1 bg-[var(--card-bg)]/80 rounded-2xl border border-[var(--card-border)] self-start sm:self-auto">
+        {/* Actions & Sub Tabs */}
+        <div className="flex items-center space-x-2 sm:space-x-3 self-start sm:self-auto">
+          {/* Reload Button */}
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="px-3 py-2 text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 hover:text-slate-800 dark:hover:text-slate-300 rounded-xl border border-slate-200 dark:border-slate-700 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center shadow-sm space-x-1.5"
+            title="โหลดข้อมูลล่าสุด"
+          >
+            <RefreshCcw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-blue-500' : ''}`} />
+            <span>รีโหลด</span>
+          </button>
+
+          {/* Sub Tabs */}
+          <div className="flex p-1 bg-[var(--card-bg)]/80 rounded-2xl border border-[var(--card-border)]">
           <button
             onClick={() => setActiveSubTab('pending')}
             className={`px-4 py-2 text-xs font-semibold rounded-xl transition-all flex items-center space-x-2 ${
@@ -217,13 +286,16 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
           >
             <span>ดำเนินการแล้ว</span>
           </button>
+
+        </div>
         </div>
       </div>
 
       {/* Request Cards List */}
       {displayList.length > 0 ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-          {displayList.map((req) => {
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+            {displayList.map((req) => {
             const requester = users.find(u => u.id === req.user_id);
             const currentStepObj = req.approvers.find(a => a.step_number === req.current_step);
 
@@ -236,7 +308,7 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
                     <img
                       src={requester?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}
                       alt={requester?.fullname}
-                      className="w-14 h-14 rounded-xl object-cover ring-2 ring-blue-500/30"
+                      className="w-24 h-24 rounded-3xl object-cover ring-2 ring-blue-500/30 shadow-md"
                     />
                     <div>
                       <div className="font-semibold text-sm text-[var(--text-main)]">{requester?.fullname || req.user_id}</div>
@@ -257,7 +329,7 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
                           : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                         : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
                     }`}>
-                      {req.id} {activeSubTab === 'completed' ? (req.status === 'Rejected' ? '(ไม่อนุมัติ)' : '(อนุมัติแล้ว)') : `(Step ${req.current_step}/${req.total_steps})`}
+                      {req.id} {activeSubTab === 'completed' ? (req.status === 'Rejected' ? (req.reject_reason?.startsWith('ยกเลิกโดย') ? '(ยกเลิก)' : '(ไม่อนุมัติ)') : '(อนุมัติแล้ว)') : `(Step ${req.current_step}/${req.total_steps})`}
                     </span>
                   </div>
                 </div>
@@ -314,7 +386,7 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
                 )}
                 
                 {/* Action Buttons for Completed (SuperAdmin Only) */}
-                {activeSubTab === 'completed' && currentUser?.role === 'SuperAdmin' && (
+                {activeSubTab === 'completed' && currentUser?.role === 'SuperAdmin' && req.status === 'Approved' && (
                   <div className="pt-3 border-t border-[var(--card-border)] flex justify-end space-x-3">
                     <button
                       onClick={() => setAdminEditRequest(req)}
@@ -329,6 +401,41 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
               </div>
             );
           })}
+          </div>
+
+          {/* Pagination UI for Completed Tab */}
+          {activeSubTab === 'completed' && totalCompletedItems > 0 && (
+            <div ref={paginationRef} className="flex flex-col items-center justify-center space-y-4 pt-4 pb-32 sm:pb-12">
+              <div className="text-[14px] font-medium text-slate-600 dark:text-slate-400">
+                แสดง {(safeCurrentPage - 1) * itemsPerPage + 1} ถึง {Math.min(safeCurrentPage * itemsPerPage, totalCompletedItems)} จากทั้งหมด {totalCompletedItems} รายการ
+              </div>
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={() => {
+                    setCurrentPageCompleted(p => Math.max(1, p - 1));
+                    setTimeout(() => paginationRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' }), 250);
+                  }}
+                  disabled={safeCurrentPage === 1}
+                  className="px-5 py-2.5 bg-white dark:bg-[var(--card-bg)] border border-slate-200 dark:border-[var(--card-border)] rounded-xl text-slate-500 dark:text-slate-400 font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm"
+                >
+                  ย้อนกลับ
+                </button>
+                <div className="font-extrabold text-[var(--text-main)] text-[15px]">
+                  หน้า {safeCurrentPage} / {totalCompletedPages}
+                </div>
+                <button
+                  onClick={() => {
+                    setCurrentPageCompleted(p => Math.min(totalCompletedPages, p + 1));
+                    setTimeout(() => paginationRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' }), 250);
+                  }}
+                  disabled={safeCurrentPage === totalCompletedPages}
+                  className="px-5 py-2.5 bg-white dark:bg-[var(--card-bg)] border border-slate-200 dark:border-[var(--card-border)] rounded-xl text-blue-600 dark:text-blue-400 font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm"
+                >
+                  ถัดไป
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <div className="glass-card-clean rounded-2xl p-12 text-center text-[var(--text-muted)] space-y-2">
@@ -340,7 +447,40 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
       {/* Modal Confirm Approval / Reject */}
       {selectedRequest && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in">
-          <div className="w-full max-w-lg glass-card-clean rounded-3xl p-6 border border-[var(--card-border)] shadow-2xl space-y-5">
+          <div className="w-full max-w-lg glass-card-clean rounded-3xl p-6 border border-[var(--card-border)] shadow-2xl space-y-5 relative overflow-hidden">
+            
+            {/* Success Popup Overlay */}
+            {showSuccessPopup && (
+              <div className="absolute inset-0 z-[100] bg-white/80 dark:bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
+                <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[2rem] shadow-2xl p-8 flex flex-col items-center text-center animate-in zoom-in-95 duration-300 border border-slate-200 dark:border-slate-800">
+                  <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-6 shadow-inner ${successType === 'approved' ? 'bg-emerald-100 dark:bg-emerald-500/20' : 'bg-rose-100 dark:bg-rose-500/20'}`}>
+                    {successType === 'approved' ? (
+                      <CheckCircle2 className="w-10 h-10 text-emerald-500" />
+                    ) : (
+                      <XCircle className="w-10 h-10 text-rose-500" />
+                    )}
+                  </div>
+                  <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 mb-2">
+                    {successType === 'approved' ? 'อนุมัติเรียบร้อย' : 'ปฏิเสธคำขอเรียบร้อย'}
+                  </h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
+                    {successType === 'approved' 
+                      ? 'คำขอลางานได้รับการอนุมัติและแจ้งเตือนผู้เกี่ยวข้องแล้ว' 
+                      : 'คำขอลางานถูกปฏิเสธและแจ้งเตือนผู้ขอลาแล้ว'}
+                  </p>
+                  <button
+                    onClick={handleSuccessOk}
+                    className={`w-full py-3.5 text-white font-extrabold rounded-2xl transition-all shadow-lg active:scale-95 ${
+                      successType === 'approved' 
+                        ? 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/30' 
+                        : 'bg-rose-500 hover:bg-rose-600 shadow-rose-500/30'
+                    }`}
+                  >
+                    ตกลง (OK)
+                  </button>
+                </div>
+              </div>
+            )}
             
             <div className="flex justify-between items-center pb-3 border-b border-[var(--card-border)]">
               <h3 className="text-base font-bold text-[var(--text-main)]">พิจารณาอนุมัติคำขอลางาน ({selectedRequest.id})</h3>
@@ -352,7 +492,7 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
                 <img 
                   src={users.find(u => u.id === selectedRequest.user_id)?.avatar_url || `https://ui-avatars.com/api/?name=${selectedRequest.user_id}&background=random`} 
                   alt="Requester" 
-                  className="w-16 h-16 rounded-full border border-[var(--card-border)] object-cover"
+                  className="w-24 h-24 rounded-full border border-[var(--card-border)] object-cover shadow-md"
                 />
                 <div>
                   <div className="font-bold text-sm text-[var(--text-main)]">
@@ -392,28 +532,28 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
             <div className="flex items-center justify-end space-x-3 pt-3 border-t border-[var(--card-border)]">
               <button
                 onClick={() => handleAction('Rejected')}
-                disabled={!comment.trim()}
+                disabled={!comment.trim() || isSubmittingAction}
                 className={`py-2.5 px-4 text-xs font-bold rounded-xl flex items-center space-x-1.5 transition-all ${
-                  !comment.trim() 
+                  !comment.trim() || isSubmittingAction
                   ? 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500 cursor-not-allowed' 
                   : 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/30'
                 }`}
               >
                 <XCircle className="w-4 h-4" />
-                <span>ปฏิเสธคำขอ</span>
+                <span>{isSubmittingAction ? 'กำลังดำเนินการ...' : 'ปฏิเสธคำขอ'}</span>
               </button>
 
               <button
                 onClick={() => handleAction('Approved')}
-                disabled={!comment.trim()}
+                disabled={!comment.trim() || isSubmittingAction}
                 className={`py-2.5 px-5 text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 transition-all shadow-lg ${
-                  !comment.trim()
+                  !comment.trim() || isSubmittingAction
                   ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 shadow-none cursor-not-allowed'
                   : 'bg-gradient-to-r from-blue-500 to-sky-600 hover:from-blue-400 hover:to-sky-500 shadow-blue-500/25'
                 }`}
               >
                 <CheckCircle2 className="w-4 h-4" />
-                <span>ยืนยันอนุมัติ</span>
+                <span>{isSubmittingAction ? 'กำลังดำเนินการ...' : 'ยืนยันอนุมัติ'}</span>
               </button>
             </div>
 
@@ -432,7 +572,31 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
         users={users}
         agencies={agencies}
         departments={departments}
+        leaveTypes={leaveTypes}
       />
+
+      {/* Admin Success Popup Overlay */}
+      {showAdminSuccessPopup && (
+        <div className="fixed inset-0 z-[120] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-[var(--card-bg)] w-full max-w-sm rounded-[2rem] shadow-2xl p-8 flex flex-col items-center text-center animate-in zoom-in-95 duration-300 border border-slate-200 dark:border-[var(--card-border)]">
+            <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-500/20 rounded-full flex items-center justify-center mb-6 shadow-inner">
+              <CheckCircle2 className="w-10 h-10 text-emerald-500" />
+            </div>
+            <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 mb-2">
+              ดำเนินการสำเร็จ
+            </h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
+              {adminSuccessMsg}
+            </p>
+            <button
+              onClick={() => setShowAdminSuccessPopup(false)}
+              className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold rounded-2xl transition-all shadow-lg shadow-emerald-500/30 active:scale-95"
+            >
+              ตกลง (OK)
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

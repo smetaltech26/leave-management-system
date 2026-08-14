@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { X, CheckCircle2, Clock, XCircle, FileText, User, Calendar, Activity } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
-export default function LeaveDetailsModal({ isOpen, onClose, request, user, allPolicies = [], users, agencies, departments }) {
+export default function LeaveDetailsModal({ isOpen, onClose, request, user, allPolicies = [], users, agencies, departments, leaveTypes = [] }) {
   const [approvalSteps, setApprovalSteps] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -50,7 +50,11 @@ export default function LeaveDetailsModal({ isOpen, onClose, request, user, allP
     'Military': { name: 'ลาทหาร', color: 'text-sky-500', bg: 'bg-sky-500' },
   };
 
-  const typeInfo = leaveTypeMap[request.leave_type] || { name: request.leave_type, color: 'text-slate-500', bg: 'bg-slate-500' };
+  // Build dynamic type info
+  const dbType = leaveTypes.find(t => t.name === request.leave_type);
+  const typeInfo = dbType 
+    ? { name: dbType.name, color: dbType.color, bg: dbType.bg }
+    : leaveTypeMap[request.leave_type] || { name: request.leave_type, color: 'text-slate-500', bg: 'bg-slate-500' };
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-start md:items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in duration-200" onClick={onClose}>
@@ -85,7 +89,7 @@ export default function LeaveDetailsModal({ isOpen, onClose, request, user, allP
                 <img 
                   src={user?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullname || request.user_id)}&background=random`}
                   alt="Profile" 
-                  className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-full border-2 border-slate-100 dark:border-slate-800 shadow-sm mb-3 sm:mb-4"
+                  className="w-24 h-24 sm:w-28 sm:h-28 shrink-0 rounded-full border-2 border-slate-100 dark:border-slate-800 shadow-sm mb-3 sm:mb-4"
                 />
                 <h3 className="text-sm sm:text-base font-extrabold text-[var(--text-main)] truncate max-w-full">{user?.fullname || request.user_id}</h3>
                 <p className="text-[10px] sm:text-xs text-[var(--text-muted)] truncate max-w-full">{agencies?.find(a => a.id === user?.agency_id)?.name || 'ไม่ระบุสังกัด'} | {departments?.find(d => d.id === user?.department_id)?.name || 'ไม่ระบุฝ่าย'}</p>
@@ -98,7 +102,7 @@ export default function LeaveDetailsModal({ isOpen, onClose, request, user, allP
                     </span>
                   ) : request.status === 'Rejected' ? (
                     <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-rose-50 text-rose-600 border border-rose-100 flex items-center shadow-sm w-fit">
-                      <XCircle className="w-3.5 h-3.5 mr-1" /> ไม่อนุมัติ
+                      <XCircle className="w-3.5 h-3.5 mr-1" /> {request.reject_reason?.startsWith('ยกเลิกโดย') ? 'ยกเลิก' : 'ไม่อนุมัติ'}
                     </span>
                   ) : (
                     <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-600 border border-amber-100 flex items-center shadow-sm w-fit">

@@ -13,6 +13,7 @@ import ReportPage from './components/ReportPage';
 import PermissionsPage from './components/admin/PermissionsPage';
 
 import * as api from './services/supabaseApi';
+import { useModal } from './contexts/ModalContext';
 
 export default function App() {
   const [users, setUsers] = useState([]);
@@ -22,7 +23,10 @@ export default function App() {
   const [agencies, setAgencies] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [permissions, setPermissions] = useState([]);
+  const [leaveTypes, setLeaveTypes] = useState([]);
   const [loadingData, setLoadingData] = useState(true);
+
+  const { showConfirm, showAlert } = useModal();
 
   const [currentUser, setCurrentUser] = useState(null); 
   const [activeTab, setActiveTab] = useState('home');
@@ -58,14 +62,15 @@ export default function App() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [u, p, r, h, a, d, perms] = await Promise.all([
+        const [u, p, r, h, a, d, perms, lt] = await Promise.all([
           api.fetchAllUsers(),
           api.fetchAllUserPolicies(),
           api.fetchAllRequests(),
           api.fetchAllHolidays(),
           api.fetchAllAgencies(),
           api.fetchAllDepartments(),
-          api.fetchAllPermissions()
+          api.fetchAllPermissions(),
+          api.fetchAllLeaveTypes()
         ]);
         setUsers(u);
         setUserPolicies(p);
@@ -74,6 +79,7 @@ export default function App() {
         setAgencies(a);
         setDepartments(d);
         setPermissions(perms);
+        setLeaveTypes(lt);
       } catch (err) {
         console.error("Failed to load initial data:", err);
       } finally {
@@ -158,8 +164,8 @@ export default function App() {
         });
       });
     } catch (err) {
-      console.error("Error adding request:", err);
-      alert("ไม่สามารถบันทึกคำขอลาได้: " + err.message);
+      console.error("Submit Error:", err);
+      await showAlert("ไม่สามารถบันทึกคำขอลาได้: " + err.message);
       throw err;
     }
   };
@@ -191,8 +197,8 @@ export default function App() {
         return prev.map(r => r.id === updatedReq.id ? updatedReq : r);
       });
     } catch (err) {
-      console.error("Error editing request:", err);
-      alert("ไม่สามารถแก้ไขคำขอลาได้: " + err.message);
+      console.error("Edit Error:", err);
+      await showAlert("ไม่สามารถแก้ไขคำขอลาได้: " + err.message);
       throw err;
     }
   };
@@ -216,8 +222,8 @@ export default function App() {
       }
       setRequests(prev => prev.filter(r => r.id !== reqId));
     } catch (err) {
-      console.error("Error deleting request:", err);
-      alert("ไม่สามารถลบคำขอลาได้: " + err.message);
+      console.error("Delete Error:", err);
+      await showAlert("ไม่สามารถลบคำขอลาได้: " + err.message);
     }
   };
 
@@ -250,14 +256,26 @@ export default function App() {
         });
       });
     } catch (err) {
-      console.error("Error approving step:", err);
-      alert("ไม่สามารถอนุมัติได้: " + err.message);
+      console.error("Approve Error:", err);
+      await showAlert("ไม่สามารถอนุมัติได้: " + err.message);
     }
   };
 
   // ดำเนินการปฏิเสธ Step
   const handleRejectStep = async (requestId, stepNumber, comment) => {
     try {
+      const targetReq = requests.find(r => r.id === requestId);
+      if (targetReq && (targetReq.status === 'Pending' || targetReq.status === 'Approved')) {
+        await api.updateUserPolicyUsedDays(targetReq.user_id, targetReq.leave_type, -Number(targetReq.leave_duration));
+        setUserPolicies(prevPol => prevPol.map(pol => {
+          if (pol.user_id === targetReq.user_id && pol.leave_type === targetReq.leave_type) {
+            const newUsed = Number(pol.used_days) - Number(targetReq.leave_duration);
+            return { ...pol, used_days: newUsed, remaining_days: pol.max_days - newUsed };
+          }
+          return pol;
+        }));
+      }
+
       await api.rejectStep(requestId, stepNumber, comment);
       
       setRequests(prev => {
@@ -280,8 +298,22 @@ export default function App() {
         });
       });
     } catch (err) {
-      console.error("Error rejecting step:", err);
-      alert("ไม่สามารถปฏิเสธได้: " + err.message);
+      console.error("Reject Error:", err);
+      await showAlert("ไม่สามารถปฏิเสธได้: " + err.message);
+    }
+  };
+
+  const refreshRequests = async () => {
+    try {
+      const [updatedRequests, updatedPolicies] = await Promise.all([
+        api.fetchAllRequests(),
+        api.fetchAllUserPolicies()
+      ]);
+      setRequests(updatedRequests);
+      setUserPolicies(updatedPolicies);
+    } catch (err) {
+      console.error("Refresh Error:", err);
+      await showAlert("ไม่สามารถรีโหลดข้อมูลได้: " + err.message);
     }
   };
 
@@ -296,7 +328,8 @@ export default function App() {
           leave_type: updates.leave_type
         });
 
-        if (oldReq.status === 'Approved') {
+        // ถ้าเป็นการอัปเดตจำนวนวันลา และคำขอนั้น Approved หรือ Pending อยู่ ต้องอัปเดตโควตาด้วย
+        if ((oldReq.status === 'Approved' || oldReq.status === 'Pending') && diffDuration !== 0) {
           if (oldReq.leave_type !== updates.leave_type) {
              await api.updateUserPolicyUsedDays(oldReq.user_id, oldReq.leave_type, -Number(oldReq.leave_duration));
              await api.updateUserPolicyUsedDays(oldReq.user_id, updates.leave_type, Number(updates.leave_duration));
@@ -327,22 +360,13 @@ export default function App() {
         }
         
         setRequests(prev => prev.map(r => r.id === oldReq.id ? { ...r, ...updates } : r));
-        alert('บันทึกการแก้ไขเรียบร้อยแล้ว');
+        return 'บันทึกการแก้ไขเรียบร้อยแล้ว';
 
       } else if (actionType === 'REVERT_PENDING') {
         await api.adminUpdateLeaveRequest(oldReq.id, { status: 'Pending', current_step: 1, reject_reason: null });
         await api.adminResetApprovalSteps(oldReq.id);
         
-        if (oldReq.status === 'Approved') {
-           await api.updateUserPolicyUsedDays(oldReq.user_id, oldReq.leave_type, -Number(oldReq.leave_duration));
-           setUserPolicies(prevPol => prevPol.map(pol => {
-              if (pol.user_id === oldReq.user_id && pol.leave_type === oldReq.leave_type) {
-                const newUsed = Number(pol.used_days) - Number(oldReq.leave_duration);
-                return { ...pol, used_days: newUsed, remaining_days: pol.max_days - newUsed };
-              }
-              return pol;
-           }));
-        }
+        // ไม่ต้องคืนโควตา เพราะสถานะ Pending ยังถือว่าใช้โควตาอยู่
         
         setRequests(prev => prev.map(r => {
           if (r.id === oldReq.id) {
@@ -351,12 +375,13 @@ export default function App() {
           }
           return r;
         }));
-        alert('ดึงกลับเป็นสถานะรออนุมัติเรียบร้อยแล้ว');
+        return 'ดึงกลับเป็นสถานะรออนุมัติเรียบร้อยแล้ว';
 
       } else if (actionType === 'CANCEL_LEAVE') {
-        await api.adminUpdateLeaveRequest(oldReq.id, { status: 'Rejected', reject_reason: 'ยกเลิกโดย SuperAdmin' });
+        const cancelReason = `ยกเลิกโดย ${currentUser?.fullname || 'ผู้ดูแลระบบ'}`;
+        await api.adminUpdateLeaveRequest(oldReq.id, { status: 'Rejected', reject_reason: cancelReason });
         
-        if (oldReq.status === 'Approved') {
+        if (oldReq.status === 'Approved' || oldReq.status === 'Pending') {
            await api.updateUserPolicyUsedDays(oldReq.user_id, oldReq.leave_type, -Number(oldReq.leave_duration));
            setUserPolicies(prevPol => prevPol.map(pol => {
               if (pol.user_id === oldReq.user_id && pol.leave_type === oldReq.leave_type) {
@@ -367,13 +392,12 @@ export default function App() {
            }));
         }
         
-        setRequests(prev => prev.map(r => r.id === oldReq.id ? { ...r, status: 'Rejected', reject_reason: 'ยกเลิกโดย SuperAdmin' } : r));
-        alert('ยกเลิกการลาและเปลี่ยนเป็นไม่อนุมัติเรียบร้อยแล้ว');
+        setRequests(prev => prev.map(r => r.id === oldReq.id ? { ...r, status: 'Rejected', reject_reason: cancelReason } : r));
+        return 'ยกเลิกการลาและเปลี่ยนสถานะเป็นยกเลิกเรียบร้อยแล้ว';
       }
 
     } catch (err) {
       console.error("Error admin editing request:", err);
-      alert("เกิดข้อผิดพลาดในการดำเนินการ: " + err.message);
       throw err;
     }
   };
@@ -387,8 +411,8 @@ export default function App() {
         setCurrentUser(updatedUser);
       }
     } catch (err) {
-      console.error("Error updating user:", err);
-      alert("ไม่สามารถบันทึกข้อมูลผู้ใช้ได้: " + err.message);
+      console.error("Save User Error:", err);
+      await showAlert("ไม่สามารถบันทึกข้อมูลผู้ใช้ได้: " + err.message);
     }
   };
 
@@ -436,6 +460,8 @@ export default function App() {
               agencies={agencies}
               departments={departments}
               users={users}
+              onRefresh={refreshRequests}
+              leaveTypes={leaveTypes}
             />
           )}
 
@@ -450,6 +476,8 @@ export default function App() {
               onRejectStep={handleRejectStep}
               onAdminEditRequest={handleAdminEditRequest}
               holidays={holidays}
+              onRefresh={refreshRequests}
+              leaveTypes={leaveTypes}
             />
           )}
 
@@ -461,19 +489,20 @@ export default function App() {
               users={users}
               agencies={agencies}
               departments={departments}
-              userPolicies={userPolicies}
+              leaveTypes={leaveTypes}
             />
           )}
 
           {activeTab === 'users' && (
             <UsersPage
               users={users}
+              currentUser={currentUser}
               setUsers={setUsers}
-              pendingCount={pendingCount}
-              userPolicies={userPolicies}
-              requests={requests}
               agencies={agencies}
               departments={departments}
+              userPolicies={userPolicies}
+              requests={requests}
+              leaveTypes={leaveTypes}
             />
           )}
 
@@ -488,6 +517,8 @@ export default function App() {
               setAgencies={setAgencies}
               departments={departments}
               setDepartments={setDepartments}
+              leaveTypes={leaveTypes}
+              setLeaveTypes={setLeaveTypes}
             />
           )}
 
@@ -497,6 +528,7 @@ export default function App() {
               users={users}
               agencies={agencies}
               departments={departments}
+              leaveTypes={leaveTypes}
             />
           )}
 
@@ -527,6 +559,7 @@ export default function App() {
         onEditRequest={handleEditRequest}
         agencies={agencies}
         departments={departments}
+        leaveTypes={leaveTypes}
       />
 
     </div>

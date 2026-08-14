@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Calendar as CalendarIcon, Plus, Trash2, Edit2, X, Save } from 'lucide-react';
+import { Calendar as CalendarIcon, Plus, Trash2, Edit2, X, Save, Search } from 'lucide-react';
+import { useModal } from '../../contexts/ModalContext';
 
 export default function HolidayManagement({ holidays, setHolidays }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingHoliday, setEditingHoliday] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const { showConfirm } = useModal();
 
   const [formData, setFormData] = useState({
     id: '',
@@ -51,8 +54,8 @@ export default function HolidayManagement({ holidays, setHolidays }) {
     handleCloseModal();
   };
 
-  const handleDeleteHoliday = (id) => {
-    if (window.confirm('ต้องการลบวันหยุดนี้ใช่หรือไม่?')) {
+  const handleDeleteHoliday = async (id) => {
+    if (await showConfirm('ต้องการลบวันหยุดนี้ใช่หรือไม่?')) {
       setHolidays(prev => prev.filter(h => h.id !== id));
     }
   };
@@ -77,12 +80,13 @@ export default function HolidayManagement({ holidays, setHolidays }) {
       </div>
 
       <div className="bg-white dark:bg-[var(--card-bg)] rounded-2xl shadow-sm border border-slate-200 dark:border-[var(--card-border)] overflow-hidden">
-        <table className="w-full text-left border-collapse">
-          <thead>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
             <tr className="bg-slate-50 dark:bg-slate-800/50 text-xs uppercase tracking-wider text-[var(--text-muted)] border-b border-slate-200 dark:border-[var(--card-border)]">
-              <th className="p-4 font-bold">วันที่</th>
+              <th className="p-4 font-bold whitespace-nowrap">วันที่</th>
               <th className="p-4 font-bold">ชื่อวันหยุด / เทศกาล</th>
-              <th className="p-4 font-bold text-center w-32">จัดการ</th>
+              <th className="p-4 font-bold text-center w-32 whitespace-nowrap">จัดการ</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-[var(--card-border)] text-sm">
@@ -93,9 +97,9 @@ export default function HolidayManagement({ holidays, setHolidays }) {
             ) : (
               holidays.map(holiday => (
                 <tr key={holiday.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
-                  <td className="p-4 font-medium text-rose-500">{formatDate(holiday.date)}</td>
+                  <td className="p-4 font-medium text-rose-500 whitespace-nowrap">{formatDate(holiday.date)}</td>
                   <td className="p-4 text-[var(--text-main)]">{holiday.title}</td>
-                  <td className="p-4">
+                  <td className="p-4 whitespace-nowrap">
                     <div className="flex justify-center gap-2">
                       <button onClick={() => handleOpenModal(holiday)} className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-lg transition-colors">
                         <Edit2 className="w-4 h-4" />
@@ -108,8 +112,9 @@ export default function HolidayManagement({ holidays, setHolidays }) {
                 </tr>
               ))
             )}
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {isModalOpen && createPortal(

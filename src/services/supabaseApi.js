@@ -22,6 +22,12 @@ export const fetchAllDepartments = async () => {
   return data || [];
 };
 
+export const fetchAllLeaveTypes = async () => {
+  const { data, error } = await supabase.from('leave_types').select('*').order('created_at', { ascending: true });
+  if (error) throw error;
+  return data || [];
+};
+
 export const fetchAllUserPolicies = async () => {
   const { data, error } = await supabase.from('user_policies').select('*');
   if (error) throw error;
@@ -279,5 +285,34 @@ export const adminResetApprovalSteps = async (requestId) => {
     .update({ status: 'Pending', comment: '', action_date: null })
     .eq('request_id', requestId);
     
+  if (error) throw error;
+};
+
+// ==========================================
+// 9. Leave Types Management
+// ==========================================
+export const createLeaveType = async (payload) => {
+  const { data, error } = await supabase
+    .from('leave_types')
+    .insert([payload])
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+};
+
+export const updateLeaveType = async (id, payload) => {
+  const { error } = await supabase
+    .from('leave_types')
+    .update(payload)
+    .eq('id', id);
+  if (error) throw error;
+};
+
+export const deleteLeaveType = async (id) => {
+  const { error } = await supabase
+    .from('leave_types')
+    .delete()
+    .eq('id', id);
   if (error) throw error;
 };

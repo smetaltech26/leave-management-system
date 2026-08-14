@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Lock, User, AlertCircle, ChevronRight, Eye, EyeOff, Moon, Sun } from 'lucide-react';
+import { Lock, User, AlertCircle, Eye, EyeOff, Moon, Sun, Info, X } from 'lucide-react';
 import logoUrl from '../assets/smt-logo.jpg';
 
 export default function LoginPage({ onLogin, users, theme = 'light', toggleTheme }) {
@@ -8,6 +8,10 @@ export default function LoginPage({ onLogin, users, theme = 'light', toggleTheme
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  
+  // State for HR Popup
+  const [showHRPopup, setShowHRPopup] = useState(false);
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -43,10 +47,8 @@ export default function LoginPage({ onLogin, users, theme = 'light', toggleTheme
           });
         };
         
-        // หน้า Login ยังอยู่และยังเลื่อนได้
         resetLoginViewport();
         
-        // รอให้ WebKit วาดตำแหน่งบนสุดจริงก่อนเปลี่ยน DOM
         requestAnimationFrame(() => {
           resetLoginViewport();
           requestAnimationFrame(() => {
@@ -59,49 +61,49 @@ export default function LoginPage({ onLogin, users, theme = 'light', toggleTheme
       
       setError('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
       setIsLoading(false);
-    }, 800); // จำลอง delay
+    }, 800);
   };
 
   return (
-    <div className="min-h-[100dvh] flex flex-col justify-start pt-12 md:pt-0 md:justify-center items-center p-4 bg-slate-50 dark:bg-slate-950">
-      {/* Overlay */}
-      <div className={`absolute inset-0 backdrop-blur-md transition-colors duration-500 ${theme === 'dark' ? 'bg-slate-950/80' : 'bg-blue-50/70'}`}></div>
+    <div className="min-h-[100svh] flex flex-col items-center justify-center p-4 bg-slate-50 dark:bg-slate-950">
+      {/* Background layer */}
+      <div className={`absolute inset-0 transition-colors duration-500 ${theme === 'dark' ? 'bg-slate-950' : 'bg-slate-50'}`}></div>
 
-      <div className="w-full max-w-md relative z-10 p-8 rounded-3xl shadow-2xl border border-white/80 dark:border-slate-800/50 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl transform transition-all hover:scale-[1.01]">
+      <div className="w-full max-w-md relative z-10 p-8 rounded-3xl shadow-xl bg-white dark:bg-slate-900 transition-all">
         
-        {/* Theme Toggle Button & New Version */}
-        <div className="absolute top-4 right-4 flex flex-col items-end space-y-2">
-          <button 
-            onClick={toggleTheme} 
-            className="p-2 rounded-full bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors shadow-sm"
-            title={theme === 'dark' ? "เปลี่ยนเป็นโหมดสว่าง" : "เปลี่ยนเป็นโหมดมืด"}
-          >
-            {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-          </button>
-          <span className="text-blue-600 dark:text-blue-400 font-bold text-[10px] sm:text-xs animate-pulse bg-blue-100 dark:bg-blue-900/30 px-1.5 py-0.5 rounded-md shadow-sm border border-blue-200 dark:border-blue-800 pointer-events-none">
+        {/* Theme Toggle Button & New Version top right inside card */}
+        <div className="absolute top-4 right-4 flex items-center space-x-2">
+          <span className="text-blue-600 dark:text-blue-400 font-bold text-[10px] animate-pulse bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded-md shadow-sm border border-blue-100 dark:border-blue-800 pointer-events-none">
             New Version ✨
           </span>
+          <button 
+            onClick={toggleTheme} 
+            className="p-1.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors"
+            title={theme === 'dark' ? "เปลี่ยนเป็นโหมดสว่าง" : "เปลี่ยนเป็นโหมดมืด"}
+          >
+            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
         </div>
 
-        {/* Logo Section */}
-        <div className="flex flex-col items-center justify-center mb-10 relative">
-          <div className="w-24 h-24 bg-white rounded-2xl shadow-xl flex items-center justify-center p-2 mb-6 border border-slate-100 overflow-hidden">
+        {/* Logo and Title Section */}
+        <div className="flex items-center justify-center mt-4 mb-6 space-x-3">
+          <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center p-1 border border-slate-100 overflow-hidden shrink-0">
             <img src={logoUrl} alt="SMT Logo" className="w-full h-full object-contain" />
           </div>
-          <h1 className="text-3xl font-black text-slate-800 dark:text-slate-100 tracking-tight mb-2 text-center drop-shadow-sm">
-            Leave Management <span className="text-blue-600 dark:text-blue-400">System</span>
+          <h1 className="text-lg font-bold text-slate-800 dark:text-slate-100">
+            Leave Management System (LMS)
           </h1>
-          <p className="text-sm font-medium text-slate-600 dark:text-slate-300 text-center bg-white/80 dark:bg-slate-800/80 px-4 py-1.5 rounded-full shadow-sm border border-slate-100 dark:border-slate-700">
-            ระบบจัดการคำขอลางานออนไลน์
-          </p>
         </div>
-
+        
+        <h2 className="text-xl font-bold text-center text-slate-800 dark:text-slate-100 mb-6">
+          เข้าสู่ระบบ
+        </h2>
 
         {/* Login Form */}
-        <form onSubmit={handleLogin} className="space-y-6">
+        <form onSubmit={handleLogin} className="space-y-5">
           
           {error && (
-            <div className="bg-rose-50 border border-rose-200 text-rose-600 px-4 py-3 rounded-2xl flex items-center space-x-3 animate-shake shadow-sm">
+            <div className="bg-rose-50 border border-rose-200 text-rose-600 px-4 py-3 rounded-xl flex items-center space-x-3 shadow-sm">
               <AlertCircle className="w-5 h-5 text-rose-500 flex-shrink-0" />
               <p className="text-sm font-medium">{error}</p>
             </div>
@@ -110,76 +112,145 @@ export default function LoginPage({ onLogin, users, theme = 'light', toggleTheme
           <div className="space-y-4">
             {/* Username Input */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2 ml-1">Username (อีเมล)</label>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <User className="h-5 w-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
-                </div>
+              <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1.5">อีเมลหรือชื่อผู้ใช้</label>
+              <div className="relative">
                 <input
                   type="text"
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="block w-full pl-11 pr-4 py-3.5 bg-white/80 dark:bg-slate-800/80 border border-white/60 dark:border-slate-700/50 rounded-2xl text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-slate-800 transition-all shadow-inner"
-                  placeholder="กรอก Username หรือ UID"
+                  className="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm"
+                  placeholder="ป้อนอีเมลหรือชื่อผู้ใช้ของคุณ"
                 />
               </div>
             </div>
 
             {/* Password Input */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2 ml-1">Password (รหัสผ่าน)</label>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
-                </div>
+              <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1.5">รหัสผ่าน</label>
+              <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-11 pr-12 py-3.5 bg-white/80 dark:bg-slate-800/80 border border-white/60 dark:border-slate-700/50 rounded-2xl text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-slate-800 transition-all shadow-inner"
-                  placeholder="••••••••"
+                  className="block w-full pl-4 pr-12 py-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm"
+                  placeholder="ป้อนรหัสผ่านของคุณ"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-blue-500 focus:outline-none transition-colors"
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
                 >
-                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
             </div>
+          </div>
+          
+          {/* Remember Me and Forgot Password */}
+          <div className="flex items-center justify-between text-sm">
+            <label className="flex items-center cursor-pointer">
+              <div className="relative">
+                <input 
+                  type="checkbox" 
+                  className="sr-only" 
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                />
+                <div className={`block w-9 h-5 rounded-full transition-colors ${rememberMe ? 'bg-blue-500' : 'bg-slate-300 dark:bg-slate-600'}`}></div>
+                <div className={`absolute left-0.5 top-0.5 bg-white w-4 h-4 rounded-full transition-transform transform ${rememberMe ? 'translate-x-4' : ''}`}></div>
+              </div>
+              <span className="ml-2 text-slate-500 dark:text-slate-400 font-medium text-xs sm:text-sm">จดจำรหัสผ่าน</span>
+            </label>
+            <button 
+              type="button" 
+              onClick={() => setShowHRPopup(true)}
+              className="text-blue-500 hover:text-blue-600 font-medium text-xs sm:text-sm"
+            >
+              ลืมรหัสผ่าน?
+            </button>
           </div>
 
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full flex items-center justify-center py-4 px-4 bg-gradient-to-r from-blue-600 to-sky-500 hover:from-blue-500 hover:to-sky-400 text-white font-bold rounded-2xl shadow-lg shadow-blue-500/30 transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed group"
+            className="w-full py-3.5 px-4 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-xl shadow-sm transition-all disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {isLoading ? (
-              <span className="flex items-center space-x-2">
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <span className="flex items-center justify-center space-x-2">
+                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                กำลังเข้าสู่ระบบ...
+                <span>กำลังเข้าสู่ระบบ...</span>
               </span>
             ) : (
-              <span className="flex items-center">
-                เข้าสู่ระบบ
-                <ChevronRight className="w-5 h-5 ml-1 group-hover:translate-x-1 transition-transform" />
-              </span>
+              "เข้าสู่ระบบ"
             )}
           </button>
         </form>
 
-        <div className="mt-8 text-center">
-          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
-            พบปัญหาการใช้งาน? ติดต่อ <span className="text-blue-600 dark:text-blue-400 font-bold">ฝ่ายบุคคล</span>
+        <div className="mt-6 flex flex-col items-center justify-center space-y-4">
+          <div className="text-center text-xs sm:text-sm">
+            <span className="text-slate-500 dark:text-slate-400">ยังไม่มีบัญชีใช่ไหม? </span>
+            <button 
+              type="button" 
+              onClick={() => setShowHRPopup(true)}
+              className="text-blue-500 hover:text-blue-600 font-medium"
+            >
+              สมัครสมาชิก
+            </button>
+          </div>
+          <p className="text-[13px] font-bold text-[#2ab9d0]">
+            Create by S Metal Tech Co., Ltd.
           </p>
         </div>
       </div>
+      
+      {/* HR Contact Popup Modal */}
+      {showHRPopup && (
+        <div className="fixed inset-0 z-50 flex items-start md:items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-2xl flex flex-col overflow-hidden max-h-[calc(100svh-2rem)] md:max-h-[85dvh] min-h-0 shadow-2xl">
+            
+            <div className="p-4 border-b border-slate-100 dark:border-slate-800 shrink-0 flex items-center justify-between">
+              <div className="flex items-center space-x-2 text-blue-600 dark:text-blue-400">
+                <Info className="w-5 h-5" />
+                <h3 className="font-bold text-slate-800 dark:text-slate-100">แจ้งเตือน</h3>
+              </div>
+              <button 
+                onClick={() => setShowHRPopup(false)}
+                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 flex-1 min-h-0 overflow-y-auto">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <User className="w-8 h-8 text-blue-500 dark:text-blue-400" />
+                </div>
+                <h4 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2">ติดต่อฝ่ายบุคคล</h4>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  หากต้องการสมัครสมาชิกใหม่ หรือลืมรหัสผ่าน กรุณาติดต่อฝ่ายบุคคล (HR) เพื่อดำเนินการค่ะ
+                </p>
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-slate-100 dark:border-slate-800 shrink-0">
+              <button 
+                onClick={() => setShowHRPopup(false)}
+                className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 font-medium rounded-xl transition-colors"
+              >
+                ปิดหน้าต่าง
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

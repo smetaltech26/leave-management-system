@@ -17,20 +17,30 @@ export const sendLinePushToUser = async (lineUserId, messageText, channelAccessT
   }
 
   try {
+    const proxyUrl = import.meta.env.VITE_GAS_LINE_URL;
     const apiUrl = import.meta.env.DEV 
       ? '/line-api/v2/bot/message/push' 
-      : 'https://api.line.me/v2/bot/message/push';
+      : (proxyUrl || 'https://api.line.me/v2/bot/message/push');
+
+    const headers = import.meta.env.DEV 
+      ? {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      : {
+          // ส่งเป็น text/plain เพื่อเลี่ยงการเกิด CORS Preflight (OPTIONS) ไปยัง GAS
+          'Content-Type': 'text/plain', 
+        };
+
+    // ถ้ายิงไปที่ GAS ให้แนบ Token ไปใน Payload ไม่ใช่ Headers เพราะ GAS อาจจะไม่ส่งต่อ Authorization Header ให้
+    const payload = import.meta.env.DEV
+      ? { to: lineUserId, messages: [{ type: 'text', text: messageText }] }
+      : { to: lineUserId, messages: [{ type: 'text', text: messageText }], channelToken: token };
 
     const response = await fetch(apiUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        to: lineUserId,
-        messages: [{ type: 'text', text: messageText }]
-      })
+      headers: headers,
+      body: JSON.stringify(payload)
     });
 
     if (response.ok) {

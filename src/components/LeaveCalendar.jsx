@@ -109,19 +109,22 @@ export default function LeaveCalendar({ requests, holidays, users, departments, 
               groupedByDept[deptName].push({ ...r, requester });
             });
 
-            const isWeekend = (index % 7 === 0) || (index % 7 === 6);
+            const isWeekend = (index % 7 === 0);
 
             let borderClass = "border-slate-200 dark:border-[var(--card-border)] bg-white dark:bg-[var(--card-bg)]";
-            if (holiday || isWeekend) {
-              borderClass = "border-rose-400 border-[1.5px] bg-white dark:bg-[var(--card-bg)]";
-            } else if (isToday) {
-              borderClass = "border-emerald-500 border-[1.5px] bg-white dark:bg-[var(--card-bg)]";
+            let dayTextClass = "text-[var(--text-main)]";
+            if (isToday) {
+              borderClass = "border-emerald-500 border-2 bg-emerald-50/50 dark:bg-emerald-900/10 shadow-sm shadow-emerald-500/20";
+              dayTextClass = "text-emerald-600 dark:text-emerald-400";
+            } else if (holiday || isWeekend) {
+              borderClass = "border-rose-500 border-2 bg-rose-50/50 dark:bg-rose-900/10 shadow-sm shadow-rose-500/10";
+              dayTextClass = "text-rose-600 dark:text-rose-400";
             }
 
             return (
               <div key={index} className={`min-h-[6rem] md:min-h-0 md:h-32 rounded-xl p-3 md:p-2 transition-all flex flex-col relative overflow-hidden ${borderClass} border`}>
                 <div className="flex items-start justify-between mb-2">
-                  <span className={`text-lg md:text-base font-extrabold text-[var(--text-main)]`}>
+                  <span className={`text-lg md:text-base font-extrabold ${dayTextClass}`}>
                     {dayNum}
                   </span>
                   
@@ -190,7 +193,7 @@ export default function LeaveCalendar({ requests, holidays, users, departments, 
                           <img 
                             src={req.requester?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(req.requester?.fullname || 'U')}&background=0D8ABC&color=fff`} 
                             alt={req.requester?.fullname}
-                            className="w-12 h-12 rounded-full object-cover ring-2 ring-blue-500/20"
+                            className="w-20 h-20 rounded-full object-cover ring-2 ring-blue-500/20"
                           />
                         </div>
                         <div>
@@ -257,6 +260,7 @@ export default function LeaveCalendar({ requests, holidays, users, departments, 
           users={users}
           agencies={agencies}
           departments={departments}
+          leaveTypes={leaveTypes}
         />
       )}
     </div>

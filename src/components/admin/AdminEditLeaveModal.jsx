@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, AlertTriangle, RefreshCcw, Ban } from 'lucide-react';
 
-export default function AdminEditLeaveModal({ isOpen, onClose, request, holidays = [], onAdminAction, isSubmitting, users = [], agencies = [], departments = [] }) {
+export default function AdminEditLeaveModal({ isOpen, onClose, request, holidays = [], onAdminAction, isSubmitting, users = [], agencies = [], departments = [], leaveTypes = [] }) {
   if (!isOpen || !request) return null;
 
   const [dateStart, setDateStart] = useState(request.date_start);
@@ -118,11 +118,19 @@ export default function AdminEditLeaveModal({ isOpen, onClose, request, holidays
             <div>
               <label className="block text-sm font-semibold text-[var(--text-main)] mb-1.5">ประเภทการลา</label>
               <select value={leaveType} onChange={e => setLeaveType(e.target.value)} className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-[var(--text-main)] focus:ring-2 focus:ring-blue-500 outline-none">
-                <option value="ลาพักร้อน">ลาพักร้อน</option>
-                <option value="ลากิจไม่ได้รับค่าจ้าง">ลากิจไม่ได้รับค่าจ้าง</option>
-                <option value="ลากิจได้รับค่าจ้าง">ลากิจได้รับค่าจ้าง</option>
-                <option value="ลาป่วย">ลาป่วย</option>
-                <option value="ลาอื่นๆ">ลาอื่นๆ</option>
+                {leaveTypes.length > 0 ? (
+                  leaveTypes.map(t => (
+                    <option key={t.id} value={t.name}>{t.name}</option>
+                  ))
+                ) : (
+                  <>
+                    <option value="ลาพักร้อน">ลาพักร้อน</option>
+                    <option value="ลากิจไม่ได้รับค่าจ้าง">ลากิจไม่ได้รับค่าจ้าง</option>
+                    <option value="ลากิจได้รับค่าจ้าง">ลากิจได้รับค่าจ้าง</option>
+                    <option value="ลาป่วย">ลาป่วย</option>
+                    <option value="ลาอื่นๆ">ลาอื่นๆ</option>
+                  </>
+                )}
               </select>
             </div>
 
@@ -186,7 +194,7 @@ export default function AdminEditLeaveModal({ isOpen, onClose, request, holidays
                 <p className="text-sm text-[var(--text-muted)]">
                   {confirmAction === 'REVERT_PENDING' 
                     ? 'สถานะการอนุมัติทั้งหมดจะถูกรีเซ็ต โควตาจะถูกคำนวณใหม่ และผู้เกี่ยวข้องจะต้องเข้ามาอนุมัติใหม่อีกครั้ง'
-                    : 'คำขอนี้จะถูกเปลี่ยนเป็น "ไม่อนุมัติ" และระบบจะทำการคืนโควตาวันลาให้พนักงานทันที'}
+                    : 'คำขอนี้จะถูกเปลี่ยนเป็น "ยกเลิก" และระบบจะทำการคืนโควตาวันลาให้พนักงานทันที'}
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-3 pt-2">

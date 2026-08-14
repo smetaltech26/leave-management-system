@@ -67,7 +67,7 @@ export default function Navbar({ currentUser, setCurrentUser, users, activeTab, 
               <img
                 src={currentUser?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser?.fullname || 'User')}&background=random`}
                 alt={currentUser?.fullname}
-                className="w-9 h-9 rounded-xl object-cover ring-2 ring-blue-500/30"
+                className="w-16 h-16 sm:w-16 sm:h-16 rounded-full object-cover ring-2 ring-blue-500/30"
                 onError={(e) => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser?.fullname || 'User')}&background=random`; }}
               />
               <div className="text-left hidden sm:block">

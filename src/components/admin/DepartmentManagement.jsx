@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Briefcase, Plus, Edit2, Trash2, X, Save, Search, Layers } from 'lucide-react';
+import { useModal } from '../../contexts/ModalContext';
 
 export default function DepartmentManagement({ departments = [], setDepartments }) {
   const [searchTerm, setSearchTerm] = useState('');
+  const { showConfirm } = useModal();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDept, setEditingDept] = useState(null);
   
@@ -49,8 +51,8 @@ export default function DepartmentManagement({ departments = [], setDepartments 
     handleCloseModal();
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm('คุณต้องการลบฝ่ายนี้ออกจากระบบหรือไม่?')) {
+  const handleDelete = async (id) => {
+    if (await showConfirm('คุณต้องการลบฝ่ายนี้ออกจากระบบหรือไม่?')) {
       setDepartments(prev => prev.filter(d => d.id !== id));
     }
   };
@@ -87,12 +89,13 @@ export default function DepartmentManagement({ departments = [], setDepartments 
       </div>
 
       <div className="bg-white dark:bg-[var(--card-bg)] rounded-2xl shadow-sm border border-slate-200 dark:border-[var(--card-border)] overflow-hidden">
-        <table className="w-full text-left border-collapse">
-          <thead>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
             <tr className="bg-slate-50 dark:bg-slate-800/50 text-xs uppercase tracking-wider text-[var(--text-muted)] border-b border-slate-200 dark:border-[var(--card-border)]">
-              <th className="p-4 font-bold w-1/4">รหัส</th>
+              <th className="p-4 font-bold w-1/4 whitespace-nowrap">รหัส</th>
               <th className="p-4 font-bold w-1/2 text-center">ฝ่าย</th>
-              <th className="p-4 font-bold text-center">จัดการ</th>
+              <th className="p-4 font-bold text-center whitespace-nowrap">จัดการ</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-[var(--card-border)] text-sm">
@@ -103,9 +106,9 @@ export default function DepartmentManagement({ departments = [], setDepartments 
             ) : (
               filteredData.map((dept, index) => (
                 <tr key={dept.id || index} className="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
-                  <td className="p-4 font-mono text-slate-600 dark:text-slate-400">{dept.id}</td>
+                  <td className="p-4 font-mono text-slate-600 dark:text-slate-400 whitespace-nowrap">{dept.id}</td>
                   <td className="p-4 font-medium text-[var(--text-main)] text-center">{dept.name}</td>
-                  <td className="p-4">
+                  <td className="p-4 whitespace-nowrap">
                     <div className="flex justify-center gap-2">
                       <button onClick={() => handleOpenModal(dept)} className="p-2 text-amber-500 bg-amber-50 dark:bg-amber-500/10 hover:bg-amber-100 dark:hover:bg-amber-500/20 rounded-lg transition-colors">
                         <Edit2 className="w-4 h-4" />
@@ -118,8 +121,9 @@ export default function DepartmentManagement({ departments = [], setDepartments 
                 </tr>
               ))
             )}
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </div>
         {/* Pagination mock */}
         <div className="p-4 border-t border-slate-100 dark:border-[var(--card-border)] flex flex-col items-center justify-center gap-2">
           <span className="text-xs text-[var(--text-muted)]">แสดง 1 ถึง {filteredData.length} จาก {filteredData.length} แถว</span>

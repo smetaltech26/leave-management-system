@@ -3,10 +3,24 @@ import { X, Calendar, Upload, FileText, CheckCircle2, UserCheck, AlertCircle } f
 import { notifyLeaveApprover } from '../lib/lineNotify';
 import { sendEmailNotification } from '../services/emailService';
 
-export default function LeaveFormModal({ isOpen, onClose, currentUser, users, userPolicies, holidays = [], onSubmitRequest, requests, onEditRequest, editingRequest, agencies, departments }) {
+export default function LeaveFormModal({ 
+  isOpen, 
+  onClose, 
+  currentUser, 
+  users, 
+  userPolicies, 
+  requests, 
+  editingRequest, 
+  holidays = [], 
+  onSubmitRequest, 
+  onEditRequest,
+  agencies,
+  departments,
+  leaveTypes = []
+}) {
   if (!isOpen) return null;
 
-  const [leaveType, setLeaveType] = useState('ลาพักร้อน');
+  const [leaveType, setLeaveType] = useState(leaveTypes[0]?.name || 'ลาพักร้อน');
   const [description, setDescription] = useState('');
   const [alertMessage, setAlertMessage] = useState('');
   const [dateStart, setDateStart] = useState(new Date().toISOString().split('T')[0]);
@@ -357,12 +371,20 @@ export default function LeaveFormModal({ isOpen, onClose, currentUser, users, us
                 onChange={(e) => setLeaveType(e.target.value)}
                 className="w-full glass-input-clean rounded-2xl px-3.5 py-3 text-sm focus:outline-none"
               >
-                <option value="ลาพักร้อน">ลาพักร้อน (Annual Leave)</option>
-                <option value="ลาป่วย">ลาป่วย (Sick Leave)</option>
-                <option value="ลากิจได้รับค่าจ้าง">ลากิจได้รับค่าจ้าง (Personal Leave)</option>
-                <option value="ลาคลอด">ลาคลอด (Maternity Leave)</option>
-                <option value="ลากิจไม่ได้รับค่าจ้าง">ลากิจไม่ได้รับค่าจ้าง (Leave Without Pay)</option>
-                <option value="ลาอื่นๆ">ลาอื่นๆ (Other)</option>
+                {leaveTypes.length > 0 ? (
+                  leaveTypes.map(t => (
+                    <option key={t.id} value={t.name}>{t.name}</option>
+                  ))
+                ) : (
+                  <>
+                    <option value="ลาพักร้อน">ลาพักร้อน (Annual Leave)</option>
+                    <option value="ลาป่วย">ลาป่วย (Sick Leave)</option>
+                    <option value="ลากิจได้รับค่าจ้าง">ลากิจได้รับค่าจ้าง (Personal Leave)</option>
+                    <option value="ลาคลอด">ลาคลอด (Maternity Leave)</option>
+                    <option value="ลากิจไม่ได้รับค่าจ้าง">ลากิจไม่ได้รับค่าจ้าง (Leave Without Pay)</option>
+                    <option value="ลาอื่นๆ">ลาอื่นๆ (Other)</option>
+                  </>
+                )}
               </select>
             </div>
 

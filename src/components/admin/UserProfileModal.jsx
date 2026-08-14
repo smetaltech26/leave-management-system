@@ -1,7 +1,7 @@
 import React from 'react';
 import { X, Plane, BriefcaseMedical, Briefcase, HelpCircle, CalendarClock, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
 
-export default function UserProfileModal({ user, userPolicies, requests, agencies = [], departments = [], onClose }) {
+export default function UserProfileModal({ user, userPolicies, requests, agencies = [], departments = [], onClose, leaveTypes = [] }) {
   if (!user) return null;
 
   // กรองนโยบายวันลาเฉพาะของพนักงานคนนี้
@@ -9,11 +9,6 @@ export default function UserProfileModal({ user, userPolicies, requests, agencie
   
   // หาโควต้าตามประเภท
   const getPolicy = (type) => userPolicyData.find(p => p.leave_type === type) || { max_days: 0, used_days: 0, remaining_days: 0 };
-  
-  const annualLeave = getPolicy('ลาพักร้อน');
-  const sickLeave = getPolicy('ลาป่วย');
-  const personalLeave = getPolicy('ลากิจได้รับค่าจ้าง');
-  const otherLeave = getPolicy('ลากิจไม่ได้รับค่าจ้าง'); // หรืออื่นๆ
 
   // คำนวณเปอร์เซ็นต์
   const getPercent = (used, max) => max > 0 ? Math.min(Math.round((used / max) * 100), 100) : 0;
@@ -48,11 +43,11 @@ export default function UserProfileModal({ user, userPolicies, requests, agencie
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white dark:bg-[var(--bg-main)] w-full max-w-4xl max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-start md:items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+      <div className="bg-white dark:bg-[var(--bg-main)] w-full max-w-4xl max-h-[calc(100svh-2rem)] md:max-h-[85dvh] min-h-0 rounded-3xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 flex flex-col">
         
         {/* Header */}
-        <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-start bg-slate-50 dark:bg-slate-800/50">
+        <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-start bg-slate-50 dark:bg-slate-800/50 shrink-0">
           <div className="flex items-center gap-4">
             <img src={user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullname)}&background=random`} alt={user.fullname} className="w-24 h-24 rounded-2xl shadow-sm object-cover" />
             <div>
@@ -71,93 +66,43 @@ export default function UserProfileModal({ user, userPolicies, requests, agencie
         </div>
 
         {/* Content Body */}
-        <div className="p-6 overflow-y-auto space-y-6">
+        <div className="p-6 flex-1 min-h-0 overflow-y-auto space-y-6 custom-scrollbar">
           
           {/* Quota Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* ลาพักร้อน */}
-            <div className="border border-blue-200 dark:border-blue-500/30 rounded-2xl p-4 bg-blue-50/50 dark:bg-blue-500/5">
-              <div className="flex justify-between items-start">
-                <div className="p-2.5 bg-blue-500 text-white rounded-xl shadow-md shadow-blue-500/20">
-                  <Plane className="w-5 h-5" />
-                </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{annualLeave.remaining_days}</div>
-                  <div className="text-xs text-[var(--text-muted)]">คงเหลือ</div>
-                </div>
+            {leaveTypes.length > 0 ? (
+              leaveTypes.map(lt => {
+                const policy = getPolicy(lt.name);
+                const bgColors = lt.bg.replace('bg-', '');
+                const textColors = lt.color.replace('text-', '');
+                
+                return (
+                  <div key={lt.id} className={`border border-${bgColors}/30 rounded-2xl p-4 bg-${bgColors}/5`}>
+                    <div className="flex justify-between items-start">
+                      <div className={`p-2.5 ${lt.bg} text-white rounded-xl shadow-md shadow-${bgColors}/20`}>
+                        <HelpCircle className="w-5 h-5" />
+                      </div>
+                      <div className="text-right">
+                        <div className={`text-2xl font-bold ${lt.color}`}>{policy.remaining_days || 0}</div>
+                        <div className="text-xs text-[var(--text-muted)]">คงเหลือ</div>
+                      </div>
+                    </div>
+                    <div className="mt-4">
+                      <div className="font-bold text-[var(--text-main)]">{lt.name}</div>
+                      <div className="text-xs text-[var(--text-muted)] mb-2">ใช้ไป {policy.used_days || 0}/{policy.max_days || 0} วัน</div>
+                      <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                        <div className={`h-full ${lt.bg} rounded-full`} style={{ width: `${getPercent(policy.used_days, policy.max_days)}%` }}></div>
+                      </div>
+                      <div className="text-right text-[10px] text-[var(--text-muted)] mt-1">{getPercent(policy.used_days, policy.max_days)}% ใช้ไปแล้ว</div>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="col-span-full py-8 text-center text-[var(--text-muted)]">
+                ไม่พบประเภทการลาในระบบ
               </div>
-              <div className="mt-4">
-                <div className="font-bold text-[var(--text-main)]">ลาพักร้อน</div>
-                <div className="text-xs text-[var(--text-muted)] mb-2">ใช้ไป {annualLeave.used_days}/{annualLeave.max_days} วัน</div>
-                <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-500 rounded-full" style={{ width: `${getPercent(annualLeave.used_days, annualLeave.max_days)}%` }}></div>
-                </div>
-                <div className="text-right text-[10px] text-[var(--text-muted)] mt-1">{getPercent(annualLeave.used_days, annualLeave.max_days)}% ใช้ไปแล้ว</div>
-              </div>
-            </div>
-
-            {/* ลาป่วย */}
-            <div className="border border-rose-200 dark:border-rose-500/30 rounded-2xl p-4 bg-rose-50/50 dark:bg-rose-500/5">
-              <div className="flex justify-between items-start">
-                <div className="p-2.5 bg-rose-500 text-white rounded-xl shadow-md shadow-rose-500/20">
-                  <BriefcaseMedical className="w-5 h-5" />
-                </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold text-rose-600 dark:text-rose-400">{sickLeave.remaining_days}</div>
-                  <div className="text-xs text-[var(--text-muted)]">คงเหลือ</div>
-                </div>
-              </div>
-              <div className="mt-4">
-                <div className="font-bold text-[var(--text-main)]">ลาป่วย</div>
-                <div className="text-xs text-[var(--text-muted)] mb-2">ใช้ไป {sickLeave.used_days}/{sickLeave.max_days} วัน</div>
-                <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                  <div className="h-full bg-rose-500 rounded-full" style={{ width: `${getPercent(sickLeave.used_days, sickLeave.max_days)}%` }}></div>
-                </div>
-                <div className="text-right text-[10px] text-[var(--text-muted)] mt-1">{getPercent(sickLeave.used_days, sickLeave.max_days)}% ใช้ไปแล้ว</div>
-              </div>
-            </div>
-
-            {/* ลากิจได้รับค่าจ้าง */}
-            <div className="border border-purple-200 dark:border-purple-500/30 rounded-2xl p-4 bg-purple-50/50 dark:bg-purple-500/5">
-              <div className="flex justify-between items-start">
-                <div className="p-2.5 bg-purple-500 text-white rounded-xl shadow-md shadow-purple-500/20">
-                  <Briefcase className="w-5 h-5" />
-                </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{personalLeave.remaining_days}</div>
-                  <div className="text-xs text-[var(--text-muted)]">คงเหลือ</div>
-                </div>
-              </div>
-              <div className="mt-4">
-                <div className="font-bold text-[var(--text-main)]">ลากิจได้รับค่าจ้าง</div>
-                <div className="text-xs text-[var(--text-muted)] mb-2">ใช้ไป {personalLeave.used_days}/{personalLeave.max_days} วัน</div>
-                <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                  <div className="h-full bg-purple-500 rounded-full" style={{ width: `${getPercent(personalLeave.used_days, personalLeave.max_days)}%` }}></div>
-                </div>
-                <div className="text-right text-[10px] text-[var(--text-muted)] mt-1">{getPercent(personalLeave.used_days, personalLeave.max_days)}% ใช้ไปแล้ว</div>
-              </div>
-            </div>
-
-            {/* อื่นๆ */}
-            <div className="border border-amber-200 dark:border-amber-500/30 rounded-2xl p-4 bg-amber-50/50 dark:bg-amber-500/5">
-              <div className="flex justify-between items-start">
-                <div className="p-2.5 bg-amber-500 text-white rounded-xl shadow-md shadow-amber-500/20">
-                  <HelpCircle className="w-5 h-5" />
-                </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{otherLeave.remaining_days}</div>
-                  <div className="text-xs text-[var(--text-muted)]">คงเหลือ</div>
-                </div>
-              </div>
-              <div className="mt-4">
-                <div className="font-bold text-[var(--text-main)]">อื่นๆ (ลากิจไม่ได้รับเงิน)</div>
-                <div className="text-xs text-[var(--text-muted)] mb-2">ใช้ไป {otherLeave.used_days}/{otherLeave.max_days} วัน</div>
-                <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                  <div className="h-full bg-amber-500 rounded-full" style={{ width: `${getPercent(otherLeave.used_days, otherLeave.max_days)}%` }}></div>
-                </div>
-                <div className="text-right text-[10px] text-[var(--text-muted)] mt-1">{getPercent(otherLeave.used_days, otherLeave.max_days)}% ใช้ไปแล้ว</div>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* History */}

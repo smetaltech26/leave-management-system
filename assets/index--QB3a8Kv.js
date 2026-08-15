@@ -386,7 +386,7 @@ ${C}`}class qt extends Error{constructor({message:e,code:r,cause:s,name:i}){var 
                   </ul>
                 </div>
                 <p>กรุณาเข้าสู่ระบบเพื่อตรวจสอบและพิจารณาอนุมัติคำขอ:</p>
-                <p><a href="${window.location.origin}" style="display: inline-block; background-color: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">เข้าสู่ระบบ</a></p>
+                <p><a href="https://smetaltech26.github.io/leave-management-system/" style="display: inline-block; background-color: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">เข้าสู่ระบบ</a></p>
                 <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
                 <p style="font-size: 12px; color: #64748b;"><i>นี่คืออีเมลอัตโนมัติจากระบบ Leave Management System กรุณาอย่าตอบกลับ</i></p>
               </div>
@@ -403,7 +403,7 @@ ${C}`}class qt extends Error{constructor({message:e,code:r,cause:s,name:i}){var 
                     <li style="margin-bottom: 0;"><strong>จำนวนวัน:</strong> ${b.leave_duration} วัน</li>
                   </ul>
                 </div>
-                <p><a href="${window.location.origin}" style="display: inline-block; background-color: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">ตรวจสอบประวัติการลาของคุณ</a></p>
+                <p><a href="https://smetaltech26.github.io/leave-management-system/" style="display: inline-block; background-color: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">ตรวจสอบประวัติการลาของคุณ</a></p>
                 <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
                 <p style="font-size: 12px; color: #64748b;"><i>นี่คืออีเมลอัตโนมัติจากระบบ Leave Management System กรุณาอย่าตอบกลับ</i></p>
               </div>
@@ -424,7 +424,7 @@ ${C}`}class qt extends Error{constructor({message:e,code:r,cause:s,name:i}){var 
                     </ul>
                   </div>
                   <p>กรุณาเข้าสู่ระบบเพื่อตรวจสอบและพิจารณาอนุมัติคำขอ:</p>
-                  <p><a href="${window.location.origin}" style="display: inline-block; background-color: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">เข้าสู่ระบบ</a></p>
+                  <p><a href="https://smetaltech26.github.io/leave-management-system/" style="display: inline-block; background-color: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">เข้าสู่ระบบ</a></p>
                   <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
                   <p style="font-size: 12px; color: #64748b;"><i>นี่คืออีเมลอัตโนมัติจากระบบ Leave Management System กรุณาอย่าตอบกลับ</i></p>
                 </div>
@@ -443,7 +443,7 @@ ${C}`}class qt extends Error{constructor({message:e,code:r,cause:s,name:i}){var 
                 </ul>
               </div>
               <p>หากมีข้อสงสัย กรุณาติดต่อหัวหน้างานหรือฝ่ายบุคคลค่ะ</p>
-              <p><a href="${window.location.origin}" style="display: inline-block; background-color: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">เข้าสู่ระบบ</a></p>
+              <p><a href="https://smetaltech26.github.io/leave-management-system/" style="display: inline-block; background-color: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">เข้าสู่ระบบ</a></p>
               <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
               <p style="font-size: 12px; color: #64748b;"><i>นี่คืออีเมลอัตโนมัติจากระบบ Leave Management System กรุณาอย่าตอบกลับ</i></p>
             </div>

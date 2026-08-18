@@ -87,8 +87,16 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
       });
     } else {
       setEditingUser(null);
+      // หาเลข UID ที่มีค่าสูงสุดในระบบ แล้วบวก 1 เพื่อไม่ให้ซ้ำกับคนที่ถูกลบไปแล้ว
+      const maxUserNum = users.reduce((max, u) => {
+        const match = (u.id || '').match(/USER-(\d+)/i);
+        const num = match ? parseInt(match[1], 10) : 0;
+        return num > max ? num : max;
+      }, 0);
+      const nextId = `USER-${String(maxUserNum + 1).padStart(3, '0')}`;
+
       setFormData({
-        id: `USER-${String(users.length + 1).padStart(3, '0')}`,
+        id: nextId,
         fullname: '',
         email: '',
         password: '',
@@ -112,8 +120,34 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData({ ...formData, avatar_url: reader.result });
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_DIM = 256;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_DIM) {
+              height = Math.round((height * MAX_DIM) / width);
+              width = MAX_DIM;
+            }
+          } else {
+            if (height > MAX_DIM) {
+              width = Math.round((width * MAX_DIM) / height);
+              height = MAX_DIM;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          setFormData(prev => ({ ...prev, avatar_url: compressedDataUrl }));
+        };
+        img.src = event.target.result;
       };
       reader.readAsDataURL(file);
     }
@@ -142,7 +176,8 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
 
         const updated = await api.adminUpdateUser(payload);
         setUsers(prev => prev.map(u => u.id === editingUser.id ? { ...u, ...updated } : u));
-        await showAlert("บันทึกการแก้ไขข้อมูลพนักงานเรียบร้อยแล้วค่ะ ✨");
+        handleCloseModal();
+        await showAlert("บันทึกการแก้ไขข้อมูลพนักงานเรียบร้อยแล้วค่ะ ✨", { type: 'success', title: 'สำเร็จ' });
       } else {
         // เพิ่มพนักงานใหม่
         const payload = {
@@ -160,12 +195,12 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
 
         const created = await api.adminCreateUser(payload);
         setUsers(prev => [...prev, created]);
-        await showAlert("เพิ่มพนักงานใหม่และสร้างบัญชีเข้าใช้งานเรียบร้อยแล้วค่ะ 🎉");
+        handleCloseModal();
+        await showAlert(`เพิ่มพนักงานใหม่รหัส ${formData.id} และสร้างบัญชีเข้าใช้งานเรียบร้อยแล้วค่ะ 🎉`, { type: 'success', title: 'เพิ่มพนักงานสำเร็จ' });
       }
-      handleCloseModal();
     } catch (err) {
       console.error("Save User Error:", err);
-      await showAlert("ไม่สามารถบันทึกข้อมูลพนักงานได้: " + (err.message || err.toString()));
+      await showAlert("ไม่สามารถบันทึกข้อมูลพนักงานได้: " + (err.message || err.toString()), { type: 'error', title: 'เกิดข้อผิดพลาด' });
     } finally {
       setIsSubmitting(false);
     }
@@ -178,10 +213,10 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
       try {
         await api.adminDeleteUser(id);
         setUsers(prev => prev.filter(u => u.id !== id));
-        await showAlert("ลบพนักงานออกจากระบบเรียบร้อยแล้วค่ะ ✨");
+        await showAlert("ลบพนักงานออกจากระบบเรียบร้อยแล้วค่ะ ✨", { type: 'success', title: 'ลบสำเร็จ' });
       } catch (err) {
         console.error("Delete User Error:", err);
-        await showAlert("ไม่สามารถลบพนักงานได้: " + (err.message || err.toString()));
+        await showAlert("ไม่สามารถลบพนักงานได้: " + (err.message || err.toString()), { type: 'error', title: 'เกิดข้อผิดพลาด' });
       } finally {
         setIsSubmitting(false);
       }

@@ -81,11 +81,22 @@ export const fetchAllPermissions = async () => {
 // ==========================================
 
 export const createLeaveRequest = async (requestData, approvers, attachments) => {
+  // Always query the next global LEV ID from the database to avoid duplicate key conflicts
+  let targetId = requestData.id;
+  try {
+    const { data: generatedId, error: rpcErr } = await supabase.rpc('get_next_leave_request_id');
+    if (!rpcErr && generatedId) {
+      targetId = generatedId;
+    }
+  } catch (e) {
+    console.warn("Could not fetch generated ID via RPC, using targetId:", targetId, e);
+  }
+
   // 1. Insert Request
   const { data: reqData, error: reqError } = await supabase
     .from('leave_requests')
     .insert([{
-      id: requestData.id,
+      id: targetId,
       user_id: requestData.user_id,
       leave_type: requestData.leave_type,
       description: requestData.description,
@@ -104,10 +115,10 @@ export const createLeaveRequest = async (requestData, approvers, attachments) =>
 
   // 2. Insert Approvers
   if (approvers && approvers.length > 0) {
-    const approversToInsert = approvers.map(a => ({
-      id: a.step_id,
-      request_id: requestData.id,
-      step_number: a.step_number,
+    const approversToInsert = approvers.map((a, idx) => ({
+      id: `${targetId}-STEP${a.step_number || (idx + 1)}`,
+      request_id: targetId,
+      step_number: a.step_number || (idx + 1),
       approver_id: a.approver_id,
       status: 'Pending'
     }));
@@ -118,13 +129,15 @@ export const createLeaveRequest = async (requestData, approvers, attachments) =>
   // 3. Insert Attachments
   if (attachments && attachments.length > 0) {
     const attToInsert = [];
-    for (const att of attachments) {
+    for (let i = 0; i < attachments.length; i++) {
+      const att = attachments[i];
       let finalFileUrl = att.file_url;
+      const attId = `${targetId}-ATT-${i + 1}`;
       
       // Upload to Supabase Storage if there's a raw file
       if (att.raw_file) {
         const fileExt = att.raw_file.name.split('.').pop() || 'png';
-        const filePath = `${requestData.id}/${att.id}.${fileExt}`;
+        const filePath = `${targetId}/${attId}.${fileExt}`;
         
         // We assume 'attachments' bucket exists and is public
         const { error: uploadError } = await supabase.storage
@@ -143,8 +156,8 @@ export const createLeaveRequest = async (requestData, approvers, attachments) =>
       }
 
       attToInsert.push({
-        id: att.id,
-        request_id: requestData.id,
+        id: attId,
+        request_id: targetId,
         file_url: finalFileUrl,
         file_name: att.file_name,
         uploaded_by: requestData.user_id
@@ -159,7 +172,7 @@ export const createLeaveRequest = async (requestData, approvers, attachments) =>
   const { data: newReq, error: fetchError } = await supabase
     .from('leave_requests')
     .select(`*, approvers:approval_steps(*), attachments:attachments(*)`)
-    .eq('id', requestData.id)
+    .eq('id', targetId)
     .single();
 
   if (fetchError) throw fetchError;

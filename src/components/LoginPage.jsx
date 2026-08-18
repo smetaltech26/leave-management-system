@@ -28,7 +28,7 @@ export default function LoginPage({ onLogin, theme = 'light', toggleTheme }) {
 
     try {
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email: username,
+        email: username.trim(),
         password: password
       });
 
@@ -67,7 +67,12 @@ export default function LoginPage({ onLogin, theme = 'light', toggleTheme }) {
 
     } catch (err) {
       console.error("Login Error:", err);
-      setError('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+      // แสดง error ตามจริงเพื่อ debug
+      if (err.message && err.message.includes('Invalid login credentials')) {
+        setError('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+      } else {
+        setError(err.message || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+      }
     } finally {
       setIsLoading(false);
     }

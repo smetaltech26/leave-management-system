@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
-import { Search, Plus, Edit2, Trash2, Shield, User, MapPin, X, Save, Users, UserCheck, Hourglass, Eye, Upload, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Plus, Edit2, Trash2, Shield, User, MapPin, X, Save, Users, UserCheck, Hourglass, Eye, Upload, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import UserProfileModal from './UserProfileModal';
 import { useModal } from '../../contexts/ModalContext';
+import * as api from '../../services/supabaseApi';
 
 export default function UserManagement({ users, setUsers, pendingCount = 0, userPolicies = [], requests = [], agencies = [], departments = [], leaveTypes = [] }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 24;
-  const { showConfirm } = useModal();
+  const { showConfirm, showAlert } = useModal();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const desktopPaginationRef = useRef(null);
   const mobilePaginationRef = useRef(null);
@@ -117,37 +119,72 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
     }
   };
 
-  const handleSaveUser = (e) => {
+  const handleSaveUser = async (e) => {
     e.preventDefault();
-    if (editingUser) {
-      // อัปเดตพนักงานเดิม
-      const updatedUser = {
-        ...editingUser,
-        ...formData,
-        password_hash: formData.password,
-        agency_id: formData.agency,
-        department_id: formData.department,
-        employee_id: formData.employee_id
-      };
-      setUsers(prev => prev.map(u => u.id === editingUser.id ? updatedUser : u));
-    } else {
-      // เพิ่มพนักงานใหม่
-      const newUser = {
-        ...formData,
-        password_hash: formData.password,
-        agency_id: formData.agency,
-        department_id: formData.department,
-        employee_id: formData.employee_id,
-        avatar_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.fullname)}&background=random`,
-      };
-      setUsers(prev => [...prev, newUser]);
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
+    try {
+      if (editingUser) {
+        // อัปเดตพนักงานเดิม
+        const payload = {
+          id: editingUser.id,
+          fullname: formData.fullname,
+          email: formData.email,
+          password: formData.password || null,
+          agency_id: formData.agency || null,
+          department_id: formData.department || null,
+          role: formData.role,
+          employee_id: formData.employee_id || null,
+          line_user_id: formData.line_user_id || null,
+          avatar_url: formData.avatar_url || null
+        };
+
+        const updated = await api.adminUpdateUser(payload);
+        setUsers(prev => prev.map(u => u.id === editingUser.id ? { ...u, ...updated } : u));
+        await showAlert("บันทึกการแก้ไขข้อมูลพนักงานเรียบร้อยแล้วค่ะ ✨");
+      } else {
+        // เพิ่มพนักงานใหม่
+        const payload = {
+          id: formData.id,
+          fullname: formData.fullname,
+          email: formData.email,
+          password: formData.password || '123456',
+          agency_id: formData.agency || null,
+          department_id: formData.department || null,
+          role: formData.role,
+          employee_id: formData.employee_id || null,
+          line_user_id: formData.line_user_id || null,
+          avatar_url: formData.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.fullname)}&background=random`
+        };
+
+        const created = await api.adminCreateUser(payload);
+        setUsers(prev => [...prev, created]);
+        await showAlert("เพิ่มพนักงานใหม่และสร้างบัญชีเข้าใช้งานเรียบร้อยแล้วค่ะ 🎉");
+      }
+      handleCloseModal();
+    } catch (err) {
+      console.error("Save User Error:", err);
+      await showAlert("ไม่สามารถบันทึกข้อมูลพนักงานได้: " + (err.message || err.toString()));
+    } finally {
+      setIsSubmitting(false);
     }
-    handleCloseModal();
   };
 
   const handleDeleteUser = async (id) => {
-    if(await showConfirm('คุณต้องการลบพนักงานรหัสนี้ใช่หรือไม่?')) {
-      setUsers(prev => prev.filter(u => u.id !== id));
+    if (isSubmitting) return;
+    if (await showConfirm('คุณต้องการลบพนักงานรหัสนี้ใช่หรือไม่? บัญชีและข้อมูลทั้งหมดจะถูกลบออกจากระบบ')) {
+      setIsSubmitting(true);
+      try {
+        await api.adminDeleteUser(id);
+        setUsers(prev => prev.filter(u => u.id !== id));
+        await showAlert("ลบพนักงานออกจากระบบเรียบร้อยแล้วค่ะ ✨");
+      } catch (err) {
+        console.error("Delete User Error:", err);
+        await showAlert("ไม่สามารถลบพนักงานได้: " + (err.message || err.toString()));
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -578,12 +615,30 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
               </div>
 
               <div className="pt-4 flex gap-3 shrink-0">
-                <button type="button" onClick={handleCloseModal} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                <button 
+                  type="button" 
+                  disabled={isSubmitting}
+                  onClick={handleCloseModal} 
+                  className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
+                >
                   ยกเลิก
                 </button>
-                <button type="submit" className="flex-1 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 flex items-center justify-center gap-2 shadow-lg shadow-blue-500/30 transition-colors">
-                  <Save className="w-4 h-4" />
-                  บันทึกข้อมูล
+                <button 
+                  type="submit" 
+                  disabled={isSubmitting}
+                  className="flex-1 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-blue-500/30 transition-colors"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      กำลังบันทึก...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" />
+                      บันทึกข้อมูล
+                    </>
+                  )}
                 </button>
               </div>
             </form>

@@ -324,6 +324,51 @@ export const updateUserProfile = async (userId, updateData) => {
   if (error) throw error;
 };
 
+export const adminCreateUser = async (userData) => {
+  const { data, error } = await supabase.rpc('admin_create_user_account', {
+    p_id: userData.id,
+    p_fullname: userData.fullname,
+    p_email: userData.email,
+    p_password: userData.password || '',
+    p_agency_id: userData.agency_id || null,
+    p_department_id: userData.department_id || null,
+    p_role: userData.role || 'Employee',
+    p_employee_id: userData.employee_id || null,
+    p_line_user_id: userData.line_user_id || null,
+    p_avatar_url: userData.avatar_url || null
+  });
+
+  if (error) throw error;
+  return data;
+};
+
+export const adminUpdateUser = async (userData) => {
+  const { data, error } = await supabase.rpc('admin_update_user_account', {
+    p_id: userData.id,
+    p_fullname: userData.fullname,
+    p_email: userData.email,
+    p_password: userData.password || null,
+    p_agency_id: userData.agency_id || null,
+    p_department_id: userData.department_id || null,
+    p_role: userData.role || null,
+    p_employee_id: userData.employee_id || null,
+    p_line_user_id: userData.line_user_id || null,
+    p_avatar_url: userData.avatar_url || null
+  });
+
+  if (error) throw error;
+  return data;
+};
+
+export const adminDeleteUser = async (userId) => {
+  const { data, error } = await supabase.rpc('admin_delete_user_account', {
+    p_user_id: userId
+  });
+
+  if (error) throw error;
+  return data;
+};
+
 // ==========================================
 // 6. Permissions
 // ==========================================

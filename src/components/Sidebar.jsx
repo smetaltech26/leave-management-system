@@ -1,5 +1,5 @@
-import React from 'react';
 import { Home, CheckSquare, Calendar, Users, Settings, FileText, PlusCircle, LogOut, ShieldCheck, X } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 export default function Sidebar({ activeTab, setActiveTab, currentUser, setCurrentUser, pendingCount, onOpenLeaveModal, permissions, isMobileMenuOpen, setIsMobileMenuOpen }) {
   
@@ -79,12 +79,12 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, setCurre
                   title={item.label}
                   className={`w-full flex items-center px-4 py-3.5 rounded-2xl font-bold text-base transition-all overflow-hidden ${
                     isActive
-                      ? 'bg-blue-500 text-white shadow-md shadow-blue-500/20'
+                      ? 'bg-blue-500 dark:bg-blue-900/30 text-white dark:text-blue-400 shadow-md shadow-blue-500/20 dark:shadow-none'
                       : 'text-[var(--text-muted)] dark:text-[var(--text-muted)] hover:text-[var(--text-main)] dark:hover:text-[var(--text-main)] hover:bg-slate-100 dark:hover:bg-[var(--card-bg)]/60'
                   }`}
                 >
                   <div className="flex-shrink-0 flex items-center justify-center">
-                    <Icon className={`w-[22px] h-[22px] ${isActive ? 'text-white' : 'text-[var(--text-muted)] group-hover:text-[var(--text-main)] dark:group-hover:text-[var(--text-main)]'}`} />
+                    <Icon className={`w-[22px] h-[22px] ${isActive ? 'text-white dark:text-blue-400' : 'text-[var(--text-muted)] group-hover:text-[var(--text-main)] dark:group-hover:text-[var(--text-main)]'}`} />
                   </div>
                   <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap ml-4">
                     {item.label}
@@ -104,7 +104,7 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, setCurre
         {/* Footer Actions */}
         <div className="space-y-3 pb-4">
           <button
-            onClick={() => setCurrentUser(null)}
+            onClick={async () => { await supabase.auth.signOut(); setCurrentUser(null); }}
             title="ออกจากระบบ"
             className="w-full flex items-center px-4 py-3.5 rounded-xl text-rose-500 hover:bg-rose-500/10 font-bold text-base transition-all border border-transparent group-hover:border-rose-500/20 overflow-hidden"
           >
@@ -151,12 +151,12 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, setCurre
                   title={item.label}
                   className={`w-full flex items-center px-4 py-3.5 rounded-2xl font-bold text-base transition-all overflow-hidden ${
                     isActive
-                      ? 'bg-blue-500 text-white shadow-md shadow-blue-500/20'
+                      ? 'bg-blue-500 dark:bg-blue-900/30 text-white dark:text-blue-400 shadow-md shadow-blue-500/20 dark:shadow-none'
                       : 'text-[var(--text-muted)] dark:text-[var(--text-muted)] hover:text-[var(--text-main)] dark:hover:text-[var(--text-main)] hover:bg-slate-100 dark:hover:bg-[var(--card-bg)]/60'
                   }`}
                 >
                   <div className="flex-shrink-0 flex items-center justify-center">
-                    <Icon className={`w-[22px] h-[22px] ${isActive ? 'text-white' : 'text-[var(--text-muted)]'}`} />
+                    <Icon className={`w-[22px] h-[22px] ${isActive ? 'text-white dark:text-blue-400' : 'text-[var(--text-muted)]'}`} />
                   </div>
                   <span className="ml-4">{item.label}</span>
                   
@@ -174,7 +174,7 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, setCurre
         {/* Footer Actions */}
         <div className="space-y-3 pb-4">
           <button
-            onClick={() => setCurrentUser(null)}
+            onClick={async () => { await supabase.auth.signOut(); setCurrentUser(null); }}
             title="ออกจากระบบ"
             className="w-full flex items-center px-4 py-3.5 rounded-xl text-rose-500 hover:bg-rose-500/10 font-bold text-base transition-all border border-transparent overflow-hidden"
           >

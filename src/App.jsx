@@ -13,6 +13,7 @@ import ReportPage from './components/ReportPage';
 import PermissionsPage from './components/admin/PermissionsPage';
 
 import * as api from './services/supabaseApi';
+import { supabase } from './lib/supabase';
 import { useModal } from './contexts/ModalContext';
 
 export default function App() {
@@ -30,6 +31,7 @@ export default function App() {
 
   const [currentUser, setCurrentUser] = useState(null); 
   const [activeTab, setActiveTab] = useState('home');
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
   const mainScrollRef = useRef(null);
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
   const [editingRequest, setEditingRequest] = useState(null);
@@ -60,6 +62,50 @@ export default function App() {
   };
 
   useEffect(() => {
+    // Check initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        fetchCurrentUserProfile(session.user.id);
+      } else {
+        setIsAuthChecking(false);
+      }
+    });
+
+    // Listen for auth changes
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session) {
+        if (!currentUser || currentUser.auth_id !== session.user.id) {
+           await fetchCurrentUserProfile(session.user.id);
+        }
+      } else {
+        setCurrentUser(null);
+        setIsAuthChecking(false);
+      }
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
+
+  const fetchCurrentUserProfile = async (authId) => {
+    try {
+      const { data, error } = await supabase.from('users').select('*').eq('auth_id', authId).single();
+      if (data) {
+        setCurrentUser(data);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsAuthChecking(false);
+    }
+  }
+
+  // โหลดข้อมูลหลังจาก Login เสร็จแล้วเท่านั้น
+  useEffect(() => {
+    if (!currentUser) return;
+    
+    setLoadingData(true);
     const loadData = async () => {
       try {
         const [u, p, r, h, a, d, perms, lt] = await Promise.all([
@@ -87,7 +133,7 @@ export default function App() {
       }
     };
     loadData();
-  }, []);
+  }, [currentUser]);
 
   // เลื่อนจอขึ้นบนสุดเมื่อมีการเปลี่ยนหน้าหรือล็อกอิน
   useLayoutEffect(() => {
@@ -127,12 +173,16 @@ export default function App() {
   // ---------------------------------------------------------
   // Render: If not logged in, show LoginPage
   // ---------------------------------------------------------
-  if (loadingData) {
-    return <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-500">กำลังโหลดข้อมูลระบบ...</div>;
+  if (isAuthChecking) {
+    return <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-500">กำลังตรวจสอบสิทธิ์...</div>;
   }
 
   if (!currentUser) {
-    return <LoginPage onLogin={(user) => setCurrentUser(user)} users={users} theme={theme} toggleTheme={toggleTheme} />;
+    return <LoginPage onLogin={(user) => setCurrentUser(user)} theme={theme} toggleTheme={toggleTheme} />;
+  }
+
+  if (loadingData) {
+    return <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-500">กำลังโหลดข้อมูลระบบ...</div>;
   }
 
   // คำนวณจำนวนรายการรออนุมัติสำหรับ currentUser

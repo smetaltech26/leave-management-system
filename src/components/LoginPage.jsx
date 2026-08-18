@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Lock, User, AlertCircle, Eye, EyeOff, Moon, Sun, Info, X } from 'lucide-react';
 import logoUrl from '../assets/smt-logo.jpg';
+import { supabase } from '../lib/supabase';
 
-export default function LoginPage({ onLogin, users, theme = 'light', toggleTheme }) {
+export default function LoginPage({ onLogin, theme = 'light', toggleTheme }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -13,7 +14,7 @@ export default function LoginPage({ onLogin, users, theme = 'light', toggleTheme
   // State for HR Popup
   const [showHRPopup, setShowHRPopup] = useState(false);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     
     // ปิด focus และเริ่มซ่อนคีย์บอร์ดทันที
@@ -25,43 +26,51 @@ export default function LoginPage({ onLogin, users, theme = 'light', toggleTheme
     setError('');
     setIsLoading(true);
 
-    setTimeout(() => {
-      // ค้นหาพนักงานจาก users prop
-      const user = users.find(
-        (u) => 
-          (u.email === username || u.id === username) && 
-          u.password_hash === password
-      );
+    try {
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email: username,
+        password: password
+      });
 
-      if (user) {
-        const resetLoginViewport = () => {
-          const documentScroller = document.scrollingElement;
-          if (documentScroller) {
-            documentScroller.scrollTop = 0;
-            documentScroller.scrollLeft = 0;
-          }
-          window.scrollTo({
-            top: 0,
-            left: 0,
-            behavior: 'auto',
-          });
-        };
+      if (signInError) throw signInError;
+
+      // เราไม่จำเป็นต้องโหลด Profile ที่นี่ก็ได้ เพราะ App.jsx จะตรวจจับ onAuthStateChange
+      // แต่เราสามารถเรียก onLogin พร้อมข้อมูลเพื่อ trigger UI ได้
+      
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('auth_id', data.user.id)
+        .single();
         
+      if (userError || !userData) {
+         throw new Error('ไม่พบข้อมูลพนักงาน หรือยังไม่ได้เชื่อมโยงบัญชี');
+      }
+
+      const resetLoginViewport = () => {
+        const documentScroller = document.scrollingElement;
+        if (documentScroller) {
+          documentScroller.scrollTop = 0;
+          documentScroller.scrollLeft = 0;
+        }
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      };
+      
+      resetLoginViewport();
+      requestAnimationFrame(() => {
         resetLoginViewport();
-        
         requestAnimationFrame(() => {
           resetLoginViewport();
-          requestAnimationFrame(() => {
-            resetLoginViewport();
-            onLogin(user);
-          });
+          onLogin(userData);
         });
-        return;
-      }
-      
+      });
+
+    } catch (err) {
+      console.error("Login Error:", err);
       setError('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+    } finally {
       setIsLoading(false);
-    }, 800);
+    }
   };
 
   return (
@@ -175,7 +184,7 @@ export default function LoginPage({ onLogin, users, theme = 'light', toggleTheme
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3.5 px-4 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-xl shadow-sm transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+            className="w-full py-3.5 px-4 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600/30 dark:hover:bg-blue-600/50 dark:border dark:border-blue-500/50 text-white dark:text-blue-300 font-medium rounded-xl shadow-sm dark:shadow-none transition-all disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {isLoading ? (
               <span className="flex items-center justify-center space-x-2">

@@ -74,7 +74,7 @@ export default function PolicyManagement({ userPolicies, setUserPolicies, users,
         id: '',
         user_id: users && users.length > 0 ? users[0].id : '',
         leave_type: leaveTypes && leaveTypes.length > 0 ? leaveTypes[0].name : 'ลาพักร้อน',
-        max_days: 30,
+        max_days: (leaveTypes && leaveTypes.length > 0 ? leaveTypes[0].name : 'ลาพักร้อน') === 'ลาคลอด' ? 120 : 30,
         used_days: 0,
         remaining_days: 30,
         year: new Date().getFullYear()
@@ -170,7 +170,10 @@ export default function PolicyManagement({ userPolicies, setUserPolicies, users,
                 <img src={userObj?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(userObj?.fullname || 'User')}&background=random`} alt="Avatar" className="w-14 h-14 rounded-xl object-cover shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-[var(--text-main)] truncate">{userObj ? userObj.fullname : 'Unknown User'}</p>
-                  <p className="text-xs text-[var(--text-muted)] font-medium mb-1">{group.user_id}</p>
+                  <p className="text-xs text-[var(--text-muted)] font-medium mb-1">
+                    {group.user_id}
+                    {userObj?.employee_id && <span> รหัสพนักงาน {userObj.employee_id}</span>}
+                  </p>
                   <p className="text-[10px] text-[var(--text-muted)] truncate">
                     {agencies?.find(a => a.id === userObj?.agency_id)?.name || userObj?.agency_id || '-'} / {departments?.find(d => d.id === userObj?.department_id)?.name || userObj?.department_id || '-'}
                   </p>
@@ -272,7 +275,11 @@ export default function PolicyManagement({ userPolicies, setUserPolicies, users,
                 <select 
                   required
                   value={formData.leave_type} 
-                  onChange={(e) => setFormData({...formData, leave_type: e.target.value})}
+                  onChange={(e) => {
+                    const newType = e.target.value;
+                    const newMaxDays = newType === 'ลาคลอด' ? 120 : 30;
+                    setFormData({...formData, leave_type: newType, max_days: newMaxDays});
+                  }}
                   className="w-full px-4 py-2.5 bg-white dark:bg-slate-950 text-[var(--text-main)] border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 outline-none"
                 >
                   {leaveTypes.length > 0 ? (

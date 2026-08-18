@@ -68,6 +68,7 @@ export default function ReportPage({ requests, users, agencies, departments, lea
         'ลำดับ': index + 1,
         'รหัสคำขอ': r.id,
         'พนักงาน': reqUser?.fullname || r.user_id,
+        'รหัสพนักงาน': reqUser?.employee_id || '',
         'ประเภท': r.leave_type,
         'วันที่เริ่ม': formatExcelDate(r.date_start),
         'วันที่สิ้นสุด': formatExcelDate(r.date_end),
@@ -198,8 +199,13 @@ export default function ReportPage({ requests, users, agencies, departments, lea
                             {r.id}
                           </span>
                         </div>
-                        <h3 className="font-bold text-[var(--text-main)] text-sm truncate">{reqUser?.fullname || r.user_id}</h3>
-                        <div className="text-xs text-[var(--text-muted)] truncate">{agencies?.find(a => a.id === reqUser?.agency_id)?.name || reqUser?.agency_id || 'SMT'} | {departments?.find(d => d.id === reqUser?.department_id)?.name || reqUser?.department_id || 'ทั่วไป'}</div>
+                        <div className="font-bold text-[var(--text-main)] text-sm">{reqUser?.fullname || r.user_id}</div>
+                        {reqUser?.employee_id && (
+                          <div className="flex items-center gap-1 mt-0.5 text-[var(--text-muted)] text-xs">
+                            รหัสพนักงาน: <span className="font-bold text-[var(--text-main)]">{reqUser.employee_id}</span>
+                          </div>
+                        )}
+                        <div className="text-xs text-[var(--text-muted)] mt-0.5 truncate">{agencies?.find(a => a.id === reqUser?.agency_id)?.name || reqUser?.agency_id || 'SMT'} | {departments?.find(d => d.id === reqUser?.department_id)?.name || reqUser?.department_id || 'ทั่วไป'}</div>
                       </div>
                     </div>
                     
@@ -307,7 +313,8 @@ export default function ReportPage({ requests, users, agencies, departments, lea
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800/50 text-[var(--text-main)] border-b border-slate-200 dark:border-[var(--card-border)]">
                 <th className="py-4 px-6 font-bold whitespace-nowrap">รหัสคำขอ</th>
-                <th className="py-4 px-6 font-bold">พนักงาน</th>
+                <th className="py-4 pr-6 pl-[88px] font-bold">พนักงาน</th>
+                <th className="py-4 px-6 font-bold text-center">รหัสพนักงาน</th>
                 <th className="py-4 px-6 font-bold text-center">ประเภท</th>
                 <th className="py-4 px-6 font-bold text-center">วันที่เริ่ม - สิ้นสุด</th>
                 <th className="py-4 px-6 font-bold text-center">จำนวน</th>
@@ -318,7 +325,7 @@ export default function ReportPage({ requests, users, agencies, departments, lea
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-[var(--card-border)]">
               {displayedRequests.length === 0 ? (
-                <tr><td colSpan="8" className="py-8 text-center text-[var(--text-muted)]">ไม่พบข้อมูล</td></tr>
+                <tr><td colSpan="9" className="py-8 text-center text-[var(--text-muted)]">ไม่พบข้อมูล</td></tr>
               ) : (
                 displayedRequests.map((r) => {
                   const reqUser = users.find(u => u.id === r.user_id);
@@ -333,6 +340,13 @@ export default function ReportPage({ requests, users, agencies, departments, lea
                             <div className="text-xs text-[var(--text-muted)] mt-0.5">{agencies?.find(a => a.id === reqUser?.agency_id)?.name || reqUser?.agency_id || 'SMT'} | {departments?.find(d => d.id === reqUser?.department_id)?.name || reqUser?.department_id || 'ทั่วไป'}</div>
                           </div>
                         </div>
+                      </td>
+                      <td className="py-4 px-6 text-center">
+                        {reqUser?.employee_id ? (
+                          <span className="text-[var(--text-main)] font-bold text-sm">{reqUser.employee_id}</span>
+                        ) : (
+                          <span className="text-slate-400">-</span>
+                        )}
                       </td>
                       <td className="py-4 px-6">
                         <div className="flex justify-center"><LeaveTypeBadge type={r.leave_type} /></div>
@@ -355,7 +369,7 @@ export default function ReportPage({ requests, users, agencies, departments, lea
               {displayedRequests.length > 0 && displayedRequests.length < itemsPerPage && (
                 Array.from({ length: itemsPerPage - displayedRequests.length }).map((_, i) => (
                   <tr key={`empty-row-${i}`} className="border-none pointer-events-none">
-                    <td className="py-4 px-6" colSpan="8">
+                    <td className="py-4 px-6" colSpan="9">
                       <div className="h-12 w-12 opacity-0"></div>
                     </td>
                   </tr>

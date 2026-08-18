@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { X, CheckCircle2, Clock, XCircle, FileText, User, Calendar, Activity } from 'lucide-react';
+import { X, CheckCircle2, Clock, XCircle, FileText, User, Calendar, Activity, Paperclip } from 'lucide-react';
 import LeaveTypeBadge, { getLeaveTypeMeta } from './ui/LeaveTypeBadge';
 import { supabase } from '../lib/supabase';
 
@@ -15,6 +15,7 @@ export default function LeaveDetailsModal({
   leaveTypes = [] 
 }) {
   const [approvalSteps, setApprovalSteps] = useState([]);
+  const [attachments, setAttachments] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -33,6 +34,23 @@ export default function LeaveDetailsModal({
       } else {
         setApprovalSteps([]);
       }
+      
+      const fetchAttachments = async () => {
+        const { data, error } = await supabase
+          .from('attachments')
+          .select('*')
+          .eq('request_id', request.id);
+        
+        if (!error && data) {
+          setAttachments(data);
+        } else {
+          setAttachments([]);
+        }
+      };
+      
+      fetchAttachments();
+    } else {
+      setAttachments([]);
     }
   }, [isOpen, request]);
 
@@ -108,22 +126,22 @@ export default function LeaveDetailsModal({
                     e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(targetUser?.fullname || request.user_id || 'User')}&background=random`;
                   }}
                 />
-                <h3 className="text-sm sm:text-base font-extrabold text-[var(--text-main)] truncate max-w-full">{targetUser?.fullname || request.user_id}</h3>
-                <p className="text-[10px] sm:text-xs text-[var(--text-muted)] truncate max-w-full">{agencies?.find(a => a?.id === targetUser?.agency_id)?.name || targetUser?.agency_id || 'ไม่ระบุสังกัด'} | {departments?.find(d => d?.id === targetUser?.department_id)?.name || targetUser?.department_id || 'ไม่ระบุฝ่าย'}</p>
+                <h3 className="text-sm sm:text-base md:text-lg font-extrabold text-[var(--text-main)] truncate max-w-full">{targetUser?.fullname || request.user_id}</h3>
+                <p className="text-[10px] sm:text-xs md:text-sm text-[var(--text-muted)] truncate max-w-full">{agencies?.find(a => a?.id === targetUser?.agency_id)?.name || targetUser?.agency_id || 'ไม่ระบุสังกัด'} | {departments?.find(d => d?.id === targetUser?.department_id)?.name || targetUser?.department_id || 'ไม่ระบุฝ่าย'}</p>
                 
                 {/* Status Badge */}
                 <div className="mt-3">
                   {request.status === 'Approved' ? (
-                    <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-blue-50 text-blue-600 border border-blue-100 flex items-center shadow-sm w-fit">
-                      <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> อนุมัติแล้ว
+                    <span className="px-3 py-1 rounded-full text-[11px] md:text-sm font-bold bg-blue-50 text-blue-600 border border-blue-100 flex items-center shadow-sm w-fit">
+                      <CheckCircle2 className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1" /> อนุมัติแล้ว
                     </span>
                   ) : request.status === 'Rejected' ? (
-                    <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-rose-50 text-rose-600 border border-rose-100 flex items-center shadow-sm w-fit">
-                      <XCircle className="w-3.5 h-3.5 mr-1" /> {request.reject_reason?.startsWith('ยกเลิกโดย') ? 'ยกเลิก' : 'ไม่อนุมัติ'}
+                    <span className="px-3 py-1 rounded-full text-[11px] md:text-sm font-bold bg-rose-50 text-rose-600 border border-rose-100 flex items-center shadow-sm w-fit">
+                      <XCircle className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1" /> {request.reject_reason?.startsWith('ยกเลิกโดย') ? 'ยกเลิก' : 'ไม่อนุมัติ'}
                     </span>
                   ) : (
-                    <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-600 border border-amber-100 flex items-center shadow-sm w-fit">
-                      <Clock className="w-3.5 h-3.5 mr-1" /> รออนุมัติ
+                    <span className="px-3 py-1 rounded-full text-[11px] md:text-sm font-bold bg-amber-50 text-amber-600 border border-amber-100 flex items-center shadow-sm w-fit">
+                      <Clock className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1" /> รออนุมัติ
                     </span>
                   )}
                 </div>
@@ -131,18 +149,18 @@ export default function LeaveDetailsModal({
 
               {/* Right col: Leave Details */}
               <div className="p-4 sm:p-6 flex flex-col justify-center border-l border-slate-100 dark:border-slate-800">
-                <div className="text-xs font-bold text-[var(--text-muted)] mb-1.5">ประเภทการลา</div>
+                <div className="text-xs md:text-sm font-bold text-[var(--text-muted)] mb-1.5">ประเภทการลา</div>
                 <div className="mb-5">
-                  <LeaveTypeBadge type={request.leave_type} size="md" />
+                  <LeaveTypeBadge type={request.leave_type} size="md" className="md:scale-110 origin-left" />
                 </div>
                 
-                <div className="text-xs font-bold text-[var(--text-muted)] mb-1">ช่วงเวลาที่ลา</div>
-                <div className="font-bold text-[var(--text-main)] text-sm">
+                <div className="text-xs md:text-sm font-bold text-[var(--text-muted)] mb-1">ช่วงเวลาที่ลา</div>
+                <div className="font-bold text-[var(--text-main)] text-sm md:text-base">
                   {request.date_start === request.date_end 
                     ? formatDate(request.date_start) 
                     : `${formatDate(request.date_start)} ถึง ${formatDate(request.date_end)}`}
                 </div>
-                <div className="text-xs text-[var(--text-muted)] mt-1 font-medium">
+                <div className="text-xs md:text-sm text-[var(--text-muted)] mt-1 font-medium">
                   จำนวน {request.leave_duration} วัน {request.leave_period === 'Morning' ? '(เช้า)' : request.leave_period === 'Afternoon' ? '(บ่าย)' : ''}
                 </div>
               </div>
@@ -153,13 +171,13 @@ export default function LeaveDetailsModal({
               {policy ? (
                 <>
                   <div className="flex justify-between items-end mb-3">
-                    <div className="text-sm font-bold text-[var(--text-main)]">โควตาวันลาคงเหลือ</div>
-                    <div className={`text-3xl font-black ${meta.iconColor}`}>{remaining} <span className="text-sm font-bold text-[var(--text-main)]">วัน</span></div>
+                    <div className="text-sm md:text-base font-bold text-[var(--text-main)]">โควตาวันลาคงเหลือ</div>
+                    <div className={`text-3xl md:text-4xl font-black ${meta.iconColor}`}>{remaining} <span className="text-sm md:text-base font-bold text-[var(--text-main)]">วัน</span></div>
                   </div>
-                  <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-3 mb-3 overflow-hidden shadow-inner">
-                    <div className={`h-3 rounded-full bg-gradient-to-r ${meta.bar} transition-all duration-500`} style={{ width: `${Math.min(percentage, 100)}%` }}></div>
+                  <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-3 md:h-4 mb-3 overflow-hidden shadow-inner">
+                    <div className={`h-3 md:h-4 rounded-full bg-gradient-to-r ${meta.bar} transition-all duration-500`} style={{ width: `${Math.min(percentage, 100)}%` }}></div>
                   </div>
-                  <div className="text-xs text-[var(--text-muted)] font-medium text-right">ใช้ไปแล้ว {used}/{quota} วัน ({percentage}%)</div>
+                  <div className="text-xs md:text-sm text-[var(--text-muted)] font-medium text-right">ใช้ไปแล้ว {used}/{quota} วัน ({percentage}%)</div>
                 </>
               ) : (
                 <div className="text-center text-[var(--text-muted)] text-sm font-medium opacity-60 py-2">ไม่มีข้อมูลโควตา</div>
@@ -168,15 +186,47 @@ export default function LeaveDetailsModal({
           </div>
 
           {/* Reason */}
-          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-[var(--card-border)] shadow-sm">
-            <div className="text-xs font-bold text-[var(--text-muted)] mb-1 uppercase tracking-wider">เหตุผลการลา / รายละเอียด</div>
-            <p className="text-sm text-[var(--text-main)] font-medium leading-relaxed">{request.description || '-'}</p>
+          <div className="p-4 sm:p-6 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-[var(--card-border)] shadow-sm">
+            <div className="text-xs md:text-sm font-bold text-[var(--text-muted)] mb-2 uppercase tracking-wider">เหตุผลการลา / รายละเอียด</div>
+            <p className="text-sm md:text-base text-[var(--text-main)] font-medium leading-relaxed">{request.description || '-'}</p>
           </div>
 
           {request.reject_reason && (
             <div className={`p-4 rounded-2xl border shadow-sm ${request.status === 'Rejected' ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800/50' : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/50'}`}>
               <div className={`text-xs font-bold mb-1 uppercase tracking-wider ${request.status === 'Rejected' ? 'text-rose-600 dark:text-rose-400' : 'text-blue-600 dark:text-blue-400'}`}>เหตุผล</div>
               <p className={`text-sm font-medium leading-relaxed ${request.status === 'Rejected' ? 'text-rose-700 dark:text-rose-300' : 'text-blue-700 dark:text-blue-300'}`}>{request.reject_reason}</p>
+            </div>
+          )}
+
+          {/* Attachments */}
+          {attachments.length > 0 && (
+            <div className="p-4 sm:p-6 rounded-2xl bg-white dark:bg-slate-800/50 border border-[var(--card-border)] shadow-sm">
+              <div className="text-xs md:text-sm font-bold text-[var(--text-muted)] mb-3 uppercase tracking-wider flex items-center">
+                <Paperclip className="w-4 h-4 mr-1.5" /> เอกสารแนบ
+              </div>
+              <div className="flex flex-col gap-2">
+                {attachments.map((file, idx) => (
+                  <a
+                    key={file.id || idx}
+                    href={file.file_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center p-3 bg-slate-50 dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl border border-slate-200 dark:border-slate-600 transition-colors"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/50 text-blue-600 flex items-center justify-center mr-3 shrink-0">
+                      <FileText className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-semibold text-[var(--text-main)] truncate">
+                        {file.file_name || file.id}
+                      </div>
+                      <div className="text-xs text-[var(--text-muted)] mt-0.5">
+                        คลิกเพื่อดูเอกสาร
+                      </div>
+                    </div>
+                  </a>
+                ))}
+              </div>
             </div>
           )}
 

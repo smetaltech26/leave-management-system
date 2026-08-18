@@ -128,7 +128,7 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
                     </ul>
                   </div>
                   <p>กรุณาเข้าสู่ระบบเพื่อตรวจสอบและพิจารณาอนุมัติคำขอ:</p>
-                  <p><a href="http://localhost:3000" style="display: inline-block; background-color: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">เข้าสู่ระบบ</a></p>
+                  <p><a href="https://smetaltech26.github.io/leave-management-system/" style="display: inline-block; background-color: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">เข้าสู่ระบบ</a></p>
                   <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
                   <p style="font-size: 12px; color: #64748b;"><i>นี่คืออีเมลอัตโนมัติจากระบบ Leave Management System กรุณาอย่าตอบกลับ</i></p>
                 </div>
@@ -160,11 +160,11 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
                   <ul style="list-style: none; padding: 0; margin: 0;">
                     <li style="margin-bottom: 8px;"><strong>รหัสคำขอ:</strong> ${selectedRequest.id}</li>
                     <li style="margin-bottom: 8px;"><strong>ประเภทการลา:</strong> ${selectedRequest.leave_type}</li>
-                    <li style="margin-bottom: 8px;"><strong>วันที่ลา:</strong> ${selectedRequest.date_start.split('-').reverse().join('-')} ถึง ${selectedRequest.date_end.split('-').reverse().join('-')}</li>
-                    <li style="margin-bottom: 0;"><strong>จำนวนวัน:</strong> ${selectedRequest.leave_duration} วัน</li>
+                      <li style="margin-bottom: 8px;"><strong>วันที่เริ่ม:</strong> ${selectedRequest.date_start.split('-').reverse().join('-')} <strong>ถึง</strong> ${selectedRequest.date_end.split('-').reverse().join('-')}</li>
+                      <li style="margin-bottom: 8px;"><strong>จำนวนวัน:</strong> ${selectedRequest.leave_duration} วัน ${selectedRequest.leave_period === 'Morning' ? '(เช้า)' : selectedRequest.leave_period === 'Afternoon' ? '(บ่าย)' : ''}</li>
                   </ul>
                 </div>
-                <p><a href="http://localhost:3000" style="display: inline-block; background-color: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">ตรวจสอบประวัติการลาของคุณ</a></p>
+                <p><a href="https://smetaltech26.github.io/leave-management-system/" style="display: inline-block; background-color: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">ตรวจสอบประวัติการลาของคุณ</a></p>
                 <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
                 <p style="font-size: 12px; color: #64748b;"><i>นี่คืออีเมลอัตโนมัติจากระบบ Leave Management System กรุณาอย่าตอบกลับ</i></p>
               </div>
@@ -205,7 +205,7 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
                 </ul>
               </div>
               <p>หากมีข้อสงสัย กรุณาติดต่อหัวหน้างานหรือฝ่ายบุคคลค่ะ</p>
-              <p><a href="http://localhost:3000" style="display: inline-block; background-color: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">เข้าสู่ระบบ</a></p>
+              <p><a href="https://smetaltech26.github.io/leave-management-system/" style="display: inline-block; background-color: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">เข้าสู่ระบบ</a></p>
               <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
               <p style="font-size: 12px; color: #64748b;"><i>นี่คืออีเมลอัตโนมัติจากระบบ Leave Management System กรุณาอย่าตอบกลับ</i></p>
             </div>
@@ -265,7 +265,7 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
             onClick={() => setActiveSubTab('pending')}
             className={`px-4 py-2 text-xs font-semibold rounded-xl transition-all flex items-center space-x-2 ${
               activeSubTab === 'pending'
-                ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25'
+                ? 'bg-blue-500 dark:bg-blue-900/30 text-white dark:text-blue-400 shadow-lg shadow-blue-500/25 dark:shadow-none'
                 : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
             }`}
           >
@@ -281,7 +281,7 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
             onClick={() => setActiveSubTab('completed')}
             className={`px-4 py-2 text-xs font-semibold rounded-xl transition-all ${
               activeSubTab === 'completed'
-                ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25'
+                ? 'bg-blue-500 dark:bg-blue-900/30 text-white dark:text-blue-400 shadow-lg shadow-blue-500/25 dark:shadow-none'
                 : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
             }`}
           >
@@ -319,12 +319,14 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-2">
-                    <LeaveTypeBadge type={req.leave_type} />
-                    <span className="px-2 py-0.5 text-xs font-semibold rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                      {req.leave_duration} วัน
-                    </span>
-                    <span className={`px-2.5 py-1 text-xs font-semibold rounded-lg border ${
+                  <div className="flex flex-col items-start sm:items-end gap-2">
+                    <div className="flex items-center space-x-2">
+                      <LeaveTypeBadge type={req.leave_type} />
+                      <span className="whitespace-nowrap shrink-0 px-2 py-0.5 text-xs font-semibold rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                        {req.leave_duration} วัน {req.leave_period === 'Morning' ? '(เช้า)' : req.leave_period === 'Afternoon' ? '(บ่าย)' : ''}
+                      </span>
+                    </div>
+                    <span className={`whitespace-nowrap px-2.5 py-1 text-xs font-semibold rounded-lg border shrink-0 ${
                       activeSubTab === 'completed'
                         ? req.status === 'Rejected'
                           ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
@@ -503,10 +505,14 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
                   <div className="text-xs text-[var(--text-muted)] mt-0.5 mb-1">
                     {agencies?.find(a => a.id === users.find(u => u.id === selectedRequest.user_id)?.agency_id)?.name || users.find(u => u.id === selectedRequest.user_id)?.agency_id || 'SMT'} • {departments?.find(d => d.id === users.find(u => u.id === selectedRequest.user_id)?.department_id)?.name || users.find(u => u.id === selectedRequest.user_id)?.department_id || 'ทั่วไป'}
                   </div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[var(--text-muted)] text-xs">ประเภท:</span>
-                    <LeaveTypeBadge type={selectedRequest.leave_type} />
-                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">({selectedRequest.leave_duration} วัน)</span>
+                  <div className="flex flex-wrap items-center gap-2 mt-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[var(--text-muted)] text-xs shrink-0">ประเภท:</span>
+                      <LeaveTypeBadge type={selectedRequest.leave_type} />
+                    </div>
+                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap mt-1 sm:mt-0">
+                      ({selectedRequest.leave_duration} วัน{selectedRequest.leave_period === 'Morning' ? ' - เช้า' : selectedRequest.leave_period === 'Afternoon' ? ' - บ่าย' : ''})
+                    </span>
                   </div>
                   <div className="text-[var(--text-muted)] mt-0.5">
                     ช่วงเวลาที่ลา: <span className="font-medium text-[var(--text-main)]">{selectedRequest.date_start ? selectedRequest.date_start.split('-').reverse().join('-') : ''} ถึง {selectedRequest.date_end ? selectedRequest.date_end.split('-').reverse().join('-') : ''}</span>

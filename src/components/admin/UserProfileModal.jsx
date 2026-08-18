@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, Plane, BriefcaseMedical, Briefcase, HelpCircle, CalendarClock, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
+import { getLeaveTypeMeta } from '../ui/LeaveTypeBadge';
 
 export default function UserProfileModal({ user, userPolicies, requests, agencies = [], departments = [], onClose, leaveTypes = [] }) {
   if (!user) return null;
@@ -69,31 +70,33 @@ export default function UserProfileModal({ user, userPolicies, requests, agencie
         <div className="p-6 flex-1 min-h-0 overflow-y-auto space-y-6 custom-scrollbar">
           
           {/* Quota Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {leaveTypes.length > 0 ? (
               leaveTypes.map(lt => {
                 const policy = getPolicy(lt.name);
                 const bgColors = lt.bg.replace('bg-', '');
                 const textColors = lt.color.replace('text-', '');
+                const meta = getLeaveTypeMeta(lt.name);
+                const Icon = meta.icon;
                 
                 return (
-                  <div key={lt.id} className={`border border-${bgColors}/30 rounded-2xl p-4 bg-${bgColors}/5`}>
+                  <div key={lt.id} className={`border border-${bgColors}/30 rounded-2xl p-3 sm:p-4 bg-${bgColors}/5`}>
                     <div className="flex justify-between items-start">
-                      <div className={`p-2.5 ${lt.bg} text-white rounded-xl shadow-md shadow-${bgColors}/20`}>
-                        <HelpCircle className="w-5 h-5" />
+                      <div className={`p-2 sm:p-2.5 ${lt.bg} text-white rounded-xl shadow-md shadow-${bgColors}/20`}>
+                        <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
                       </div>
                       <div className="text-right">
-                        <div className={`text-2xl font-bold ${lt.color}`}>{policy.remaining_days || 0}</div>
-                        <div className="text-xs text-[var(--text-muted)]">คงเหลือ</div>
+                        <div className={`text-xl sm:text-2xl font-bold ${lt.color}`}>{policy.remaining_days || 0}</div>
+                        <div className="text-[10px] sm:text-xs text-[var(--text-muted)]">คงเหลือ</div>
                       </div>
                     </div>
-                    <div className="mt-4">
-                      <div className="font-bold text-[var(--text-main)]">{lt.name}</div>
-                      <div className="text-xs text-[var(--text-muted)] mb-2">ใช้ไป {policy.used_days || 0}/{policy.max_days || 0} วัน</div>
+                    <div className="mt-3 sm:mt-4">
+                      <div className="text-xs sm:text-sm font-bold text-[var(--text-main)] truncate" title={lt.name}>{lt.name}</div>
+                      <div className="text-[10px] sm:text-xs text-[var(--text-muted)] mb-1.5 sm:mb-2 truncate">ใช้ไป {policy.used_days || 0}/{policy.max_days || 0} วัน</div>
                       <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                         <div className={`h-full ${lt.bg} rounded-full`} style={{ width: `${getPercent(policy.used_days, policy.max_days)}%` }}></div>
                       </div>
-                      <div className="text-right text-[10px] text-[var(--text-muted)] mt-1">{getPercent(policy.used_days, policy.max_days)}% ใช้ไปแล้ว</div>
+                      <div className="text-right text-[9px] sm:text-[10px] text-[var(--text-muted)] mt-1">{getPercent(policy.used_days, policy.max_days)}% ใช้ไปแล้ว</div>
                     </div>
                   </div>
                 );

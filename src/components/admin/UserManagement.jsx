@@ -158,41 +158,41 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-blue-500 rounded-2xl p-4 text-white shadow-lg shadow-blue-500/20 flex items-center justify-between">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-blue-500 dark:bg-slate-800/80 dark:border dark:border-blue-500/30 rounded-2xl p-3 sm:p-4 text-white dark:text-blue-400 shadow-lg shadow-blue-500/20 dark:shadow-none flex items-center justify-between">
           <div>
-            <div className="text-sm font-medium text-blue-100">ผู้ใช้งาน</div>
-            <div className="text-3xl font-bold mt-1">{totalUsers}</div>
+            <div className="text-[10px] sm:text-sm font-medium text-blue-100 dark:text-blue-300">ผู้ใช้งาน</div>
+            <div className="text-2xl sm:text-3xl font-bold mt-0.5 sm:mt-1">{totalUsers}</div>
           </div>
-          <div className="p-3 bg-white/20 rounded-xl">
-            <User className="w-6 h-6 text-white" />
+          <div className="p-2 sm:p-3 bg-white/20 dark:bg-blue-500/20 rounded-xl">
+            <User className="w-5 h-5 sm:w-6 sm:h-6 text-white dark:text-blue-400" />
           </div>
         </div>
-        <div className="bg-emerald-500 rounded-2xl p-4 text-white shadow-lg shadow-emerald-500/20 flex items-center justify-between">
+        <div className="bg-emerald-500 dark:bg-slate-800/80 dark:border dark:border-emerald-500/30 rounded-2xl p-3 sm:p-4 text-white dark:text-emerald-400 shadow-lg shadow-emerald-500/20 dark:shadow-none flex items-center justify-between">
           <div>
-            <div className="text-sm font-medium text-emerald-100">ผู้ใช้งาน(ทั่วไป)</div>
-            <div className="text-3xl font-bold mt-1">{normalUsers}</div>
+            <div className="text-[10px] sm:text-sm font-medium text-emerald-100 dark:text-emerald-300">ผู้ใช้งาน(ทั่วไป)</div>
+            <div className="text-2xl sm:text-3xl font-bold mt-0.5 sm:mt-1">{normalUsers}</div>
           </div>
-          <div className="p-3 bg-white/20 rounded-xl">
-            <Users className="w-6 h-6 text-white" />
+          <div className="p-2 sm:p-3 bg-white/20 dark:bg-emerald-500/20 rounded-xl">
+            <Users className="w-5 h-5 sm:w-6 sm:h-6 text-white dark:text-emerald-400" />
           </div>
         </div>
-        <div className="bg-amber-500 rounded-2xl p-4 text-white shadow-lg shadow-amber-500/20 flex items-center justify-between">
+        <div className="bg-amber-500 dark:bg-slate-800/80 dark:border dark:border-amber-500/30 rounded-2xl p-3 sm:p-4 text-white dark:text-amber-400 shadow-lg shadow-amber-500/20 dark:shadow-none flex items-center justify-between">
           <div>
-            <div className="text-sm font-medium text-amber-100">ผู้ใช้งาน(ระดับสูง)</div>
-            <div className="text-3xl font-bold mt-1">{highLevelUsers}</div>
+            <div className="text-[10px] sm:text-sm font-medium text-amber-100 dark:text-amber-300">ผู้ใช้งาน(ระดับสูง)</div>
+            <div className="text-2xl sm:text-3xl font-bold mt-0.5 sm:mt-1">{highLevelUsers}</div>
           </div>
-          <div className="p-3 bg-white/20 rounded-xl">
-            <UserCheck className="w-6 h-6 text-white" />
+          <div className="p-2 sm:p-3 bg-white/20 dark:bg-amber-500/20 rounded-xl">
+            <UserCheck className="w-5 h-5 sm:w-6 sm:h-6 text-white dark:text-amber-400" />
           </div>
         </div>
-        <div className="bg-rose-500 rounded-2xl p-4 text-white shadow-lg shadow-rose-500/20 flex items-center justify-between">
+        <div className="bg-rose-500 dark:bg-slate-800/80 dark:border dark:border-rose-500/30 rounded-2xl p-3 sm:p-4 text-white dark:text-rose-400 shadow-lg shadow-rose-500/20 dark:shadow-none flex items-center justify-between">
           <div>
-            <div className="text-sm font-medium text-rose-100">รออนุมัติ</div>
-            <div className="text-3xl font-bold mt-1">{pendingCount}</div>
+            <div className="text-[10px] sm:text-sm font-medium text-rose-100 dark:text-rose-300">รออนุมัติ</div>
+            <div className="text-2xl sm:text-3xl font-bold mt-0.5 sm:mt-1">{pendingCount}</div>
           </div>
-          <div className="p-3 bg-white/20 rounded-xl">
-            <Hourglass className="w-6 h-6 text-white" />
+          <div className="p-2 sm:p-3 bg-white/20 dark:bg-rose-500/20 rounded-xl">
+            <Hourglass className="w-5 h-5 sm:w-6 sm:h-6 text-white dark:text-rose-400" />
           </div>
         </div>
       </div>
@@ -207,7 +207,7 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
         </div>
         <button
           onClick={() => handleOpenModal()}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl flex items-center gap-2 font-semibold shadow-lg shadow-blue-500/30 transition-all transform hover:scale-105"
+          className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600/80 dark:hover:bg-blue-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 font-semibold shadow-lg shadow-blue-500/30 dark:shadow-none transition-all transform hover:scale-105"
         >
           <Plus className="w-4 h-4" />
           เพิ่มพนักงานใหม่
@@ -234,8 +234,9 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800/50 text-xs uppercase tracking-wider text-[var(--text-muted)] border-b border-slate-200 dark:border-[var(--card-border)]">
-                <th className="p-4 font-bold">รหัส</th>
-                <th className="p-4 font-bold">พนักงาน</th>
+                <th className="p-4 font-bold">UID</th>
+                <th className="py-4 pr-4 pl-[84px] font-bold">พนักงาน</th>
+                <th className="p-4 font-bold text-center">รหัสพนักงาน</th>
                 <th className="p-4 font-bold">สิทธิ์ (Role)</th>
                 <th className="p-4 font-bold">หน่วยงาน / ฝ่าย</th>
                 <th className="p-4 font-bold text-center">จัดการ</th>
@@ -244,23 +245,22 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
             <tbody className="divide-y divide-slate-100 dark:divide-[var(--card-border)] text-sm">
               {currentUsers.map(user => (
                 <tr key={user.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
-                  <td className="p-4 text-[var(--text-muted)] font-medium">{user.id}</td>
+                  <td className="p-4 text-[var(--text-muted)] font-medium text-xs">{user.id}</td>
                   <td className="p-4">
                     <div className="flex items-center gap-3">
                       <img src={user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullname)}&background=random`} alt="Avatar" className="w-14 h-14 rounded-xl object-cover shrink-0" />
                       <div>
                         <div className="font-bold text-[var(--text-main)] text-sm">{user.fullname}</div>
-                        <div className="text-xs text-[var(--text-muted)] flex items-center gap-2 mt-1">
-                          <span>{user.id}</span>
-                          {user.employee_id && (
-                            <>
-                              <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700"></span>
-                              <span>ID: {user.employee_id}</span>
-                            </>
-                          )}
-                        </div>
+                        <div className="text-xs text-[var(--text-muted)] mt-0.5 truncate max-w-[200px]">{user.email || '-'}</div>
                       </div>
                     </div>
+                  </td>
+                  <td className="p-4 text-center">
+                    {user.employee_id ? (
+                      <span className="text-[var(--text-main)] font-bold text-sm">{user.employee_id}</span>
+                    ) : (
+                      <span className="text-slate-400">-</span>
+                    )}
                   </td>
                   <td className="p-4">
                     <span className={`px-2.5 py-1 text-[11px] font-bold rounded-lg border inline-block ${
@@ -335,27 +335,32 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
         )}
       </div>
 
-      {/* Card List (Mobile) */}
-      <div 
-        className="md:hidden space-y-4"
-        style={{ overflowAnchor: 'none' }}
-      >
+      {/* Mobile View (Cards) */}
+      <div className="md:hidden space-y-4">
         {currentUsers.map(user => (
-          <div key={user.id} className="bg-white dark:bg-[var(--card-bg)] p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-[var(--card-border)]">
-            <div className="flex items-center gap-3 mb-4">
-              <img src={user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullname)}&background=random`} alt="Avatar" className="w-14 h-14 rounded-xl object-cover shrink-0" />
+          <div key={user.id} className="bg-white dark:bg-[var(--card-bg)] rounded-2xl p-4 shadow-sm border border-slate-200 dark:border-[var(--card-border)] flex flex-col relative overflow-hidden">
+            <div className="absolute top-0 right-0 bg-slate-50 dark:bg-slate-800/80 px-3 py-1 text-[10px] font-bold text-[var(--text-muted)] rounded-bl-xl border-b border-l border-slate-200 dark:border-[var(--card-border)]">
+              {user.id}
+            </div>
+            
+            <div className="flex items-center gap-4 mb-4 mt-2">
+              <img src={user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullname)}&background=random`} alt="Avatar" className="w-14 h-14 rounded-xl object-cover shrink-0 border-2 border-slate-100 dark:border-slate-800 shadow-sm" />
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-[var(--text-main)] truncate">{user.fullname}</p>
-                <p className="text-xs text-[var(--text-muted)] font-medium mb-1">{user.id}</p>
-                <span className={`px-2 py-0.5 text-[10px] font-bold rounded-md border inline-block ${
-                      user.role === 'SuperAdmin' ? 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-500/20 dark:text-purple-300' :
-                      user.role === 'Admin' ? 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-500/20 dark:text-rose-300' :
-                      user.role === 'SuperUser' ? 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/20 dark:text-amber-300' :
-                      user.role === 'Manager' ? 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/20 dark:text-amber-300' :
-                      'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-700 dark:text-slate-300'
-                    }`}>
-                      {user.role}
-                </span>
+                <div className="font-bold text-[var(--text-main)] text-sm truncate">{user.fullname}</div>
+                <div className="flex items-center gap-1 mt-1 text-[var(--text-muted)] text-xs">
+                  รหัสพนักงาน: <span className="font-bold text-[var(--text-main)]">{user.employee_id || '-'}</span>
+                </div>
+                <div className="mt-1">
+                  <span className={`px-2 py-0.5 text-[10px] font-bold rounded-md border inline-block ${
+                        user.role === 'SuperAdmin' ? 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-500/20 dark:text-purple-300' :
+                        user.role === 'Admin' ? 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-500/20 dark:text-rose-300' :
+                        user.role === 'SuperUser' ? 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/20 dark:text-amber-300' :
+                        user.role === 'Manager' ? 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/20 dark:text-amber-300' :
+                        'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-700 dark:text-slate-300'
+                      }`}>
+                        {user.role}
+                  </span>
+                </div>
               </div>
             </div>
             
@@ -442,9 +447,10 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-[var(--text-muted)] mb-1.5 uppercase">ID (รหัสพนักงาน)</label>
+                  <label className="block text-xs font-bold text-[var(--text-muted)] mb-1.5 uppercase">ID (รหัสพนักงาน) <span className="text-rose-500">*</span></label>
                   <input 
                     type="text" 
+                    required
                     value={formData.employee_id} 
                     onChange={(e) => setFormData({...formData, employee_id: e.target.value})}
                     placeholder="เช่น 150, 272"
@@ -460,8 +466,7 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
                   >
                     <option value="Employee">Employee (พนักงาน)</option>
                     <option value="SuperUser">SuperUser (หัวหน้า/รอง)</option>
-                    <option value="Manager">Manager (ผู้จัดการ)</option>
-                    <option value="Admin">Admin (บุคคล)</option>
+                    <option value="Admin">Admin / Manager (บุคคล/ผู้จัดการ)</option>
                     <option value="SuperAdmin">SuperAdmin</option>
                   </select>
                 </div>
@@ -480,7 +485,7 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[var(--text-muted)] mb-1.5 uppercase">รูปโปรไฟล์ (Avatar) <span className="text-[var(--text-muted)] font-normal ml-1">(ทางเลือก)</span></label>
+                <label className="block text-xs font-bold text-[var(--text-muted)] mb-1.5 uppercase">รูปโปรไฟล์ (Avatar)</label>
                 <div className="flex items-center gap-4">
                   <div className="shrink-0 w-16 h-16 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 border-2 border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center">
                     {formData.avatar_url ? (
@@ -534,28 +539,34 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-[var(--text-muted)] mb-1.5 uppercase">ฝ่าย (Agency)</label>
-                  <input 
-                    type="text" 
+                  <select 
                     value={formData.agency} 
                     onChange={(e) => setFormData({...formData, agency: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-950 text-[var(--text-main)] border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none" 
-                    placeholder="เช่น AGC-014"
-                  />
+                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-950 text-[var(--text-main)] border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  >
+                    <option value="">-- เลือกฝ่าย --</option>
+                    {agencies?.map(a => (
+                      <option key={a.id} value={a.id}>{a.name}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-[var(--text-muted)] mb-1.5 uppercase">แผนก (Department)</label>
-                  <input 
-                    type="text" 
+                  <select 
                     value={formData.department} 
                     onChange={(e) => setFormData({...formData, department: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-950 text-[var(--text-main)] border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none" 
-                    placeholder="เช่น DPM-002"
-                  />
+                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-950 text-[var(--text-main)] border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  >
+                    <option value="">-- เลือกแผนก --</option>
+                    {departments?.map(d => (
+                      <option key={d.id} value={d.id}>{d.name}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[var(--text-muted)] mb-1.5 uppercase">LINE User ID (แจ้งเตือน 1:1)</label>
+                <label className="block text-xs font-bold text-[var(--text-muted)] mb-1.5 uppercase">LINE User ID (แจ้งเตือน 1:1) <span className="font-normal text-[10px] normal-case">(ทางเลือก)</span></label>
                 <input 
                   type="text" 
                   value={formData.line_user_id} 

@@ -117,13 +117,40 @@ export const createLeaveRequest = async (requestData, approvers, attachments) =>
 
   // 3. Insert Attachments
   if (attachments && attachments.length > 0) {
-    const attToInsert = attachments.map(att => ({
-      id: att.id,
-      request_id: requestData.id,
-      file_url: att.file_url,
-      file_name: att.file_name,
-      uploaded_by: requestData.user_id
-    }));
+    const attToInsert = [];
+    for (const att of attachments) {
+      let finalFileUrl = att.file_url;
+      
+      // Upload to Supabase Storage if there's a raw file
+      if (att.raw_file) {
+        const fileExt = att.raw_file.name.split('.').pop() || 'png';
+        const filePath = `${requestData.id}/${att.id}.${fileExt}`;
+        
+        // We assume 'attachments' bucket exists and is public
+        const { error: uploadError } = await supabase.storage
+          .from('attachments')
+          .upload(filePath, att.raw_file, {
+            cacheControl: '3600',
+            upsert: true
+          });
+          
+        if (!uploadError) {
+          const { data } = supabase.storage.from('attachments').getPublicUrl(filePath);
+          finalFileUrl = data.publicUrl;
+        } else {
+          console.error("Upload file error:", uploadError);
+        }
+      }
+
+      attToInsert.push({
+        id: att.id,
+        request_id: requestData.id,
+        file_url: finalFileUrl,
+        file_name: att.file_name,
+        uploaded_by: requestData.user_id
+      });
+    }
+
     const { error: attError } = await supabase.from('attachments').insert(attToInsert);
     if (attError) throw attError;
   }

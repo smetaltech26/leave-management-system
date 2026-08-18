@@ -159,7 +159,7 @@ export default function LeaveTypeBadge({ type, className = '', showIcon = true, 
           <Icon className={`${iconSizes[size] || iconSizes.md} ${meta.iconColor}`} />
         </div>
       )}
-      <span className={`font-semibold text-slate-800 dark:text-slate-200 ${textSizes[size] || textSizes.md}`}>
+      <span className={`font-semibold text-slate-800 dark:text-slate-200 whitespace-nowrap ${textSizes[size] || textSizes.md}`}>
         {type || meta.name}
       </span>
     </div>

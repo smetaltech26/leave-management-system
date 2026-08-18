@@ -112,7 +112,8 @@ export default function LeaveFormModal({
 
   // หาโควตาจาก userPolicies หรือใช้ค่าเริ่มต้น
   const currentPolicy = userPolicies.find(p => p.user_id === currentUser?.id && p.leave_type === leaveType);
-  const maxDays = currentPolicy ? currentPolicy.max_days : 30; // ดีฟอลต์ให้ 30 วันถ้ายังไม่มีในระบบ
+  const defaultMaxDays = leaveType === 'ลาคลอด' ? 120 : 30;
+  const maxDays = currentPolicy ? currentPolicy.max_days : defaultMaxDays; // ดีฟอลต์ให้ 120 หรือ 30 วันถ้ายังไม่มีในระบบ
 
   // คำนวณวันลาที่ใช้ไปสดๆ จากคำขอที่มีอยู่แล้ว
   const dynamicUsedDays = requests
@@ -202,8 +203,14 @@ export default function LeaveFormModal({
       });
     }
 
-    const attachments = filePreview ? [
-      { id: 'FILE-' + Math.floor(1000 + Math.random() * 9000), file_name: file?.name || 'เอกสารแนบ.jpg', file_url: filePreview }
+    // Keep the file object to be uploaded by App.jsx
+    const attachments = file ? [
+      { 
+        id: 'FILE-' + Math.floor(1000 + Math.random() * 9000), 
+        file_name: file.name || 'เอกสารแนบ', 
+        file_url: filePreview, // Temporary preview URL
+        raw_file: file // <--- Pass the raw file object
+      }
     ] : [];
 
     const newRequest = {
@@ -270,7 +277,7 @@ export default function LeaveFormModal({
                   </ul>
                 </div>
                 <p>กรุณาเข้าสู่ระบบเพื่อตรวจสอบและพิจารณาอนุมัติคำขอ:</p>
-                <p><a href="http://localhost:3000" style="display: inline-block; background-color: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">เข้าสู่ระบบ</a></p>
+                <p><a href="https://smetaltech26.github.io/leave-management-system/" style="display: inline-block; background-color: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">เข้าสู่ระบบ</a></p>
                 <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
                 <p style="font-size: 12px; color: #64748b;"><i>นี่คืออีเมลอัตโนมัติจากระบบ Leave Management System กรุณาอย่าตอบกลับ</i></p>
               </div>
@@ -480,7 +487,7 @@ export default function LeaveFormModal({
             <button
               type="button"
               onClick={() => setShowApproverModal(true)}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-colors mb-2 flex items-center space-x-2 shadow-sm"
+              className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-400 dark:border dark:border-indigo-500/30 dark:hover:bg-indigo-500/30 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-colors mb-2 flex items-center space-x-2 shadow-sm dark:shadow-none"
             >
               <UserCheck className="w-4 h-4" />
               <span>เลือกผู้อนุมัติ</span>
@@ -539,7 +546,7 @@ export default function LeaveFormModal({
           <button
             type="button"
             onClick={onClose}
-            className="px-6 py-2.5 rounded-xl text-sm font-bold bg-rose-500 hover:bg-rose-600 text-white transition-colors"
+            className="px-6 py-2.5 rounded-xl text-sm font-bold bg-rose-500 hover:bg-rose-600 text-white dark:bg-transparent dark:text-rose-500 dark:border dark:border-rose-500/50 dark:hover:bg-rose-500/10 transition-colors"
           >
             ยกเลิก
           </button>
@@ -548,7 +555,7 @@ export default function LeaveFormModal({
             type="submit"
             form="leave-form"
             disabled={isSubmitting}
-            className="px-6 py-2.5 rounded-xl text-sm font-bold bg-emerald-500 hover:bg-emerald-600 text-white transition-colors shadow-lg shadow-emerald-500/30 flex items-center space-x-2"
+            className="px-6 py-2.5 rounded-xl text-sm font-bold bg-emerald-500 hover:bg-emerald-600 text-white transition-colors shadow-lg shadow-emerald-500/30 dark:shadow-none dark:bg-emerald-600/80 dark:hover:bg-emerald-600 flex items-center space-x-2"
           >
             {isSubmitting ? <span>กำลังส่งข้อมูล...</span> : <span>ส่งคำขออนุมัติ</span>}
           </button>
@@ -672,7 +679,7 @@ export default function LeaveFormModal({
               <button
                 type="button"
                 onClick={() => setShowApproverModal(false)}
-                className="px-6 py-2.5 rounded-xl text-sm font-bold bg-rose-500 hover:bg-rose-600 text-white transition-colors"
+                className="px-6 py-2.5 rounded-xl text-sm font-bold bg-rose-500 hover:bg-rose-600 text-white dark:bg-transparent dark:text-rose-500 dark:border dark:border-rose-500/50 dark:hover:bg-rose-500/10 transition-colors"
               >
                 ยกเลิก
               </button>
@@ -680,7 +687,7 @@ export default function LeaveFormModal({
                 type="button"
                 disabled={selectedApproversCount !== 3}
                 onClick={() => setShowApproverModal(false)}
-                className="px-6 py-2.5 rounded-xl text-sm font-bold bg-emerald-500 hover:bg-emerald-600 text-white transition-colors shadow-lg shadow-emerald-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2.5 rounded-xl text-sm font-bold bg-emerald-500 hover:bg-emerald-600 text-white transition-colors shadow-lg shadow-emerald-500/30 dark:shadow-none dark:bg-emerald-600/80 dark:hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 ยืนยัน
               </button>

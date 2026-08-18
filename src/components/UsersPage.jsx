@@ -2,7 +2,7 @@ import React from 'react';
 import UserManagement from './admin/UserManagement';
 import { MessageSquare } from 'lucide-react';
 
-export default function UsersPage({ users, setUsers, pendingCount, userPolicies, requests, agencies, departments }) {
+export default function UsersPage({ users, setUsers, pendingCount, userPolicies, requests, agencies, departments, leaveTypes }) {
   return (
     <div className="space-y-6">
       
@@ -17,7 +17,7 @@ export default function UsersPage({ users, setUsers, pendingCount, userPolicies,
         </div>
       </div>
 
-      <UserManagement users={users} setUsers={setUsers} pendingCount={pendingCount} userPolicies={userPolicies} requests={requests} agencies={agencies} departments={departments} />
+      <UserManagement users={users} setUsers={setUsers} pendingCount={pendingCount} userPolicies={userPolicies} requests={requests} agencies={agencies} departments={departments} leaveTypes={leaveTypes} />
     </div>
   );
 }

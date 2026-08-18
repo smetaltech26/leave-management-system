@@ -198,30 +198,9 @@ export default function LeaveTypeManagement({ leaveTypes, setLeaveTypes }) {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-[var(--text-main)] mb-3">เลือกสีป้ายกำกับ (Badge)</label>
-                  <div className="grid grid-cols-5 gap-3">
-                    {colors.map(c => (
-                      <button
-                        key={c.label}
-                        type="button"
-                        onClick={() => setFormData({ ...formData, color: c.color, bg: c.bg })}
-                        className={`aspect-square rounded-xl flex items-center justify-center transition-all duration-200 ${c.bg} bg-opacity-20 border-2 ${
-                          formData.bg === c.bg ? `border-current ${c.color} scale-110 shadow-sm` : 'border-transparent hover:scale-105'
-                        }`}
-                        title={c.label}
-                      >
-                        <div className={`w-4 h-4 rounded-full ${c.bg}`}></div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                
                 <div className="mt-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex flex-col items-center gap-2">
-                  <span className="text-xs text-[var(--text-muted)] font-medium">ตัวอย่างป้ายกำกับ</span>
-                  <span className={`inline-flex px-3 py-1 rounded-full text-sm font-bold tracking-wide uppercase ${formData.bg} ${formData.color} bg-opacity-10 border border-current/20`}>
-                    {formData.name || 'ตัวอย่าง'}
-                  </span>
+                  <span className="text-xs text-[var(--text-muted)] font-medium">ตัวอย่างไอคอนที่จะแสดง</span>
+                  <LeaveTypeBadge type={formData.name || 'ตัวอย่าง'} size="md" />
                 </div>
               </form>
             </div>

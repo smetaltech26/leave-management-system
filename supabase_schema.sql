@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS public.users (
     approver_step3_id VARCHAR(50) REFERENCES public.users(id) ON DELETE SET NULL,
     line_user_id VARCHAR(100), -- LINE User ID สำหรับแจ้งเตือนแบบ 1:1 (e.g. 'U1234567890abcdef...')
     avatar_url TEXT,
+    employee_id TEXT, -- รหัสพนักงาน (เช่น 160, 272, 288)
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Calendar, Clock, CheckCircle2, XCircle, PlusCircle, Sparkles, Send, ShieldCheck, HeartPulse, Luggage, Search, Edit2, Trash2, Eye, RefreshCcw } from 'lucide-react';
 import LeaveDetailsModal from './LeaveDetailsModal';
 import LeaveTypeBadge, { getLeaveTypeMeta } from './ui/LeaveTypeBadge';
@@ -9,8 +9,8 @@ export default function HomeDashboard({ currentUser, userPolicies, requests, onD
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { showConfirm } = useModal();
 
-  const myPolicies = userPolicies.filter(p => p.user_id === currentUser?.id);
-  const myRequests = requests.filter(r => r.user_id === currentUser?.id);
+  const myPolicies = useMemo(() => userPolicies.filter(p => p.user_id === currentUser?.id), [userPolicies, currentUser?.id]);
+  const myRequests = useMemo(() => requests.filter(r => r.user_id === currentUser?.id), [requests, currentUser?.id]);
 
   return (
     <div className="space-y-7 animate-in fade-in duration-200">
@@ -22,7 +22,7 @@ export default function HomeDashboard({ currentUser, userPolicies, requests, onD
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
           <div className="space-y-1">
             <h2 className="text-xl md:text-2xl font-extrabold tracking-tight drop-shadow-sm">
-              สวัสดีค่ะคุณ {currentUser?.fullname}
+              สวัสดีคุณ {currentUser?.fullname}
             </h2>
             <p className="text-blue-100 dark:text-slate-400 text-xs md:text-sm font-semibold">
               สังกัด: {agencies?.find(a => a.id === currentUser?.agency_id)?.name || currentUser?.agency_id || 'SMT'} | ฝ่าย: {departments?.find(d => d.id === currentUser?.department_id)?.name || currentUser?.department_id || 'ทั่วไป'}
@@ -147,7 +147,8 @@ export default function HomeDashboard({ currentUser, userPolicies, requests, onD
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800/50 text-[var(--text-main)] border-b border-slate-200 dark:border-[var(--card-border)]">
                 <th className="py-4 px-4 font-bold whitespace-nowrap">รหัสคำขอ</th>
-                <th className="py-4 px-4 font-bold">พนักงาน</th>
+                <th className="py-4 pr-4 pl-[108px] font-bold">พนักงาน</th>
+                <th className="py-4 px-4 font-bold text-center">รหัสพนักงาน</th>
                 <th className="py-4 px-4 font-bold text-center">ประเภท</th>
                 <th className="py-4 px-4 font-bold text-center">วันที่เริ่ม - สิ้นสุด</th>
                 <th className="py-4 px-4 font-bold text-center">จำนวน</th>
@@ -159,7 +160,7 @@ export default function HomeDashboard({ currentUser, userPolicies, requests, onD
             <tbody className="divide-y divide-slate-100 dark:divide-[var(--card-border)]">
               {myRequests.length === 0 ? (
                 <tr>
-                  <td colSpan="8" className="py-12 text-center">
+                  <td colSpan="9" className="py-12 text-center">
                     <Send className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
                     <p className="text-slate-500 dark:text-slate-400 font-bold">คุณยังไม่มีคำขอลางานในขณะนี้</p>
                   </td>
@@ -180,10 +181,19 @@ export default function HomeDashboard({ currentUser, userPolicies, requests, onD
                             onError={(e) => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser?.fullname)}&background=random`; }}
                           />
                           <div>
-                            <div className="font-bold text-[var(--text-main)] text-sm">{currentUser?.fullname}</div>
+                            <div className="font-bold text-[var(--text-main)] text-sm">
+                              {currentUser?.fullname}
+                            </div>
                             <div className="text-xs text-[var(--text-muted)] mt-0.5">{agencies?.find(a => a.id === currentUser?.agency_id)?.name || currentUser?.agency_id || 'SMT'} | {departments?.find(d => d.id === currentUser?.department_id)?.name || currentUser?.department_id || 'ทั่วไป'}</div>
                           </div>
                         </div>
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        {currentUser?.employee_id ? (
+                          <span className="text-[var(--text-main)] font-bold text-sm">{currentUser.employee_id}</span>
+                        ) : (
+                          <span className="text-slate-400">-</span>
+                        )}
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex justify-center">
@@ -273,6 +283,11 @@ export default function HomeDashboard({ currentUser, userPolicies, requests, onD
                       <div>
                         <div className="font-mono text-blue-500 dark:text-blue-400 text-xs font-bold mb-0.5">{req.id}</div>
                         <div className="font-bold text-[var(--text-main)] text-sm">{currentUser?.fullname}</div>
+                        {currentUser?.employee_id && (
+                          <div className="flex items-center gap-1 mt-0.5 text-[var(--text-muted)] text-xs">
+                            รหัสพนักงาน: <span className="font-bold text-[var(--text-main)]">{currentUser.employee_id}</span>
+                          </div>
+                        )}
                         <div className="text-xs text-[var(--text-muted)] mt-0.5">{agencies?.find(a => a.id === currentUser?.agency_id)?.name || currentUser?.agency_id || 'SMT'} | {departments?.find(d => d.id === currentUser?.department_id)?.name || currentUser?.department_id || 'ทั่วไป'}</div>
                       </div>
                     </div>

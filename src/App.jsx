@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useMemo } from 'react';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import FormLogin from './components/FormLogin';
@@ -186,11 +186,13 @@ export default function App() {
   }
 
   // คำนวณจำนวนรายการรออนุมัติสำหรับ currentUser
-  const pendingCount = requests.filter(r => {
-    if (r.status !== 'Pending') return false;
-    const stepObj = r.approvers.find(a => a.step_number === r.current_step);
-    return stepObj && stepObj.approver_id === currentUser?.id && stepObj.status === 'Pending';
-  }).length;
+  const pendingCount = useMemo(() => {
+    return requests.filter(r => {
+      if (r.status !== 'Pending') return false;
+      const stepObj = r.approvers.find(a => a.step_number === r.current_step);
+      return stepObj && stepObj.approver_id === currentUser?.id && stepObj.status === 'Pending';
+    }).length;
+  }, [requests, currentUser?.id]);
 
   // เพิ่มคำขอลาใหม่
   const handleAddRequest = async (newReq) => {

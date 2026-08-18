@@ -9,8 +9,8 @@ export default function HomeDashboard({ currentUser, userPolicies, requests, onD
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { showConfirm } = useModal();
 
-  const myPolicies = useMemo(() => userPolicies.filter(p => p.user_id === currentUser?.id), [userPolicies, currentUser?.id]);
-  const myRequests = useMemo(() => requests.filter(r => r.user_id === currentUser?.id), [requests, currentUser?.id]);
+  const myPolicies = useMemo(() => (userPolicies || []).filter(p => p.user_id === currentUser?.id), [userPolicies, currentUser?.id]);
+  const myRequests = useMemo(() => (requests || []).filter(r => r.user_id === currentUser?.id), [requests, currentUser?.id]);
 
   return (
     <div className="space-y-7 animate-in fade-in duration-200">

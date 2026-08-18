@@ -170,6 +170,17 @@ export default function App() {
     };
   }, [currentUser?.id, activeTab]);
 
+  // คำนวณจำนวนรายการรออนุมัติสำหรับ currentUser
+  const pendingCount = useMemo(() => {
+    if (!requests || !Array.isArray(requests)) return 0;
+    return requests.filter(r => {
+      if (r.status !== 'Pending') return false;
+      if (!r.approvers || !Array.isArray(r.approvers)) return false;
+      const stepObj = r.approvers.find(a => a.step_number === r.current_step);
+      return stepObj && stepObj.approver_id === currentUser?.id && stepObj.status === 'Pending';
+    }).length;
+  }, [requests, currentUser?.id]);
+
   // ---------------------------------------------------------
   // Render: If not logged in, show LoginPage
   // ---------------------------------------------------------
@@ -184,17 +195,6 @@ export default function App() {
   if (loadingData) {
     return <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-500">กำลังโหลดข้อมูลระบบ...</div>;
   }
-
-  // คำนวณจำนวนรายการรออนุมัติสำหรับ currentUser
-  const pendingCount = useMemo(() => {
-    if (!requests || !Array.isArray(requests)) return 0;
-    return requests.filter(r => {
-      if (r.status !== 'Pending') return false;
-      if (!r.approvers || !Array.isArray(r.approvers)) return false;
-      const stepObj = r.approvers.find(a => a.step_number === r.current_step);
-      return stepObj && stepObj.approver_id === currentUser?.id && stepObj.status === 'Pending';
-    }).length;
-  }, [requests, currentUser?.id]);
 
   // เพิ่มคำขอลาใหม่
   const handleAddRequest = async (newReq) => {

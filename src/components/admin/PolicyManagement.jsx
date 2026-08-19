@@ -51,13 +51,20 @@ export default function PolicyManagement({ userPolicies, setUserPolicies, users,
     }
   }, [currentPage, currentGroupedPolicies]);
 
+  const sortedUsers = [...(users || [])].sort((a, b) => {
+    const numA = parseInt((a.id || '').replace(/[^0-9]/g, ''), 10) || 0;
+    const numB = parseInt((b.id || '').replace(/[^0-9]/g, ''), 10) || 0;
+    if (numA !== numB) return numA - numB;
+    return (a.id || '').localeCompare(b.id || '');
+  });
+
   const [formData, setFormData] = useState({
     id: '',
     user_id: '',
     leave_type: 'ลาป่วย',
-    max_days: 30,
+    max_days: 0,
     used_days: 0,
-    remaining_days: 30,
+    remaining_days: 0,
     year: new Date().getFullYear()
   });
 
@@ -70,7 +77,7 @@ export default function PolicyManagement({ userPolicies, setUserPolicies, users,
       });
     } else {
       setEditingPolicy(null);
-      const defaultUserId = users && users.length > 0 ? users[0].id : '';
+      const defaultUserId = sortedUsers.length > 0 ? sortedUsers[0].id : '';
       const defaultLeaveType = leaveTypes && leaveTypes.length > 0 ? leaveTypes[0].name : 'ลาพักร้อน';
       
       const existing = userPolicies.find(p => p.user_id === defaultUserId && p.leave_type === defaultLeaveType && (p.year === new Date().getFullYear() || !p.year));
@@ -302,7 +309,7 @@ export default function PolicyManagement({ userPolicies, setUserPolicies, users,
                   className="w-full px-4 py-2.5 bg-white dark:bg-slate-950 text-[var(--text-main)] border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 outline-none"
                 >
                   <option value="" disabled>-- เลือกพนักงาน --</option>
-                  {users?.map(u => (
+                  {sortedUsers.map(u => (
                     <option key={u.id} value={u.id}>
                       {u.id} - {u.fullname}
                     </option>

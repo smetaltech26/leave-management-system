@@ -7,7 +7,12 @@ import { supabase } from '../lib/supabase';
 export const fetchAllUsers = async () => {
   const { data, error } = await supabase.from('users').select('*');
   if (error) throw error;
-  return data || [];
+  return (data || []).sort((a, b) => {
+    const numA = parseInt((a.id || '').replace(/[^0-9]/g, ''), 10) || 0;
+    const numB = parseInt((b.id || '').replace(/[^0-9]/g, ''), 10) || 0;
+    if (numA !== numB) return numA - numB;
+    return (a.id || '').localeCompare(b.id || '');
+  });
 };
 
 export const fetchAllAgencies = async () => {

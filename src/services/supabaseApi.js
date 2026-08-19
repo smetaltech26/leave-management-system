@@ -258,7 +258,7 @@ export const createUserPolicy = async (policyData) => {
   
   const { data, error } = await supabase
     .from('user_policies')
-    .insert([payload])
+    .upsert([payload], { onConflict: 'user_id,leave_type,year' })
     .select()
     .single();
     

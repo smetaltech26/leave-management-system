@@ -70,17 +70,50 @@ export default function PolicyManagement({ userPolicies, setUserPolicies, users,
       });
     } else {
       setEditingPolicy(null);
+      const defaultUserId = users && users.length > 0 ? users[0].id : '';
+      const defaultLeaveType = leaveTypes && leaveTypes.length > 0 ? leaveTypes[0].name : 'ลาพักร้อน';
+      
+      const existing = userPolicies.find(p => p.user_id === defaultUserId && p.leave_type === defaultLeaveType && (p.year === new Date().getFullYear() || !p.year));
+      
       setFormData({
-        id: '',
-        user_id: users && users.length > 0 ? users[0].id : '',
-        leave_type: leaveTypes && leaveTypes.length > 0 ? leaveTypes[0].name : 'ลาพักร้อน',
-        max_days: (leaveTypes && leaveTypes.length > 0 ? leaveTypes[0].name : 'ลาพักร้อน') === 'ลาคลอด' ? 120 : 30,
-        used_days: 0,
-        remaining_days: 30,
+        id: existing?.id || '',
+        user_id: defaultUserId,
+        leave_type: defaultLeaveType,
+        max_days: existing ? existing.max_days : (defaultLeaveType === 'ลาคลอด' ? 120 : (defaultLeaveType === 'ลาพักร้อน' ? 6 : (defaultLeaveType === 'ลาป่วย' ? 30 : 6))),
+        used_days: existing ? existing.used_days : 0,
+        remaining_days: existing ? existing.remaining_days : (defaultLeaveType === 'ลาคลอด' ? 120 : (defaultLeaveType === 'ลาพักร้อน' ? 6 : (defaultLeaveType === 'ลาป่วย' ? 30 : 6))),
         year: new Date().getFullYear()
       });
     }
     setIsModalOpen(true);
+  };
+
+  const handleUserOrTypeChange = (newUserId, newLeaveType) => {
+    const currentYear = new Date().getFullYear();
+    const existing = userPolicies.find(p => p.user_id === newUserId && p.leave_type === newLeaveType && (p.year === currentYear || !p.year));
+    
+    if (existing) {
+      setFormData(prev => ({
+        ...prev,
+        id: existing.id,
+        user_id: newUserId,
+        leave_type: newLeaveType,
+        max_days: existing.max_days,
+        used_days: existing.used_days,
+        remaining_days: existing.remaining_days
+      }));
+    } else {
+      const defaultMax = newLeaveType === 'ลาคลอด' ? 120 : (newLeaveType === 'ลาพักร้อน' ? 6 : (newLeaveType === 'ลาป่วย' ? 30 : 6));
+      setFormData(prev => ({
+        ...prev,
+        id: '',
+        user_id: newUserId,
+        leave_type: newLeaveType,
+        max_days: defaultMax,
+        used_days: 0,
+        remaining_days: defaultMax
+      }));
+    }
   };
 
   const handleCloseModal = () => {
@@ -91,7 +124,7 @@ export default function PolicyManagement({ userPolicies, setUserPolicies, users,
   const handleSavePolicy = async (e) => {
     e.preventDefault();
     if (!formData.user_id || !formData.leave_type) {
-      await showAlert("กรุณาระบุข้อมูลพนักงานและประเภทการลาให้ครบถ้วนค่ะ");
+      await showAlert("กรุณาระบุข้อมูลพนักงานและประเภทการลาให้ครบถ้วนค่ะ", { type: 'error', title: 'แจ้งเตือน' });
       return;
     }
 
@@ -106,24 +139,31 @@ export default function PolicyManagement({ userPolicies, setUserPolicies, users,
         year: Number(formData.year) || currentYear
       };
 
+      let savedPolicy;
       if (editingPolicy) {
-        const updated = await api.updateUserPolicy(editingPolicy.id, payload);
-        setUserPolicies(prev => prev.map(p => p.id === editingPolicy.id ? { 
-          ...p, 
-          ...updated, 
-          remaining_days: (Number(updated.max_days) || 0) - (Number(updated.used_days) || 0) 
-        } : p));
+        savedPolicy = await api.updateUserPolicy(editingPolicy.id, payload);
       } else {
-        const created = await api.createUserPolicy(payload);
-        setUserPolicies(prev => [...prev, { 
-          ...created, 
-          remaining_days: (Number(created.max_days) || 0) - (Number(created.used_days) || 0) 
-        }]);
+        savedPolicy = await api.createUserPolicy(payload);
       }
+
+      const calculatedRemaining = (Number(savedPolicy.max_days) || 0) - (Number(savedPolicy.used_days) || 0);
+      const policyWithRemaining = { ...savedPolicy, remaining_days: calculatedRemaining };
+
+      setUserPolicies(prev => {
+        const index = prev.findIndex(p => p.id === savedPolicy.id || (p.user_id === savedPolicy.user_id && p.leave_type === savedPolicy.leave_type && p.year === savedPolicy.year));
+        if (index !== -1) {
+          const nextList = [...prev];
+          nextList[index] = policyWithRemaining;
+          return nextList;
+        }
+        return [...prev, policyWithRemaining];
+      });
+
       handleCloseModal();
+      await showAlert(editingPolicy ? "แก้ไขโควตาวันลาเรียบร้อยแล้วค่ะ ✨" : "บันทึกโควตาวันลาเรียบร้อยแล้วค่ะ ✨", { type: 'success', title: 'สำเร็จ' });
     } catch (err) {
       console.error("Save Policy Error:", err);
-      await showAlert("เกิดข้อผิดพลาดในการบันทึกโควตาวันลา: " + (err.message || err));
+      await showAlert("เกิดข้อผิดพลาดในการบันทึกโควตาวันลา: " + (err.message || err.toString()), { type: 'error', title: 'เกิดข้อผิดพลาด' });
     } finally {
       setIsSubmitting(false);
     }
@@ -258,7 +298,7 @@ export default function PolicyManagement({ userPolicies, setUserPolicies, users,
                 <select 
                   required
                   value={formData.user_id} 
-                  onChange={(e) => setFormData({...formData, user_id: e.target.value})}
+                  onChange={(e) => handleUserOrTypeChange(e.target.value, formData.leave_type)}
                   className="w-full px-4 py-2.5 bg-white dark:bg-slate-950 text-[var(--text-main)] border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 outline-none"
                 >
                   <option value="" disabled>-- เลือกพนักงาน --</option>
@@ -275,11 +315,7 @@ export default function PolicyManagement({ userPolicies, setUserPolicies, users,
                 <select 
                   required
                   value={formData.leave_type} 
-                  onChange={(e) => {
-                    const newType = e.target.value;
-                    const newMaxDays = newType === 'ลาคลอด' ? 120 : 30;
-                    setFormData({...formData, leave_type: newType, max_days: newMaxDays});
-                  }}
+                  onChange={(e) => handleUserOrTypeChange(formData.user_id, e.target.value)}
                   className="w-full px-4 py-2.5 bg-white dark:bg-slate-950 text-[var(--text-main)] border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 outline-none"
                 >
                   {leaveTypes.length > 0 ? (

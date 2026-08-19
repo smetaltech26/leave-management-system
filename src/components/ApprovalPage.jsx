@@ -357,19 +357,38 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
                     {[...req.approvers].sort((a, b) => a.step_number - b.step_number).map((step) => {
                       const approverUser = users.find(u => u.id === step.approver_id);
                       const approverName = approverUser ? approverUser.fullname : 'ผู้อนุมัติ';
+                      const hasComment = step.comment && typeof step.comment === 'string' && step.comment.trim() !== '';
+
                       return (
                         <div
-                          key={step.step_id}
-                          className={`px-3 py-1.5 rounded-xl border text-xs flex items-center space-x-2 ${
+                          key={step.step_id || step.id || `step-${step.step_number}`}
+                          className={`px-3 py-2 rounded-xl border text-xs flex flex-col justify-center min-w-[130px] transition-all shadow-sm ${
                             step.status === 'Approved'
-                              ? 'bg-blue-500/10 text-blue-400 border-blue-500/30'
+                              ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30'
                               : step.status === 'Rejected'
-                              ? 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+                              ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30'
                               : 'bg-[var(--card-bg)] text-[var(--text-muted)] border-[var(--card-border)]'
                           }`}
                         >
-                          <span className="font-bold">{approverName}</span>
-                          <span className="font-semibold text-[10px]">({step.status})</span>
+                          <div className="flex items-center justify-between gap-1.5">
+                            <span className="font-bold">{approverName}</span>
+                            <span className={`font-semibold text-[10px] shrink-0 px-1.5 py-0.5 rounded ${
+                              step.status === 'Approved'
+                                ? 'bg-blue-500/20 text-blue-600 dark:text-blue-300'
+                                : step.status === 'Rejected'
+                                ? 'bg-rose-500/20 text-rose-600 dark:text-rose-300'
+                                : 'bg-slate-200/60 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+                            }`}>
+                              ({step.status})
+                            </span>
+                          </div>
+                          
+                          {hasComment && (
+                            <div className="mt-1 pt-1 border-t border-current/15 text-[11px] font-normal flex items-start gap-1">
+                              <MessageSquare className="w-3 h-3 shrink-0 mt-0.5 opacity-70" />
+                              <span className="break-words font-medium italic">"{step.comment}"</span>
+                            </div>
+                          )}
                         </div>
                       );
                     })}
@@ -450,8 +469,8 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
 
       {/* Modal Confirm Approval / Reject */}
       {selectedRequest && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in">
-          <div className="w-full max-w-lg glass-card-clean rounded-3xl p-6 border border-[var(--card-border)] shadow-2xl space-y-5 relative overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-start md:items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in overflow-y-auto">
+          <div className="w-full max-w-lg glass-card-clean rounded-3xl p-6 border border-[var(--card-border)] shadow-2xl space-y-4 relative flex flex-col max-h-[calc(100svh-2rem)] md:max-h-[85dvh] min-h-0">
             
             {/* Success Popup Overlay */}
             {showSuccessPopup && (
@@ -486,20 +505,20 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
               </div>
             )}
             
-            <div className="flex justify-between items-center pb-3 border-b border-[var(--card-border)]">
+            <div className="flex justify-between items-center pb-3 border-b border-[var(--card-border)] shrink-0">
               <h3 className="text-base font-bold text-[var(--text-main)]">พิจารณาอนุมัติคำขอลางาน ({selectedRequest.id})</h3>
               <button onClick={() => setSelectedRequest(null)} className="text-[var(--text-muted)] hover:text-[var(--text-main)]">✕</button>
             </div>
 
-            <div className="space-y-4 text-xs">
+            <div className="space-y-4 text-xs flex-1 min-h-0 overflow-y-auto pr-1 custom-scrollbar">
               <div className="p-4 rounded-xl bg-[var(--card-bg)] border border-[var(--card-border)] flex items-start space-x-4">
                 <img 
                   src={users.find(u => u.id === selectedRequest.user_id)?.avatar_url || `https://ui-avatars.com/api/?name=${selectedRequest.user_id}&background=random`} 
                   alt="Requester" 
-                  className="w-24 h-24 rounded-full border border-[var(--card-border)] object-cover shadow-md"
+                  className="w-20 h-20 rounded-2xl border border-[var(--card-border)] object-cover shadow-md shrink-0"
                 />
-                <div>
-                  <div className="font-bold text-sm text-[var(--text-main)]">
+                <div className="min-w-0 flex-1">
+                  <div className="font-bold text-sm text-[var(--text-main)] truncate">
                     {users.find(u => u.id === selectedRequest.user_id)?.fullname || selectedRequest.user_id}
                   </div>
                   <div className="text-xs text-[var(--text-muted)] mt-0.5 mb-1">
@@ -514,14 +533,51 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
                       ({selectedRequest.leave_duration} วัน{selectedRequest.leave_period === 'Morning' ? ' - เช้า' : selectedRequest.leave_period === 'Afternoon' ? ' - บ่าย' : ''})
                     </span>
                   </div>
-                  <div className="text-[var(--text-muted)] mt-0.5">
+                  <div className="text-[var(--text-muted)] mt-1">
                     ช่วงเวลาที่ลา: <span className="font-medium text-[var(--text-main)]">{selectedRequest.date_start ? selectedRequest.date_start.split('-').reverse().join('-') : ''} ถึง {selectedRequest.date_end ? selectedRequest.date_end.split('-').reverse().join('-') : ''}</span>
                   </div>
-                  <div className="text-[var(--text-muted)] mt-0.5">
-                    เหตุผล: <span className="text-[var(--text-main)]">{selectedRequest.description}</span>
+                  <div className="text-[var(--text-muted)] mt-1">
+                    เหตุผล: <span className="text-[var(--text-main)] font-medium">{selectedRequest.description}</span>
                   </div>
                 </div>
               </div>
+
+              {/* Approval Chain with comments */}
+              {selectedRequest.approvers && selectedRequest.approvers.length > 0 && (
+                <div className="p-3 rounded-xl bg-slate-50/60 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 space-y-2">
+                  <span className="text-[11px] font-semibold text-[var(--text-muted)] block">ลำดับการอนุมัติและความเห็น (Approval Chain):</span>
+                  <div className="space-y-1.5">
+                    {[...selectedRequest.approvers].sort((a, b) => a.step_number - b.step_number).map((st) => {
+                      const apUser = users.find(u => u.id === st.approver_id);
+                      const apName = apUser ? apUser.fullname : 'ผู้อนุมัติ';
+                      const isApproved = st.status === 'Approved';
+                      const isRejected = st.status === 'Rejected';
+                      const hasStepComment = st.comment && typeof st.comment === 'string' && st.comment.trim() !== '';
+
+                      return (
+                        <div key={st.step_id || st.id || `m-step-${st.step_number}`} className="p-2 rounded-lg bg-white dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-800 text-[11px]">
+                          <div className="flex items-center justify-between font-semibold">
+                            <span className="text-[var(--text-main)]">ขั้นที่ {st.step_number}: {apName}</span>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${
+                              isApproved ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' :
+                              isRejected ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300' :
+                              'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                            }`}>
+                              {st.status}
+                            </span>
+                          </div>
+                          {hasStepComment && (
+                            <div className="mt-1 text-slate-600 dark:text-slate-300 italic flex items-start gap-1 font-normal">
+                              <MessageSquare className="w-3 h-3 text-blue-500 shrink-0 mt-0.5" />
+                              <span className="break-words">"{st.comment}"</span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1.5 flex items-center">
@@ -539,7 +595,7 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
             </div>
 
             {/* Buttons */}
-            <div className="flex items-center justify-end space-x-3 pt-3 border-t border-[var(--card-border)]">
+            <div className="flex items-center justify-end space-x-3 pt-3 border-t border-[var(--card-border)] shrink-0">
               <button
                 onClick={() => handleAction('Rejected')}
                 disabled={!comment.trim() || isSubmittingAction}

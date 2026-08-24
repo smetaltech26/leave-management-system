@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
-import { Search, Plus, Edit2, Trash2, Shield, User, MapPin, X, Save, Users, UserCheck, Hourglass, Eye, Upload, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { Search, Plus, Edit2, Trash2, Shield, User, MapPin, X, Save, Users, UserCheck, Hourglass, Eye, Upload, ChevronLeft, ChevronRight, Loader2, Lock } from 'lucide-react';
 import UserProfileModal from './UserProfileModal';
 import { useModal } from '../../contexts/ModalContext';
 import * as api from '../../services/supabaseApi';
@@ -218,8 +218,14 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
     }
   };
 
+  const isProtectedUser = (id) => id === 'USER-002' || id === 'USER-004';
+
   const handleDeleteUser = async (id) => {
     if (isSubmitting) return;
+    if (isProtectedUser(id)) {
+      await showAlert(`บัญชีผู้ดูแลระบบหลัก (${id}) เป็นบัญชีสำคัญของระบบ ไม่สามารถลบได้ค่ะ`, { type: 'error', title: 'ไม่อนุญาต' });
+      return;
+    }
     if (await showConfirm('คุณต้องการลบพนักงานรหัสนี้ใช่หรือไม่? บัญชีและข้อมูลทั้งหมดจะถูกลบออกจากระบบ')) {
       setIsSubmitting(true);
       try {
@@ -362,15 +368,21 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
                   </td>
                   <td className="p-4">
                     <div className="flex justify-center gap-1.5">
-                      <button onClick={() => setViewingUser(user)} className="p-2 text-blue-600 bg-blue-100 dark:bg-blue-500/20 hover:bg-blue-200 dark:hover:bg-blue-500/40 rounded-lg transition-colors">
+                      <button onClick={() => setViewingUser(user)} title="ดูข้อมูล" className="p-2 text-blue-600 bg-blue-100 dark:bg-blue-500/20 hover:bg-blue-200 dark:hover:bg-blue-500/40 rounded-lg transition-colors">
                         <Eye className="w-4 h-4" />
                       </button>
-                      <button onClick={() => handleOpenModal(user)} className="p-2 text-amber-600 bg-amber-100 dark:bg-amber-500/20 hover:bg-amber-200 dark:hover:bg-amber-500/40 rounded-lg transition-colors">
+                      <button onClick={() => handleOpenModal(user)} title="แก้ไขข้อมูล" className="p-2 text-amber-600 bg-amber-100 dark:bg-amber-500/20 hover:bg-amber-200 dark:hover:bg-amber-500/40 rounded-lg transition-colors">
                         <Edit2 className="w-4 h-4" />
                       </button>
-                      <button onClick={() => handleDeleteUser(user.id)} className="p-2 text-rose-600 bg-rose-100 dark:bg-rose-500/20 hover:bg-rose-200 dark:hover:bg-rose-500/40 rounded-lg transition-colors">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {isProtectedUser(user.id) ? (
+                        <button disabled title="บัญชีผู้ดูแลระบบหลัก (ไม่สามารถลบได้)" className="p-2 text-slate-400 bg-slate-100 dark:bg-slate-800 dark:text-slate-500 rounded-lg cursor-not-allowed transition-colors">
+                          <Lock className="w-4 h-4" />
+                        </button>
+                      ) : (
+                        <button onClick={() => handleDeleteUser(user.id)} title="ลบพนักงาน" className="p-2 text-rose-600 bg-rose-100 dark:bg-rose-500/20 hover:bg-rose-200 dark:hover:bg-rose-500/40 rounded-lg transition-colors">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -468,9 +480,15 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
               <button onClick={() => handleOpenModal(user)} className="flex-1 flex items-center justify-center gap-1.5 p-2.5 text-amber-600 bg-amber-100 dark:bg-amber-500/20 hover:bg-amber-200 dark:hover:bg-amber-500/40 rounded-xl transition-colors font-semibold text-xs">
                 <Edit2 className="w-4 h-4" /> แก้ไข
               </button>
-              <button onClick={() => handleDeleteUser(user.id)} className="flex-1 flex items-center justify-center gap-1.5 p-2.5 text-rose-600 bg-rose-100 dark:bg-rose-500/20 hover:bg-rose-200 dark:hover:bg-rose-500/40 rounded-xl transition-colors font-semibold text-xs">
-                <Trash2 className="w-4 h-4" /> ลบ
-              </button>
+              {isProtectedUser(user.id) ? (
+                <div title="บัญชีผู้ดูแลระบบหลัก (ไม่สามารถลบได้)" className="flex-1 flex items-center justify-center gap-1.5 p-2.5 text-slate-400 bg-slate-100 dark:bg-slate-800 dark:text-slate-500 rounded-xl font-semibold text-xs cursor-not-allowed">
+                  <Lock className="w-4 h-4" /> ล็อค
+                </div>
+              ) : (
+                <button onClick={() => handleDeleteUser(user.id)} className="flex-1 flex items-center justify-center gap-1.5 p-2.5 text-rose-600 bg-rose-100 dark:bg-rose-500/20 hover:bg-rose-200 dark:hover:bg-rose-500/40 rounded-xl transition-colors font-semibold text-xs">
+                  <Trash2 className="w-4 h-4" /> ลบ
+                </button>
+              )}
             </div>
           </div>
         ))}

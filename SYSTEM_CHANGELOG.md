@@ -65,15 +65,34 @@
 
 ---
 
-## 🔮 4. แผนงานและข้อเสนอแนะสำหรับการปรับปรุงในอนาคต (Future Roadmap)
+## 🔮 4. แผนงานและพิมพ์เขียวการปรับปรุงในอนาคต (Future Roadmap & Notification Blueprint)
 
-1. **📧 ยกระดับความปลอดภัยระบบส่งอีเมล (Email Webhook Hardening):**
-   - *สถานะปัจจุบัน:* ใช้ Google Apps Script Webhook (`VITE_GAS_EMAIL_URL`) แบบ Unauthenticated
-   - *แผนปรับปรุง:* ใส่ Secret API Key ในการเรียก Webhook หรือย้ายไปใช้ **Supabase Edge Functions / Resend API** เพื่อตัดการพึ่งพา Google Apps Script 100%
-2. **💬 ย้าย LINE Token ไปไว้ฝั่งหลังบ้าน (LINE Access Token Security):**
-   - *สถานะปัจจุบัน:* โทเคน `VITE_LINE_CHANNEL_ACCESS_TOKEN` อยู่ในไฟล์ `.env` ฝั่ง Client
-   - *แผนปรับปรุง:* ย้ายการยิงส่ง LINE 1:1 Push Message ไปทำผ่าน **Supabase Database Trigger / Edge Functions** เพื่อไม่ให้มี Token หลุดอยู่ที่ฝั่ง Client
+### 📧 สถาปัตยกรรมระบบแจ้งเตือนแบบไฮบริด (Hybrid Notification Architecture: Supabase + GAS)
+จากข้อเสนอแนะของ **น้องจ๊ะ (Codex)** และ **พี่ต้น (P'Ton)** ได้ข้อสรุปแนวทางการปรับปรุงระบบแจ้งเตือนในอนาคตดังนี้:
+
+#### 🔄 ลำดับการทำงาน (Workflow Pipeline):
+1. **ผู้ใช้กดยื่นใบลา / อนุมัติ:** หน้าเว็บส่งเฉพาะ `request_id` (เช่น `LEV-0012`) ไปยัง **Supabase Edge Function**
+2. **Supabase Edge Function (ป้อมปราการความปลอดภัยหลังบ้าน):**
+   - ตรวจสอบ Supabase User Session & Authentication
+   - ตรวจสอบ Role และสิทธิ์ของผู้ใช้งาน
+   - ตรวจสอบ Rate Limit ป้องกันการกดส่งซ้ำ
+   - อ่านรายละเอียดข้อมูลจริง (ชื่อพนักงาน, วันที่, ประเภทการลา, เหตุผล, ผู้อนุมัติ) จาก Supabase Database
+   - ประกอบ HTML Email Template เดิมที่สวยงาม (รูปแบบเดิม 100%)
+   - ส่งข้อมูลต่อไปยัง Google Apps Script พร้อมแนบ **`Secret Key`** ลับหลังบ้าน
+3. **Google Apps Script (ตัวยิงส่งอีเมล - Email Dispatcher):**
+   - ตรวจสอบ Secret Key ที่ส่งมาจาก Supabase
+   - สั่ง Gmail / Google Workspace ของบริษัทให้ส่งอีเมลออกไปยังผู้รับปลายทางฟรี (สูงสุด 1,500 ฉบับ/วัน)
+
+#### 💬 ระบบส่ง LINE 1:1 Direct Push:
+- ย้าย `LINE_CHANNEL_ACCESS_TOKEN` จาก `.env` ฝั่งหน้าบ้าน ไปเก็บเป็น Supabase Secret หลังบ้าน
+- ให้ Supabase Edge Function เป็นตัวส่งคำสั่ง Push Message ผ่าน LINE API โดยตรง
+
+#### 🌟 ประโยชน์ที่จะได้รับ:
+- **ความปลอดภัยระดับสูงสุด:** Frontend ไม่ถือ Token หรือ Webhook ลับใดๆ ป้องกันการยิง Spam ได้ 100%
+- **ประหยัดค่าใช้จ่าย:** ใช้อีเมลบริษัทส่งฟรีผ่าน Google Workspace ต่อไปได้ตามปกติ ไม่ต้องเสียเงินซื้อ Email Service เพิ่ม
+- **เนื้อหาคงเดิม 100%:** ผู้รับได้รับอีเมลหน้าตาเดิม สวยงาม ปุ่มกดเข้าสู่ระบบทำงานได้ตามปกติ
 
 ---
 
-*เอกสารนี้ถูกบันทึกเพื่อเป็นคู่มือและประวัติการทำงาน ให้ทีมพัฒนาสามารถตรวจสอบและต่อยอดระบบได้อย่างราบรื่นค่ะ* 💕
+*เอกสารนี้ถูกบันทึกเพื่อเป็นคู่มือและประวัติการทำงาน ให้ทีมพัฒนา (พี่ต้น, น้องจ๊ะ, น้องแอ๊น) สามารถตรวจสอบและต่อยอดระบบได้อย่างราบรื่นค่ะ* 💕
+

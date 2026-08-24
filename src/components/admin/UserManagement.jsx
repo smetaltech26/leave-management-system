@@ -156,6 +156,18 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
   const handleSaveUser = async (e) => {
     e.preventDefault();
     if (isSubmitting) return;
+
+    // ตรวจสอบความยาวรหัสผ่านอย่างน้อย 6 หลัก
+    if (!editingUser) {
+      if (!formData.password || formData.password.trim().length < 6) {
+        await showAlert("พนักงานใหม่ต้องกำหนดรหัสผ่านอย่างน้อย 6 หลักค่ะ", { type: 'error', title: 'แจ้งเตือน' });
+        return;
+      }
+    } else if (formData.password && formData.password.trim().length > 0 && formData.password.trim().length < 6) {
+      await showAlert("หากต้องการเปลี่ยนรหัสผ่าน กรุณากำหนดรหัสผ่านอย่างน้อย 6 หลักค่ะ", { type: 'error', title: 'แจ้งเตือน' });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -184,7 +196,7 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
           id: formData.id,
           fullname: formData.fullname,
           email: formData.email,
-          password: formData.password && formData.password.trim() ? formData.password.trim() : '123456',
+          password: formData.password.trim(),
           agency_id: formData.agency || null,
           department_id: formData.department || null,
           role: formData.role,
@@ -602,10 +614,12 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
                   <input 
                     type="password" 
                     required={!editingUser}
+                    minLength={6}
                     value={formData.password} 
                     onChange={(e) => setFormData({...formData, password: e.target.value})}
                     className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-950 text-[var(--text-main)] border border-slate-300 dark:border-slate-700 rounded-xl text-sm placeholder:text-[11px] sm:placeholder:text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none" 
-                    placeholder={editingUser ? "เว้นว่างไว้หากไม่เปลี่ยนรหัส" : "รหัสผ่าน (เช่น 123456)"}
+                    placeholder={editingUser ? "เว้นว่างไว้หากไม่เปลี่ยนรหัส" : "กำหนดรหัสผ่านอย่างน้อย 6 หลัก"}
+                    title="รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร"
                   />
                 </div>
               </div>

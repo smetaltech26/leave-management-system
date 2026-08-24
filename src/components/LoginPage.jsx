@@ -39,7 +39,7 @@ export default function LoginPage({ onLogin, theme = 'light', toggleTheme }) {
       
       const { data: userData, error: userError } = await supabase
         .from('users')
-        .select('*')
+        .select('id, email, fullname, agency_id, department_id, role, approver_step1_id, approver_step2_id, approver_step3_id, line_user_id, avatar_url, employee_id, created_at, auth_id')
         .eq('auth_id', data.user.id)
         .single();
         

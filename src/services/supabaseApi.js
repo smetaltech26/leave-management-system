@@ -5,7 +5,9 @@ import { supabase } from '../lib/supabase';
 // ==========================================
 
 export const fetchAllUsers = async () => {
-  const { data, error } = await supabase.from('users').select('*');
+  const { data, error } = await supabase
+    .from('users')
+    .select('id, email, fullname, agency_id, department_id, role, approver_step1_id, approver_step2_id, approver_step3_id, line_user_id, avatar_url, employee_id, created_at, auth_id');
   if (error) throw error;
   return (data || []).sort((a, b) => {
     const numA = parseInt((a.id || '').replace(/[^0-9]/g, ''), 10) || 0;

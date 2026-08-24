@@ -77,7 +77,7 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
         id: user.id,
         fullname: user.fullname,
         email: user.email,
-        password: user.password_hash || '',
+        password: '',
         agency: user.agency_id || '',
         department: user.department_id || '',
         role: user.role,
@@ -165,7 +165,7 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
           id: editingUser.id,
           fullname: formData.fullname,
           email: formData.email,
-          password: formData.password || null,
+          password: formData.password && formData.password.trim() ? formData.password.trim() : null,
           agency_id: formData.agency || null,
           department_id: formData.department || null,
           role: formData.role,
@@ -184,7 +184,7 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
           id: formData.id,
           fullname: formData.fullname,
           email: formData.email,
-          password: formData.password || '123456',
+          password: formData.password && formData.password.trim() ? formData.password.trim() : '123456',
           agency_id: formData.agency || null,
           department_id: formData.department || null,
           role: formData.role,
@@ -591,19 +591,21 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
                     required
                     value={formData.email} 
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-950 text-[var(--text-main)] border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none" 
+                    className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-950 text-[var(--text-main)] border border-slate-300 dark:border-slate-700 rounded-xl text-sm placeholder:text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none" 
                     placeholder="email@smetaltech.co.th"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-[var(--text-muted)] mb-1.5 uppercase">รหัสผ่าน (Password) <span className="text-rose-500">*</span></label>
+                  <label className="block text-xs font-bold text-[var(--text-muted)] mb-1.5 uppercase">
+                    รหัสผ่าน (Password) {!editingUser && <span className="text-rose-500">*</span>}
+                  </label>
                   <input 
-                    type="text" 
-                    required
+                    type="password" 
+                    required={!editingUser}
                     value={formData.password} 
                     onChange={(e) => setFormData({...formData, password: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-950 text-[var(--text-main)] border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none" 
-                    placeholder="รหัสผ่านสำหรับเข้าสู่ระบบ"
+                    className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-950 text-[var(--text-main)] border border-slate-300 dark:border-slate-700 rounded-xl text-sm placeholder:text-[11px] sm:placeholder:text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none" 
+                    placeholder={editingUser ? "เว้นว่างไว้หากไม่เปลี่ยนรหัส" : "รหัสผ่าน (เช่น 123456)"}
                   />
                 </div>
               </div>

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect, useRef, useMemo } from 'react';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
-import FormLogin from './components/FormLogin';
 import HomeDashboard from './components/HomeDashboard';
 import LeaveFormModal from './components/LeaveFormModal';
 import ApprovalPage from './components/ApprovalPage';
@@ -90,7 +89,11 @@ export default function App() {
 
   const fetchCurrentUserProfile = async (authId) => {
     try {
-      const { data, error } = await supabase.from('users').select('*').eq('auth_id', authId).single();
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, email, fullname, agency_id, department_id, role, approver_step1_id, approver_step2_id, approver_step3_id, line_user_id, avatar_url, employee_id, created_at, auth_id')
+        .eq('auth_id', authId)
+        .single();
       if (data) {
         setCurrentUser(data);
       }

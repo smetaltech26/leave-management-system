@@ -28,33 +28,57 @@ export default function LeaveFormModal({
   const [leavePeriod, setLeavePeriod] = useState('Full');
   const [leaveDuration, setLeaveDuration] = useState(1);
 
+  const isInitializedRef = useRef(false);
+  const [selectedApprover1, setSelectedApprover1] = useState('');
+  const [selectedApprover2, setSelectedApprover2] = useState('');
+  const [selectedApprover3, setSelectedApprover3] = useState('');
+
+  const [file, setFile] = useState(null);
+  const [filePreview, setFilePreview] = useState(null);
+  const [isPdf, setIsPdf] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const fileInputRef = useRef(null);
+
   useEffect(() => {
     if (isOpen) {
-      if (editingRequest) {
-        setLeaveType(editingRequest.leave_type || 'ลาพักร้อน');
-        setDescription(editingRequest.description || '');
-        setDateStart(editingRequest.date_start || new Date().toISOString().split('T')[0]);
-        setDateEnd(editingRequest.date_end || new Date().toISOString().split('T')[0]);
-        setLeavePeriod(editingRequest.leave_period || 'Full');
-        
-        const attached = editingRequest.attachments?.[0]?.file_url || null;
-        const attachedName = editingRequest.attachments?.[0]?.file_name || '';
-        const isPdfFile = attachedName.toLowerCase().endsWith('.pdf') || attached?.toLowerCase().includes('.pdf');
-        setIsPdf(isPdfFile);
-        setFilePreview(attached);
-        setFile(null);
-      } else {
-        setLeaveType('ลาพักร้อน');
-        setDescription('');
-        setDateStart(new Date().toISOString().split('T')[0]);
-        setDateEnd(new Date().toISOString().split('T')[0]);
-        setLeavePeriod('Full');
-        setFile(null);
-        setFilePreview(null);
-        setIsPdf(false);
+      if (!isInitializedRef.current) {
+        isInitializedRef.current = true;
+        if (editingRequest) {
+          setLeaveType(editingRequest.leave_type || 'ลาพักร้อน');
+          setDescription(editingRequest.description || '');
+          setDateStart(editingRequest.date_start || new Date().toISOString().split('T')[0]);
+          setDateEnd(editingRequest.date_end || new Date().toISOString().split('T')[0]);
+          setLeavePeriod(editingRequest.leave_period || 'Full');
+          
+          const attached = editingRequest.attachments?.[0]?.file_url || null;
+          const attachedName = editingRequest.attachments?.[0]?.file_name || '';
+          const isPdfFile = attachedName.toLowerCase().endsWith('.pdf') || attached?.toLowerCase().includes('.pdf');
+          setIsPdf(isPdfFile);
+          setFilePreview(attached);
+          setFile(null);
+
+          setSelectedApprover1(editingRequest.approvers?.[0]?.approver_id || '');
+          setSelectedApprover2(editingRequest.approvers?.[1]?.approver_id || '');
+          setSelectedApprover3(editingRequest.approvers?.[2]?.approver_id || '');
+        } else {
+          setLeaveType(leaveTypes[0]?.name || 'ลาพักร้อน');
+          setDescription('');
+          setDateStart(new Date().toISOString().split('T')[0]);
+          setDateEnd(new Date().toISOString().split('T')[0]);
+          setLeavePeriod('Full');
+          setFile(null);
+          setFilePreview(null);
+          setIsPdf(false);
+
+          setSelectedApprover1(currentUser?.approver_step1_id || '');
+          setSelectedApprover2(currentUser?.approver_step2_id || '');
+          setSelectedApprover3(currentUser?.approver_step3_id || '');
+        }
       }
+    } else {
+      isInitializedRef.current = false;
     }
-  }, [isOpen, editingRequest]);
+  }, [isOpen, editingRequest, currentUser, leaveTypes]);
 
   useEffect(() => {
     const sDate = new Date(dateStart);
@@ -89,29 +113,6 @@ export default function LeaveFormModal({
 
     setLeaveDuration(total);
   }, [dateStart, dateEnd, leavePeriod, holidays]);
-  const [selectedApprover1, setSelectedApprover1] = useState('');
-  const [selectedApprover2, setSelectedApprover2] = useState('');
-  const [selectedApprover3, setSelectedApprover3] = useState('');
-
-  useEffect(() => {
-    if (isOpen) {
-      if (editingRequest) {
-        setSelectedApprover1(editingRequest.approvers?.[0]?.approver_id || '');
-        setSelectedApprover2(editingRequest.approvers?.[1]?.approver_id || '');
-        setSelectedApprover3(editingRequest.approvers?.[2]?.approver_id || '');
-      } else {
-        setSelectedApprover1('');
-        setSelectedApprover2('');
-        setSelectedApprover3('');
-      }
-    }
-  }, [isOpen, editingRequest, currentUser]);
-
-  const [file, setFile] = useState(null);
-  const [filePreview, setFilePreview] = useState(null);
-  const [isPdf, setIsPdf] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const fileInputRef = useRef(null);
 
   const [showApproverModal, setShowApproverModal] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);

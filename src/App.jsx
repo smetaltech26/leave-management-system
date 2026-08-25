@@ -60,6 +60,11 @@ export default function App() {
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
   };
 
+  const currentUserRef = useRef(currentUser);
+  useEffect(() => {
+    currentUserRef.current = currentUser;
+  }, [currentUser]);
+
   useEffect(() => {
     // Check initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -72,13 +77,17 @@ export default function App() {
 
     // Listen for auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session) {
-        if (!currentUser || currentUser.auth_id !== session.user.id) {
-           await fetchCurrentUserProfile(session.user.id);
-        }
-      } else {
+      if (event === 'SIGNED_OUT' || !session) {
         setCurrentUser(null);
+        currentUserRef.current = null;
         setIsAuthChecking(false);
+        return;
+      }
+
+      if (event === 'SIGNED_IN') {
+        if (!currentUserRef.current || currentUserRef.current.auth_id !== session.user.id) {
+          await fetchCurrentUserProfile(session.user.id);
+        }
       }
     });
 
@@ -96,6 +105,7 @@ export default function App() {
         .single();
       if (data) {
         setCurrentUser(data);
+        currentUserRef.current = data;
       }
     } catch (err) {
       console.error(err);
@@ -104,9 +114,12 @@ export default function App() {
     }
   }
 
-  // โหลดข้อมูลหลังจาก Login เสร็จแล้วเท่านั้น
+  // โหลดข้อมูลหลังจาก Login เสร็จแล้วเท่านั้น (โหลดเฉพาะเมื่อเปลี่ยน User ID จริงๆ)
+  const loadedUserIdRef = useRef(null);
   useEffect(() => {
-    if (!currentUser) return;
+    if (!currentUser?.id) return;
+    if (loadedUserIdRef.current === currentUser.id) return;
+    loadedUserIdRef.current = currentUser.id;
     
     setLoadingData(true);
     const loadData = async () => {
@@ -136,7 +149,7 @@ export default function App() {
       }
     };
     loadData();
-  }, [currentUser]);
+  }, [currentUser?.id]);
 
   // เลื่อนจอขึ้นบนสุดเมื่อมีการเปลี่ยนหน้าหรือล็อกอิน
   useLayoutEffect(() => {

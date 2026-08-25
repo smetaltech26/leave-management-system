@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { X, CheckCircle2, Clock, XCircle, FileText, User, Calendar, Activity, Paperclip, ExternalLink, Eye, Image as ImageIcon } from 'lucide-react';
+import { X, CheckCircle2, Clock, XCircle, FileText, User, Calendar, Activity, Paperclip, ExternalLink, Eye, Image as ImageIcon, ZoomIn, ZoomOut, RotateCw, RotateCcw } from 'lucide-react';
 import LeaveTypeBadge, { getLeaveTypeMeta } from './ui/LeaveTypeBadge';
 import { supabase } from '../lib/supabase';
 
@@ -18,6 +18,95 @@ export default function LeaveDetailsModal({
   const [attachments, setAttachments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [lightboxImage, setLightboxImage] = useState(null);
+  const [zoomScale, setZoomScale] = useState(1);
+  const [rotation, setRotation] = useState(0);
+  const [panPosition, setPanPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    if (lightboxImage) {
+      setZoomScale(1);
+      setRotation(0);
+      setPanPosition({ x: 0, y: 0 });
+      setIsDragging(false);
+    }
+  }, [lightboxImage]);
+
+  const handleZoomIn = () => {
+    setZoomScale(prev => Math.min(Number((prev + 0.5).toFixed(1)), 4));
+  };
+
+  const handleZoomOut = () => {
+    setZoomScale(prev => {
+      const next = Math.max(Number((prev - 0.5).toFixed(1)), 1);
+      if (next === 1) setPanPosition({ x: 0, y: 0 });
+      return next;
+    });
+  };
+
+  const handleRotate = () => {
+    setRotation(prev => (prev + 90) % 360);
+  };
+
+  const handleResetZoom = () => {
+    setZoomScale(1);
+    setRotation(0);
+    setPanPosition({ x: 0, y: 0 });
+  };
+
+  const handleWheel = (e) => {
+    e.preventDefault();
+    if (e.deltaY < 0) {
+      setZoomScale(prev => Math.min(Number((prev + 0.25).toFixed(2)), 4));
+    } else {
+      setZoomScale(prev => {
+        const next = Math.max(Number((prev - 0.25).toFixed(2)), 1);
+        if (next === 1) setPanPosition({ x: 0, y: 0 });
+        return next;
+      });
+    }
+  };
+
+  const handleMouseDown = (e) => {
+    if (zoomScale > 1) {
+      setIsDragging(true);
+      setDragStart({ x: e.clientX - panPosition.x, y: e.clientY - panPosition.y });
+    }
+  };
+
+  const handleMouseMove = (e) => {
+    if (isDragging && zoomScale > 1) {
+      setPanPosition({
+        x: e.clientX - dragStart.x,
+        y: e.clientY - dragStart.y
+      });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleTouchStart = (e) => {
+    if (zoomScale > 1 && e.touches.length === 1) {
+      setIsDragging(true);
+      setDragStart({ x: e.touches[0].clientX - panPosition.x, y: e.touches[0].clientY - panPosition.y });
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (isDragging && zoomScale > 1 && e.touches.length === 1) {
+      setPanPosition({
+        x: e.touches[0].clientX - dragStart.x,
+        y: e.touches[0].clientY - dragStart.y
+      });
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+  };
 
   useEffect(() => {
     if (isOpen && request) {
@@ -374,15 +463,15 @@ export default function LeaveDetailsModal({
 
       </div>
 
-      {/* In-App Image Lightbox Modal */}
+      {/* In-App Image Lightbox Modal with Zoom & Pan */}
       {lightboxImage && (
         <div 
-          className="fixed inset-0 z-[150] bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200"
+          className="fixed inset-0 z-[150] bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-between p-3 sm:p-5 animate-in fade-in duration-200"
           onClick={() => setLightboxImage(null)}
         >
           {/* Lightbox Header */}
           <div 
-            className="w-full max-w-4xl flex items-center justify-between p-2 text-white mb-2"
+            className="w-full max-w-5xl flex items-center justify-between p-2 text-white shrink-0"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center space-x-2 min-w-0">
@@ -410,16 +499,84 @@ export default function LeaveDetailsModal({
             </div>
           </div>
 
-          {/* Lightbox Body */}
+          {/* Lightbox Body (Interactive Zoom & Pan Viewport) */}
           <div 
-            className="relative max-w-4xl max-h-[82vh] w-full flex items-center justify-center p-2 rounded-2xl bg-black/50 border border-white/10 shadow-2xl overflow-hidden"
+            className={`relative max-w-5xl max-h-[72vh] sm:max-h-[76vh] w-full flex-1 flex items-center justify-center p-2 rounded-2xl bg-black/60 border border-white/10 shadow-2xl overflow-hidden select-none ${zoomScale > 1 ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}`}
             onClick={e => e.stopPropagation()}
+            onWheel={handleWheel}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
           >
             <img
               src={lightboxImage.url}
               alt={lightboxImage.name || 'เอกสารแนบ'}
-              className="max-w-full max-h-[78vh] object-contain rounded-lg shadow-2xl animate-in zoom-in-95 duration-200 select-none"
+              style={{
+                transform: `translate(${panPosition.x}px, ${panPosition.y}px) scale(${zoomScale}) rotate(${rotation}deg)`,
+                transition: isDragging ? 'none' : 'transform 0.15s ease-out'
+              }}
+              className="max-w-full max-h-[70vh] sm:max-h-[74vh] object-contain rounded-lg shadow-2xl select-none pointer-events-none"
+              draggable={false}
             />
+          </div>
+
+          {/* Floating Bottom Zoom & Rotate Toolbar */}
+          <div 
+            className="mt-2 flex items-center space-x-2 bg-slate-900/90 border border-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-2xl shadow-2xl shrink-0"
+            onClick={e => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={handleZoomOut}
+              disabled={zoomScale <= 1}
+              className="p-2 text-white hover:bg-white/20 disabled:opacity-30 rounded-xl transition-all active:scale-95"
+              title="ย่อรูปภาพ (Zoom Out)"
+            >
+              <ZoomOut className="w-4 h-4 sm:w-5 sm:h-5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={handleResetZoom}
+              className="px-2.5 py-1 bg-white/10 hover:bg-white/20 text-white text-xs font-black rounded-lg transition-all active:scale-95"
+              title="รีเซ็ตเป็น 100%"
+            >
+              {Math.round(zoomScale * 100)}%
+            </button>
+
+            <button
+              type="button"
+              onClick={handleZoomIn}
+              disabled={zoomScale >= 4}
+              className="p-2 text-white hover:bg-white/20 disabled:opacity-30 rounded-xl transition-all active:scale-95"
+              title="ขยายรูปภาพ (Zoom In)"
+            >
+              <ZoomIn className="w-4 h-4 sm:w-5 sm:h-5" />
+            </button>
+
+            <div className="w-[1px] h-4 bg-white/20 mx-1"></div>
+
+            <button
+              type="button"
+              onClick={handleRotate}
+              className="p-2 text-white hover:bg-white/20 rounded-xl transition-all active:scale-95"
+              title="หมุนรูปภาพ 90 องศา"
+            >
+              <RotateCw className="w-4 h-4 sm:w-5 sm:h-5" />
+            </button>
+            
+            <button
+              type="button"
+              onClick={handleResetZoom}
+              className="p-2 text-slate-300 hover:text-white hover:bg-white/20 rounded-xl transition-all active:scale-95"
+              title="รีเซ็ตการหมุนและขนาดเดิม"
+            >
+              <RotateCcw className="w-4 h-4 sm:w-4 sm:h-4" />
+            </button>
           </div>
         </div>
       )}

@@ -70,9 +70,9 @@ export default function LeaveFormModal({
           setFilePreview(null);
           setIsPdf(false);
 
-          setSelectedApprover1(currentUser?.approver_step1_id || '');
-          setSelectedApprover2(currentUser?.approver_step2_id || '');
-          setSelectedApprover3(currentUser?.approver_step3_id || '');
+          setSelectedApprover1('');
+          setSelectedApprover2('');
+          setSelectedApprover3('');
         }
       }
     } else {
@@ -606,22 +606,29 @@ export default function LeaveFormModal({
             </button>
 
             {/* สรุปผู้อนุมัติที่เลือกแล้ว */}
-            <div className="flex flex-wrap gap-2">
-              {[selectedApprover1, selectedApprover2, selectedApprover3].filter(Boolean).map((id, index) => {
-                const u = users.find(x => x.id === id);
-                if (!u) return null;
-                const roleTitle = u.role === 'SuperUser' ? 'หัวหน้างาน' : u.role === 'Admin' ? 'ผู้จัดการ' : u.role === 'SuperAdmin' ? 'HR' : u.role;
-                return (
-                  <div key={index} className="flex items-center space-x-3 bg-slate-50 dark:bg-[var(--card-bg)] border border-slate-200 dark:border-slate-700 p-3 rounded-2xl shadow-sm">
-                    <img src={u.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.fullname)}`} alt="" className="w-10 h-10 rounded-full object-cover shadow-sm" />
-                    <div>
-                      <div className="text-sm font-bold text-slate-800 dark:text-slate-200">{u.fullname}</div>
-                      <div className="text-[11px] font-semibold text-slate-500">Step {index + 1} ({roleTitle})</div>
+            {selectedApproversCount === 0 ? (
+              <div className="text-xs text-amber-600 dark:text-amber-400 font-medium py-1.5 flex items-center space-x-1.5">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                <span>ยังไม่ได้เลือกผู้อนุมัติ (กรุณากดปุ่ม "เลือกผู้อนุมัติ" ด้านบนให้ครบทั้ง 3 ท่าน)</span>
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {[selectedApprover1, selectedApprover2, selectedApprover3].filter(Boolean).map((id, index) => {
+                  const u = users.find(x => x.id === id);
+                  if (!u) return null;
+                  const roleTitle = u.role === 'SuperUser' ? 'หัวหน้างาน' : u.role === 'Admin' ? 'ผู้จัดการ' : u.role === 'SuperAdmin' ? 'HR' : u.role;
+                  return (
+                    <div key={index} className="flex items-center space-x-3 bg-slate-50 dark:bg-[var(--card-bg)] border border-slate-200 dark:border-slate-700 p-3 rounded-2xl shadow-sm">
+                      <img src={u.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.fullname)}`} alt="" className="w-10 h-10 rounded-full object-cover shadow-sm" />
+                      <div>
+                        <div className="text-sm font-bold text-slate-800 dark:text-slate-200">{u.fullname}</div>
+                        <div className="text-[11px] font-semibold text-slate-500">Step {index + 1} ({roleTitle})</div>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Attachment File */}

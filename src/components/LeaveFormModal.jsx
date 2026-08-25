@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Calendar, Upload, FileText, CheckCircle2, UserCheck, AlertCircle } from 'lucide-react';
 import { notifyLeaveApprover } from '../lib/lineNotify';
 import { sendEmailNotification } from '../services/emailService';
@@ -111,6 +111,7 @@ export default function LeaveFormModal({
   const [filePreview, setFilePreview] = useState(null);
   const [isPdf, setIsPdf] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const fileInputRef = useRef(null);
 
   const [showApproverModal, setShowApproverModal] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
@@ -623,11 +624,21 @@ export default function LeaveFormModal({
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-[var(--text-muted)] mb-1.5">แนบไฟล์หลักฐาน / ใบรับรองแพทย์ (ถ้ามี)</label>
             <div className="flex items-center space-x-3">
-              <label className="cursor-pointer py-2.5 px-4 rounded-2xl bg-slate-100 dark:bg-[var(--card-bg)] hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-[var(--text-muted)] text-xs font-semibold border border-slate-200 dark:border-[var(--card-border)] flex items-center space-x-2 transition-all">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="py-2.5 px-4 rounded-2xl bg-slate-100 dark:bg-[var(--card-bg)] hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-[var(--text-muted)] text-xs font-semibold border border-slate-200 dark:border-[var(--card-border)] flex items-center space-x-2 transition-all active:scale-95 shadow-sm"
+              >
                 <Upload className="w-4 h-4 text-blue-500" />
                 <span>อัปโหลดรูปภาพ / เอกสาร</span>
-                <input type="file" accept="image/*,.pdf,application/pdf" onChange={handleFileChange} className="hidden" />
-              </label>
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,application/pdf,.pdf"
+                onChange={handleFileChange}
+                className="sr-only"
+              />
               {file && <span className="text-xs text-blue-600 dark:text-blue-400 font-semibold truncate max-w-xs">{file.name}</span>}
             </div>
 
@@ -667,6 +678,28 @@ export default function LeaveFormModal({
                   title="ลบรูปภาพ"
                 >
                   <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : file ? (
+              <div className="mt-3 flex items-center justify-between p-3.5 bg-blue-50/80 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-2xl shadow-sm animate-in fade-in">
+                <div className="flex items-center space-x-3 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-sm">
+                    <Upload className="w-5 h-5 text-blue-500" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{file.name}</div>
+                    <div className="text-[11px] text-blue-500 font-semibold mt-0.5">
+                      แนบไฟล์สำเร็จ {file.size ? `(${(file.size / (1024 * 1024)).toFixed(2)} MB)` : ''}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setFile(null); setFilePreview(null); setIsPdf(false); }}
+                  className="p-1.5 hover:bg-blue-100 dark:hover:bg-blue-500/20 rounded-full text-blue-500 transition-colors"
+                  title="ลบไฟล์แนบ"
+                >
+                  <X className="w-4 h-4" />
                 </button>
               </div>
             ) : null}

@@ -130,83 +130,114 @@ export default function LeaveFormModal({
   // Smart Canvas Compression: บีบอัดรูปถ่ายเอกสาร/ใบรับรองแพทย์ให้อ่านง่าย คมชัด และไฟล์เบา (~200-400 KB)
   const compressImage = (file) => {
     return new Promise((resolve) => {
-      // ถ้าไม่ใช่รูปภาพ หรือขนาดเล็กกว่า 350 KB อยู่แล้ว ไม่ต้องบีบอัด
-      if (!file.type.startsWith('image/') || file.size < 350 * 1024) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          resolve({ file, preview: reader.result });
-        };
-        reader.readAsDataURL(file);
+      const fileType = (file.type || '').toLowerCase();
+      const fileName = (file.name || '').toLowerCase();
+      const isImg = fileType.startsWith('image/') || /\.(jpg|jpeg|png|webp|bmp|gif|heic)$/i.test(fileName);
+
+      // ถ้าไม่ใช่รูปภาพ หรือขนาดเล็กกว่า 300 KB อยู่แล้ว ให้ใช้ไฟล์เดิม
+      if (!isImg || file.size < 300 * 1024) {
+        resolve({ file, preview: null });
         return;
       }
 
-      const reader = new FileReader();
-      reader.onload = (e) => {
+      try {
+        const objectUrl = URL.createObjectURL(file);
         const img = new Image();
+
         img.onload = () => {
-          const canvas = document.createElement('canvas');
-          let width = img.width;
-          let height = img.height;
+          try {
+            const canvas = document.createElement('canvas');
+            let width = img.naturalWidth || img.width;
+            let height = img.naturalHeight || img.height;
 
-          // เพดานความละเอียดสูงสุด 1800px (คมกริบสำหรับอ่านตัวหนังสือ/ใบรับรองแพทย์)
-          const MAX_DIMENSION = 1800;
-          if (width > height) {
-            if (width > MAX_DIMENSION) {
-              height = Math.round((height * MAX_DIMENSION) / width);
-              width = MAX_DIMENSION;
-            }
-          } else {
-            if (height > MAX_DIMENSION) {
-              width = Math.round((width * MAX_DIMENSION) / height);
-              height = MAX_DIMENSION;
-            }
-          }
-
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, width, height);
-
-          // แปลงเป็น JPEG ความคมชัด 85%
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-
-          canvas.toBlob(
-            (blob) => {
-              if (blob) {
-                const newFileName = file.name.replace(/\.[^/.]+$/, "") + ".jpg";
-                const compressedFile = new File([blob], newFileName, {
-                  type: 'image/jpeg',
-                  lastModified: Date.now()
-                });
-                resolve({ file: compressedFile, preview: dataUrl });
-              } else {
-                resolve({ file, preview: dataUrl });
+            // เพดานความละเอียดสูงสุด 1800px (คมกริบสำหรับอ่านตัวหนังสือ/ใบรับรองแพทย์)
+            const MAX_DIMENSION = 1800;
+            if (width > height) {
+              if (width > MAX_DIMENSION) {
+                height = Math.round((height * MAX_DIMENSION) / width);
+                width = MAX_DIMENSION;
               }
-            },
-            'image/jpeg',
-            0.85
-          );
+            } else {
+              if (height > MAX_DIMENSION) {
+                width = Math.round((width * MAX_DIMENSION) / height);
+                height = MAX_DIMENSION;
+              }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            URL.revokeObjectURL(objectUrl);
+
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+            canvas.toBlob(
+              (blob) => {
+                if (blob) {
+                  const baseName = file.name ? file.name.replace(/\.[^/.]+$/, "") : "attachment";
+                  const compressedFile = new File([blob], `${baseName}.jpg`, {
+                    type: 'image/jpeg',
+                    lastModified: Date.now()
+                  });
+                  resolve({ file: compressedFile, preview: dataUrl });
+                } else {
+                  resolve({ file, preview: dataUrl });
+                }
+              },
+              'image/jpeg',
+              0.85
+            );
+          } catch (canvasErr) {
+            console.warn("Canvas processing error, fallback to original file:", canvasErr);
+            URL.revokeObjectURL(objectUrl);
+            resolve({ file, preview: null });
+          }
         };
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
+
+        img.onerror = () => {
+          console.warn("Image load error in canvas, fallback to original file");
+          URL.revokeObjectURL(objectUrl);
+          resolve({ file, preview: null });
+        };
+
+        img.src = objectUrl;
+      } catch (err) {
+        console.warn("Compression error, fallback to original:", err);
+        resolve({ file, preview: null });
+      }
     });
   };
 
-  const handleFileChange = async (e) => {
-    const uploaded = e.target.files[0];
-    if (uploaded) {
-      const isPdfFile = uploaded.type === 'application/pdf' || uploaded.name?.toLowerCase().endsWith('.pdf');
-      setIsPdf(isPdfFile);
+  const handleFileChange = (e) => {
+    const uploaded = e.target.files && e.target.files[0];
+    if (!uploaded) return;
 
-      if (isPdfFile) {
-        setFile(uploaded);
-        setFilePreview(null);
-      } else {
-        const { file: optimizedFile, preview } = await compressImage(uploaded);
-        setFile(optimizedFile);
-        setFilePreview(preview);
+    const fileName = (uploaded.name || '').toLowerCase();
+    const fileType = (uploaded.type || '').toLowerCase();
+    const isPdfFile = fileType.includes('pdf') || fileName.endsWith('.pdf');
+
+    setIsPdf(isPdfFile);
+    setFile(uploaded);
+
+    if (isPdfFile) {
+      setFilePreview(null);
+    } else {
+      // แสดง Preview รูปภาพทันทีผ่าน Object URL (0ms เร็วทันใจบน Android / iOS)
+      try {
+        const instantPreviewUrl = URL.createObjectURL(uploaded);
+        setFilePreview(instantPreviewUrl);
+      } catch (err) {
+        const reader = new FileReader();
+        reader.onloadend = () => setFilePreview(reader.result);
+        reader.readAsDataURL(uploaded);
       }
+
+      // บีบอัดรูปภาพเบื้องหลังเพื่อเตรียมส่ง API อย่างรวดเร็ว
+      compressImage(uploaded).then(({ file: optimizedFile, preview }) => {
+        if (optimizedFile) setFile(optimizedFile);
+        if (preview) setFilePreview(preview);
+      }).catch(console.warn);
     }
   };
 
@@ -601,37 +632,17 @@ export default function LeaveFormModal({
             </div>
 
             {/* Distinct Preview for PDF & Images */}
-            {(isPdf && file) ? (
+            {isPdf ? (
               <div className="mt-3 flex items-center justify-between p-3.5 bg-rose-50/80 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 rounded-2xl shadow-sm animate-in fade-in">
                 <div className="flex items-center space-x-3 min-w-0">
                   <div className="w-10 h-10 rounded-xl bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 shadow-sm">
                     <FileText className="w-5 h-5" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{file.name}</div>
+                    <div className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{file?.name || 'เอกสารประกอบการลา (PDF)'}</div>
                     <div className="text-[11px] text-rose-500 font-semibold mt-0.5">
-                      เอกสาร PDF {file.size ? `(${(file.size / (1024 * 1024)).toFixed(2)} MB)` : ''}
+                      เอกสาร PDF {file?.size ? `(${(file.size / (1024 * 1024)).toFixed(2)} MB)` : 'แนบอยู่ในระบบเรียบร้อย'}
                     </div>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => { setFile(null); setFilePreview(null); setIsPdf(false); }}
-                  className="p-1.5 hover:bg-rose-100 dark:hover:bg-rose-500/20 rounded-full text-rose-500 transition-colors"
-                  title="ลบไฟล์แนบ"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            ) : (isPdf && filePreview) ? (
-              <div className="mt-3 flex items-center justify-between p-3.5 bg-rose-50/80 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 rounded-2xl shadow-sm animate-in fade-in">
-                <div className="flex items-center space-x-3 min-w-0">
-                  <div className="w-10 h-10 rounded-xl bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 shadow-sm">
-                    <FileText className="w-5 h-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">เอกสารแนบเดิม (PDF)</div>
-                    <div className="text-[11px] text-rose-500 font-semibold mt-0.5">แนบอยู่ในระบบเรียบร้อย</div>
                   </div>
                 </div>
                 <button

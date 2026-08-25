@@ -606,13 +606,8 @@ export default function LeaveFormModal({
             </button>
 
             {/* สรุปผู้อนุมัติที่เลือกแล้ว */}
-            {selectedApproversCount === 0 ? (
-              <div className="text-xs text-amber-600 dark:text-amber-400 font-medium py-1.5 flex items-center space-x-1.5">
-                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                <span>ยังไม่ได้เลือกผู้อนุมัติ (กรุณากดปุ่ม "เลือกผู้อนุมัติ" ด้านบนให้ครบทั้ง 3 ท่าน)</span>
-              </div>
-            ) : (
-              <div className="flex flex-wrap gap-2">
+            {selectedApproversCount > 0 && (
+              <div className="flex flex-wrap gap-2 pt-1">
                 {[selectedApprover1, selectedApprover2, selectedApprover3].filter(Boolean).map((id, index) => {
                   const u = users.find(x => x.id === id);
                   if (!u) return null;

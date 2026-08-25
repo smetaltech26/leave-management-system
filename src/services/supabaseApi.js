@@ -187,13 +187,46 @@ export const createLeaveRequest = async (requestData, approvers, attachments) =>
 };
 
 export const updateLeaveRequest = async (updatedReqData) => {
-  const { id, description, date_start, date_end, leave_duration, leave_type } = updatedReqData;
+  const { id, description, date_start, date_end, leave_duration, leave_type, attachments, user_id } = updatedReqData;
   const { error } = await supabase
     .from('leave_requests')
     .update({ description, date_start, date_end, leave_duration, leave_type })
     .eq('id', id);
     
   if (error) throw error;
+
+  // จัดการอัปโหลดไฟล์แนบใหม่ (กรณีแก้ไขใบลาแล้วแนบไฟล์เพิ่ม)
+  if (attachments && Array.isArray(attachments)) {
+    for (let i = 0; i < attachments.length; i++) {
+      const att = attachments[i];
+      if (att.raw_file) {
+        const fileExt = att.raw_file.name.split('.').pop() || 'jpg';
+        const attId = `${id}-ATT-${Date.now()}`;
+        const filePath = `${id}/${attId}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('attachments')
+          .upload(filePath, att.raw_file, {
+            cacheControl: '3600',
+            upsert: true
+          });
+          
+        let finalFileUrl = att.file_url;
+        if (!uploadError) {
+          const { data } = supabase.storage.from('attachments').getPublicUrl(filePath);
+          finalFileUrl = data.publicUrl;
+        }
+
+        await supabase.from('attachments').insert([{
+          id: attId,
+          request_id: id,
+          file_url: finalFileUrl,
+          file_name: att.file_name,
+          uploaded_by: user_id || updatedReqData.user_id
+        }]);
+      }
+    }
+  }
 };
 
 export const deleteLeaveRequest = async (requestId) => {

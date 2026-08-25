@@ -127,20 +127,85 @@ export default function LeaveFormModal({
 
   const remainingDays = Math.max(0, maxDays - dynamicUsedDays);
 
-  const handleFileChange = (e) => {
-    const uploaded = e.target.files[0];
-    if (uploaded) {
-      setFile(uploaded);
-      const isPdfFile = uploaded.type === 'application/pdf' || uploaded.name?.toLowerCase().endsWith('.pdf');
-      setIsPdf(isPdfFile);
-      if (!isPdfFile) {
+  // Smart Canvas Compression: บีบอัดรูปถ่ายเอกสาร/ใบรับรองแพทย์ให้อ่านง่าย คมชัด และไฟล์เบา (~200-400 KB)
+  const compressImage = (file) => {
+    return new Promise((resolve) => {
+      // ถ้าไม่ใช่รูปภาพ หรือขนาดเล็กกว่า 350 KB อยู่แล้ว ไม่ต้องบีบอัด
+      if (!file.type.startsWith('image/') || file.size < 350 * 1024) {
         const reader = new FileReader();
         reader.onloadend = () => {
-          setFilePreview(reader.result);
+          resolve({ file, preview: reader.result });
         };
-        reader.readAsDataURL(uploaded);
-      } else {
+        reader.readAsDataURL(file);
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          // เพดานความละเอียดสูงสุด 1800px (คมกริบสำหรับอ่านตัวหนังสือ/ใบรับรองแพทย์)
+          const MAX_DIMENSION = 1800;
+          if (width > height) {
+            if (width > MAX_DIMENSION) {
+              height = Math.round((height * MAX_DIMENSION) / width);
+              width = MAX_DIMENSION;
+            }
+          } else {
+            if (height > MAX_DIMENSION) {
+              width = Math.round((width * MAX_DIMENSION) / height);
+              height = MAX_DIMENSION;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // แปลงเป็น JPEG ความคมชัด 85%
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                const newFileName = file.name.replace(/\.[^/.]+$/, "") + ".jpg";
+                const compressedFile = new File([blob], newFileName, {
+                  type: 'image/jpeg',
+                  lastModified: Date.now()
+                });
+                resolve({ file: compressedFile, preview: dataUrl });
+              } else {
+                resolve({ file, preview: dataUrl });
+              }
+            },
+            'image/jpeg',
+            0.85
+          );
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleFileChange = async (e) => {
+    const uploaded = e.target.files[0];
+    if (uploaded) {
+      const isPdfFile = uploaded.type === 'application/pdf' || uploaded.name?.toLowerCase().endsWith('.pdf');
+      setIsPdf(isPdfFile);
+
+      if (isPdfFile) {
+        setFile(uploaded);
         setFilePreview(null);
+      } else {
+        const { file: optimizedFile, preview } = await compressImage(uploaded);
+        setFile(optimizedFile);
+        setFilePreview(preview);
       }
     }
   };

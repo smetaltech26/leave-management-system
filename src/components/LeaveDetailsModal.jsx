@@ -17,6 +17,7 @@ export default function LeaveDetailsModal({
   const [approvalSteps, setApprovalSteps] = useState([]);
   const [attachments, setAttachments] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState(null);
 
   useEffect(() => {
     if (isOpen && request) {
@@ -218,21 +219,30 @@ export default function LeaveDetailsModal({
                             <span className="px-2 py-0.5 text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300 rounded-md shrink-0">รูปภาพ</span>
                             <span className="text-xs font-bold text-[var(--text-main)] truncate">{file.file_name || 'รูปภาพประกอบการลา'}</span>
                           </div>
-                          <a
-                            href={file.file_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="px-2.5 py-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center space-x-1 shrink-0"
-                          >
-                            <span>เปิดภาพเต็ม</span>
-                            <ExternalLink className="w-3.5 h-3.5" />
-                          </a>
+                          <div className="flex items-center space-x-2 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => setLightboxImage({ url: file.file_url, name: file.file_name || 'รูปภาพประกอบการลา' })}
+                              className="px-2.5 py-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-lg flex items-center space-x-1 transition-colors"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>ดูรูปขยาย</span>
+                            </button>
+                            <a
+                              href={file.file_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                              title="เปิดในแท็บใหม่"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </a>
+                          </div>
                         </div>
-                        <a
-                          href={file.file_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 max-h-60 group cursor-zoom-in shadow-inner bg-slate-100 dark:bg-slate-900"
+                        <button
+                          type="button"
+                          onClick={() => setLightboxImage({ url: file.file_url, name: file.file_name || 'รูปภาพประกอบการลา' })}
+                          className="w-full block relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 max-h-60 group cursor-zoom-in shadow-inner bg-slate-100 dark:bg-slate-900 focus:outline-none"
                         >
                           <img
                             src={file.file_url}
@@ -241,9 +251,9 @@ export default function LeaveDetailsModal({
                           />
                           <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-1.5 text-white text-xs font-bold">
                             <Eye className="w-4 h-4" />
-                            <span>คลิกเพื่อดูรูปภาพขนาดใหญ่</span>
+                            <span>คลิกเพื่อดูรูปภาพขนาดใหญ่ (ในแอป)</span>
                           </div>
-                        </a>
+                        </button>
                       </div>
                     );
                   }
@@ -363,6 +373,56 @@ export default function LeaveDetailsModal({
         <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0 min-h-[72px]"></div>
 
       </div>
+
+      {/* In-App Image Lightbox Modal */}
+      {lightboxImage && (
+        <div 
+          className="fixed inset-0 z-[150] bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200"
+          onClick={() => setLightboxImage(null)}
+        >
+          {/* Lightbox Header */}
+          <div 
+            className="w-full max-w-4xl flex items-center justify-between p-2 text-white mb-2"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center space-x-2 min-w-0">
+              <span className="px-2.5 py-1 text-xs font-bold bg-blue-500/30 text-blue-300 border border-blue-400/30 rounded-lg shrink-0">รูปภาพแนบ</span>
+              <span className="text-sm font-semibold truncate text-slate-200">{lightboxImage.name || 'เอกสารประกอบการลา'}</span>
+            </div>
+            <div className="flex items-center space-x-2 shrink-0">
+              <a
+                href={lightboxImage.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 bg-white/10 hover:bg-white/20 rounded-xl text-slate-300 hover:text-white transition-colors"
+                title="เปิดไฟล์ในแท็บใหม่"
+              >
+                <ExternalLink className="w-4 h-4" />
+              </a>
+              <button
+                type="button"
+                onClick={() => setLightboxImage(null)}
+                className="py-1.5 px-3.5 bg-rose-600 hover:bg-rose-700 rounded-xl text-white text-xs font-bold transition-all flex items-center space-x-1.5 shadow-lg active:scale-95"
+              >
+                <X className="w-4 h-4" />
+                <span>ปิดรูปภาพ</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Lightbox Body */}
+          <div 
+            className="relative max-w-4xl max-h-[82vh] w-full flex items-center justify-center p-2 rounded-2xl bg-black/50 border border-white/10 shadow-2xl overflow-hidden"
+            onClick={e => e.stopPropagation()}
+          >
+            <img
+              src={lightboxImage.url}
+              alt={lightboxImage.name || 'เอกสารแนบ'}
+              className="max-w-full max-h-[78vh] object-contain rounded-lg shadow-2xl animate-in zoom-in-95 duration-200 select-none"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

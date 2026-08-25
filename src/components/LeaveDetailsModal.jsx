@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { X, CheckCircle2, Clock, XCircle, FileText, User, Calendar, Activity, Paperclip } from 'lucide-react';
+import { X, CheckCircle2, Clock, XCircle, FileText, User, Calendar, Activity, Paperclip, ExternalLink, Eye, Image as ImageIcon } from 'lucide-react';
 import LeaveTypeBadge, { getLeaveTypeMeta } from './ui/LeaveTypeBadge';
 import { supabase } from '../lib/supabase';
 
@@ -202,30 +202,82 @@ export default function LeaveDetailsModal({
           {attachments.length > 0 && (
             <div className="p-4 sm:p-6 rounded-2xl bg-white dark:bg-slate-800/50 border border-[var(--card-border)] shadow-sm">
               <div className="text-xs md:text-sm font-bold text-[var(--text-muted)] mb-3 uppercase tracking-wider flex items-center">
-                <Paperclip className="w-4 h-4 mr-1.5" /> เอกสารแนบ
+                <Paperclip className="w-4 h-4 mr-1.5" /> เอกสารแนบ ({attachments.length})
               </div>
-              <div className="flex flex-col gap-2">
-                {attachments.map((file, idx) => (
-                  <a
-                    key={file.id || idx}
-                    href={file.file_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center p-3 bg-slate-50 dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl border border-slate-200 dark:border-slate-600 transition-colors"
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/50 text-blue-600 flex items-center justify-center mr-3 shrink-0">
-                      <FileText className="w-4 h-4" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-semibold text-[var(--text-main)] truncate">
-                        {file.file_name || file.id}
+              <div className="flex flex-col gap-3">
+                {attachments.map((file, idx) => {
+                  const url = file.file_url?.toLowerCase() || '';
+                  const name = file.file_name?.toLowerCase() || '';
+                  const isImg = name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png') || name.endsWith('.webp') || name.endsWith('.gif') || url.includes('.jpg') || url.includes('.jpeg') || url.includes('.png') || url.includes('.webp') || url.startsWith('data:image/');
+
+                  if (isImg) {
+                    return (
+                      <div key={file.id || idx} className="p-3.5 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2 min-w-0">
+                            <span className="px-2 py-0.5 text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300 rounded-md shrink-0">รูปภาพ</span>
+                            <span className="text-xs font-bold text-[var(--text-main)] truncate">{file.file_name || 'รูปภาพประกอบการลา'}</span>
+                          </div>
+                          <a
+                            href={file.file_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-2.5 py-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center space-x-1 shrink-0"
+                          >
+                            <span>เปิดภาพเต็ม</span>
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
+                        </div>
+                        <a
+                          href={file.file_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 max-h-60 group cursor-zoom-in shadow-inner bg-slate-100 dark:bg-slate-900"
+                        >
+                          <img
+                            src={file.file_url}
+                            alt={file.file_name || 'เอกสารแนบ'}
+                            className="w-full h-auto max-h-60 object-contain mx-auto group-hover:scale-[1.02] transition-transform duration-200"
+                          />
+                          <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-1.5 text-white text-xs font-bold">
+                            <Eye className="w-4 h-4" />
+                            <span>คลิกเพื่อดูรูปภาพขนาดใหญ่</span>
+                          </div>
+                        </a>
                       </div>
-                      <div className="text-xs text-[var(--text-muted)] mt-0.5">
-                        คลิกเพื่อดูเอกสาร
+                    );
+                  }
+
+                  return (
+                    <a
+                      key={file.id || idx}
+                      href={file.file_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between p-3.5 bg-rose-50/70 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 rounded-2xl border border-rose-200 dark:border-rose-500/30 transition-all group"
+                    >
+                      <div className="flex items-center space-x-3 min-w-0">
+                        <div className="w-10 h-10 rounded-xl bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 shadow-sm">
+                          <FileText className="w-5 h-5" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate group-hover:text-rose-600 transition-colors">
+                            {file.file_name || 'เอกสารประกอบการลา (PDF)'}
+                          </div>
+                          <div className="text-[11px] text-rose-500 font-semibold mt-0.5 flex items-center space-x-1">
+                            <span>เอกสาร PDF</span>
+                            <span>•</span>
+                            <span>คลิกเพื่อเปิดดูไฟล์</span>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </a>
-                ))}
+                      <div className="px-3 py-1.5 bg-white dark:bg-slate-800 rounded-xl border border-rose-200 dark:border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs font-bold flex items-center space-x-1 shadow-sm shrink-0">
+                        <span>เปิดดู</span>
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </div>
+                    </a>
+                  );
+                })}
               </div>
             </div>
           )}

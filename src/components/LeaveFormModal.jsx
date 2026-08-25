@@ -38,6 +38,9 @@ export default function LeaveFormModal({
         setLeavePeriod(editingRequest.leave_period || 'Full');
         
         const attached = editingRequest.attachments?.[0]?.file_url || null;
+        const attachedName = editingRequest.attachments?.[0]?.file_name || '';
+        const isPdfFile = attachedName.toLowerCase().endsWith('.pdf') || attached?.toLowerCase().includes('.pdf');
+        setIsPdf(isPdfFile);
         setFilePreview(attached);
         setFile(null);
       } else {
@@ -48,6 +51,7 @@ export default function LeaveFormModal({
         setLeavePeriod('Full');
         setFile(null);
         setFilePreview(null);
+        setIsPdf(false);
       }
     }
   }, [isOpen, editingRequest]);
@@ -105,6 +109,7 @@ export default function LeaveFormModal({
 
   const [file, setFile] = useState(null);
   const [filePreview, setFilePreview] = useState(null);
+  const [isPdf, setIsPdf] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [showApproverModal, setShowApproverModal] = useState(false);
@@ -126,11 +131,17 @@ export default function LeaveFormModal({
     const uploaded = e.target.files[0];
     if (uploaded) {
       setFile(uploaded);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFilePreview(reader.result);
-      };
-      reader.readAsDataURL(uploaded);
+      const isPdfFile = uploaded.type === 'application/pdf' || uploaded.name?.toLowerCase().endsWith('.pdf');
+      setIsPdf(isPdfFile);
+      if (!isPdfFile) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setFilePreview(reader.result);
+        };
+        reader.readAsDataURL(uploaded);
+      } else {
+        setFilePreview(null);
+      }
     }
   };
 
@@ -519,23 +530,70 @@ export default function LeaveFormModal({
               <label className="cursor-pointer py-2.5 px-4 rounded-2xl bg-slate-100 dark:bg-[var(--card-bg)] hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-[var(--text-muted)] text-xs font-semibold border border-slate-200 dark:border-[var(--card-border)] flex items-center space-x-2 transition-all">
                 <Upload className="w-4 h-4 text-blue-500" />
                 <span>อัปโหลดรูปภาพ / เอกสาร</span>
-                <input type="file" accept="image/*,.pdf" onChange={handleFileChange} className="hidden" />
+                <input type="file" accept="image/*,.pdf,application/pdf" onChange={handleFileChange} className="hidden" />
               </label>
               {file && <span className="text-xs text-blue-600 dark:text-blue-400 font-semibold truncate max-w-xs">{file.name}</span>}
             </div>
 
-            {filePreview && (
-              <div className="mt-3 relative w-32 h-32 rounded-2xl overflow-hidden border border-slate-200 dark:border-[var(--card-border)] shadow-md">
-                <img src={filePreview} alt="Preview" className="w-full h-full object-cover" />
+            {/* Distinct Preview for PDF & Images */}
+            {(isPdf && file) ? (
+              <div className="mt-3 flex items-center justify-between p-3.5 bg-rose-50/80 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 rounded-2xl shadow-sm animate-in fade-in">
+                <div className="flex items-center space-x-3 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 shadow-sm">
+                    <FileText className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{file.name}</div>
+                    <div className="text-[11px] text-rose-500 font-semibold mt-0.5">
+                      เอกสาร PDF {file.size ? `(${(file.size / (1024 * 1024)).toFixed(2)} MB)` : ''}
+                    </div>
+                  </div>
+                </div>
                 <button
                   type="button"
-                  onClick={() => { setFile(null); setFilePreview(null); }}
-                  className="absolute top-1 right-1 bg-[var(--card-bg)]/80 p-1 rounded-full text-rose-400 hover:text-rose-300"
+                  onClick={() => { setFile(null); setFilePreview(null); setIsPdf(false); }}
+                  className="p-1.5 hover:bg-rose-100 dark:hover:bg-rose-500/20 rounded-full text-rose-500 transition-colors"
+                  title="ลบไฟล์แนบ"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (isPdf && filePreview) ? (
+              <div className="mt-3 flex items-center justify-between p-3.5 bg-rose-50/80 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 rounded-2xl shadow-sm animate-in fade-in">
+                <div className="flex items-center space-x-3 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 shadow-sm">
+                    <FileText className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">เอกสารแนบเดิม (PDF)</div>
+                    <div className="text-[11px] text-rose-500 font-semibold mt-0.5">แนบอยู่ในระบบเรียบร้อย</div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setFile(null); setFilePreview(null); setIsPdf(false); }}
+                  className="p-1.5 hover:bg-rose-100 dark:hover:bg-rose-500/20 rounded-full text-rose-500 transition-colors"
+                  title="ลบไฟล์แนบ"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : filePreview ? (
+              <div className="mt-3 relative w-36 h-36 rounded-2xl overflow-hidden border border-slate-200 dark:border-[var(--card-border)] shadow-md group">
+                <img src={filePreview} alt="Preview" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <span className="text-[10px] text-white font-bold bg-slate-900/80 px-2 py-1 rounded-md">รูปภาพแนบ</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setFile(null); setFilePreview(null); setIsPdf(false); }}
+                  className="absolute top-1.5 right-1.5 bg-slate-900/80 hover:bg-rose-600 p-1.5 rounded-full text-white transition-colors shadow-sm"
+                  title="ลบรูปภาพ"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
               </div>
-            )}
+            ) : null}
           </div>
 
           </form>

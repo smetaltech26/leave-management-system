@@ -240,6 +240,9 @@ export default function LeaveFormModal({
         if (preview) setFilePreview(preview);
       }).catch(console.warn);
     }
+
+    // เคลียร์ค่า input ให้เลือกไฟล์เดิมซ้ำได้ถ้ายกเลิก
+    if (e.target) e.target.value = '';
   };
 
   const handleSubmit = async (e) => {
@@ -624,21 +627,19 @@ export default function LeaveFormModal({
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-[var(--text-muted)] mb-1.5">แนบไฟล์หลักฐาน / ใบรับรองแพทย์ (ถ้ามี)</label>
             <div className="flex items-center space-x-3">
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="py-2.5 px-4 rounded-2xl bg-slate-100 dark:bg-[var(--card-bg)] hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-[var(--text-muted)] text-xs font-semibold border border-slate-200 dark:border-[var(--card-border)] flex items-center space-x-2 transition-all active:scale-95 shadow-sm"
-              >
-                <Upload className="w-4 h-4 text-blue-500" />
-                <span>อัปโหลดรูปภาพ / เอกสาร</span>
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*,application/pdf,.pdf"
-                onChange={handleFileChange}
-                className="sr-only"
-              />
+              <div className="relative inline-block overflow-hidden">
+                <div className="py-2.5 px-4 rounded-2xl bg-slate-100 dark:bg-[var(--card-bg)] hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-[var(--text-muted)] text-xs font-semibold border border-slate-200 dark:border-[var(--card-border)] flex items-center space-x-2 transition-all shadow-sm">
+                  <Upload className="w-4 h-4 text-blue-500" />
+                  <span>อัปโหลดรูปภาพ / เอกสาร</span>
+                </div>
+                <input
+                  type="file"
+                  accept="image/*,application/pdf"
+                  onChange={handleFileChange}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  title="อัปโหลดรูปภาพหรือเอกสาร"
+                />
+              </div>
               {file && <span className="text-xs text-blue-600 dark:text-blue-400 font-semibold truncate max-w-xs">{file.name}</span>}
             </div>
 

@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { CheckCircle2, XCircle, Clock, FileText, User, MessageSquare, AlertCircle, Sparkles, Edit2, RefreshCcw } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, FileText, User, MessageSquare, AlertCircle, Sparkles, Edit2, RefreshCcw, Search, X } from 'lucide-react';
 import { notifyLeaveApprover, sendLinePushToUser } from '../lib/lineNotify';
 import { sendEmailNotification } from '../services/emailService';
 import AdminEditLeaveModal from './admin/AdminEditLeaveModal';
@@ -10,6 +10,7 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
   const [activeSubTab, setActiveSubTab] = useState('pending'); // pending | completed
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [comment, setComment] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [successType, setSuccessType] = useState('');
@@ -52,6 +53,30 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
     }
   };
 
+  // Filter Function
+  const filterRequest = (r) => {
+    if (!searchTerm.trim()) return true;
+    const term = searchTerm.trim().toLowerCase();
+    const requester = users.find(u => u.id === r.user_id);
+    const fullname = (requester?.fullname || '').toLowerCase();
+    const reqId = (r.id || '').toLowerCase();
+    const empId = (requester?.employee_id || requester?.id || '').toLowerCase();
+    const deptName = (departments?.find(d => d.id === requester?.department_id)?.name || requester?.department_id || '').toLowerCase();
+    const agencyName = (agencies?.find(a => a.id === requester?.agency_id)?.name || requester?.agency_id || '').toLowerCase();
+    const leaveType = (r.leave_type || '').toLowerCase();
+    const desc = (r.description || '').toLowerCase();
+
+    return (
+      fullname.includes(term) ||
+      reqId.includes(term) ||
+      empId.includes(term) ||
+      deptName.includes(term) ||
+      agencyName.includes(term) ||
+      leaveType.includes(term) ||
+      desc.includes(term)
+    );
+  };
+
   // คำขอที่คอยการอนุมัติจาก currentUser
   const pendingForMe = requests.filter(r => {
     if (r.status !== 'Pending') return false;
@@ -68,17 +93,20 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
     return r.approvers.some(a => a.approver_id === currentUser?.id && a.status !== 'Pending');
   });
 
+  const filteredPending = pendingForMe.filter(filterRequest);
+  const filteredCompleted = completedByMe.filter(filterRequest);
+
   // Calculate pagination for completed tab
-  const totalCompletedItems = completedByMe.length;
+  const totalCompletedItems = filteredCompleted.length;
   const totalCompletedPages = Math.ceil(totalCompletedItems / itemsPerPage) || 1;
   const safeCurrentPage = Math.min(currentPageCompleted, totalCompletedPages);
 
-  const currentCompletedList = completedByMe.slice(
+  const currentCompletedList = filteredCompleted.slice(
     (safeCurrentPage - 1) * itemsPerPage,
     safeCurrentPage * itemsPerPage
   );
 
-  const displayList = activeSubTab === 'pending' ? pendingForMe : currentCompletedList;
+  const displayList = activeSubTab === 'pending' ? filteredPending : currentCompletedList;
 
   const handleAction = async (action) => {
     if (!selectedRequest || isSubmittingAction) return;
@@ -237,58 +265,104 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
   return (
     <div className="space-y-6">
       
-      {/* Title Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-[var(--text-main)] flex items-center space-x-2 whitespace-nowrap">
-            <span>การอนุมัติคำขอลางาน</span>
-          </h2>
-          <p className="text-xs text-[var(--text-muted)] mt-1">รายการคำขอลางานที่รอให้คุณตรวจสอบและอนุมัติตามลำดับขั้นตอน</p>
+      {/* Title Banner & Filters */}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-bold text-[var(--text-main)] flex items-center space-x-2 whitespace-nowrap">
+              <span>การอนุมัติคำขอลางาน</span>
+            </h2>
+            <p className="text-xs text-[var(--text-muted)] mt-1">รายการคำขอลางานที่รอให้คุณตรวจสอบและอนุมัติตามลำดับขั้นตอน</p>
+          </div>
+
+          {/* Actions & Sub Tabs */}
+          <div className="flex items-center space-x-2 sm:space-x-3 self-start sm:self-auto">
+            {/* Reload Button */}
+            <button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="px-3 py-2 text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 hover:text-slate-800 dark:hover:text-slate-300 rounded-xl border border-slate-200 dark:border-slate-700 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center shadow-sm space-x-1.5"
+              title="โหลดข้อมูลล่าสุด"
+            >
+              <RefreshCcw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-blue-500' : ''}`} />
+              <span>รีโหลด</span>
+            </button>
+
+            {/* Sub Tabs */}
+            <div className="flex p-1 bg-[var(--card-bg)]/80 rounded-2xl border border-[var(--card-border)]">
+              <button
+                onClick={() => {
+                  setActiveSubTab('pending');
+                  setCurrentPageCompleted(1);
+                }}
+                className={`px-4 py-2 text-xs font-semibold rounded-xl transition-all flex items-center space-x-2 ${
+                  activeSubTab === 'pending'
+                    ? 'bg-blue-500 dark:bg-blue-900/30 text-white dark:text-blue-400 shadow-lg shadow-blue-500/25 dark:shadow-none'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                }`}
+              >
+                <span>รอการอนุมัติ</span>
+                {pendingForMe.length > 0 && (
+                  <span className="px-1.5 py-0.5 text-[10px] bg-rose-500 text-[var(--text-main)] rounded-full font-bold">
+                    {pendingForMe.length}
+                  </span>
+                )}
+              </button>
+
+              <button
+                onClick={() => {
+                  setActiveSubTab('completed');
+                  setCurrentPageCompleted(1);
+                }}
+                className={`px-4 py-2 text-xs font-semibold rounded-xl transition-all ${
+                  activeSubTab === 'completed'
+                    ? 'bg-blue-500 dark:bg-blue-900/30 text-white dark:text-blue-400 shadow-lg shadow-blue-500/25 dark:shadow-none'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                }`}
+              >
+                <span>ดำเนินการแล้ว</span>
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Actions & Sub Tabs */}
-        <div className="flex items-center space-x-2 sm:space-x-3 self-start sm:self-auto">
-          {/* Reload Button */}
-          <button
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            className="px-3 py-2 text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 hover:text-slate-800 dark:hover:text-slate-300 rounded-xl border border-slate-200 dark:border-slate-700 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center shadow-sm space-x-1.5"
-            title="โหลดข้อมูลล่าสุด"
-          >
-            <RefreshCcw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-blue-500' : ''}`} />
-            <span>รีโหลด</span>
-          </button>
-
-          {/* Sub Tabs */}
-          <div className="flex p-1 bg-[var(--card-bg)]/80 rounded-2xl border border-[var(--card-border)]">
-          <button
-            onClick={() => setActiveSubTab('pending')}
-            className={`px-4 py-2 text-xs font-semibold rounded-xl transition-all flex items-center space-x-2 ${
-              activeSubTab === 'pending'
-                ? 'bg-blue-500 dark:bg-blue-900/30 text-white dark:text-blue-400 shadow-lg shadow-blue-500/25 dark:shadow-none'
-                : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-            }`}
-          >
-            <span>รอการอนุมัติ</span>
-            {pendingForMe.length > 0 && (
-              <span className="px-1.5 py-0.5 text-[10px] bg-rose-500 text-[var(--text-main)] rounded-full font-bold">
-                {pendingForMe.length}
-              </span>
+        {/* Search Bar */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 bg-white/80 dark:bg-[var(--card-bg)]/80 p-2.5 sm:p-3 rounded-2xl border border-[var(--card-border)] shadow-sm backdrop-blur-md">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+            <input
+              type="text"
+              placeholder="ค้นหาชื่อ-นามสกุล, เลขที่คำขอ (LEV-xxxx), หรือแผนก..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPageCompleted(1);
+              }}
+              className="w-full pl-10 pr-10 py-2.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 rounded-xl text-xs sm:text-sm text-[var(--text-main)] focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
+            />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchTerm('');
+                  setCurrentPageCompleted(1);
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full transition-colors"
+                title="ล้างคำค้นหา"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
             )}
-          </button>
-
+          </div>
+          
           <button
-            onClick={() => setActiveSubTab('completed')}
-            className={`px-4 py-2 text-xs font-semibold rounded-xl transition-all ${
-              activeSubTab === 'completed'
-                ? 'bg-blue-500 dark:bg-blue-900/30 text-white dark:text-blue-400 shadow-lg shadow-blue-500/25 dark:shadow-none'
-                : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-            }`}
+            type="button"
+            onClick={() => setCurrentPageCompleted(1)}
+            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-sm shadow-blue-500/20 active:scale-95 transition-all shrink-0"
           >
-            <span>ดำเนินการแล้ว</span>
+            <Search className="w-4 h-4" />
+            <span>ค้นหา</span>
           </button>
-
-        </div>
         </div>
       </div>
 
@@ -461,9 +535,26 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
           )}
         </div>
       ) : (
-        <div className="glass-card-clean rounded-2xl p-12 text-center text-[var(--text-muted)] space-y-2">
-          <Clock className="w-10 h-10 text-[var(--text-muted)] mx-auto mb-2" />
-          <p className="text-sm font-semibold text-[var(--text-muted)]">ไม่มีรายการคำขอลางานที่ต้องดำเนินการในขณะนี้</p>
+        <div className="glass-card-clean rounded-2xl p-12 text-center text-[var(--text-muted)] space-y-3">
+          {searchTerm ? (
+            <>
+              <Search className="w-10 h-10 text-slate-400 mx-auto mb-2 opacity-60" />
+              <p className="text-sm font-bold text-[var(--text-main)]">ไม่พบคำขอลางานที่ตรงกับคำค้นหา "{searchTerm}"</p>
+              <p className="text-xs text-[var(--text-muted)]">ลองค้นหาด้วยชื่อ, นามสกุล, เลขที่คำขอ หรือชื่อแผนกอื่นดูนะคะ</p>
+              <button
+                type="button"
+                onClick={() => setSearchTerm('')}
+                className="px-4 py-2 mt-2 text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-blue-600 dark:text-blue-400 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-all inline-block shadow-sm"
+              >
+                ล้างการค้นหาทั้งหมด
+              </button>
+            </>
+          ) : (
+            <>
+              <Clock className="w-10 h-10 text-[var(--text-muted)] mx-auto mb-2" />
+              <p className="text-sm font-semibold text-[var(--text-muted)]">ไม่มีรายการคำขอลางานที่ต้องดำเนินการในขณะนี้</p>
+            </>
+          )}
         </div>
       )}
 

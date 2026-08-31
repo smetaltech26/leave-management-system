@@ -347,11 +347,12 @@ export default function PolicyManagement({ userPolicies, setUserPolicies, users,
                   <label className="block text-xs font-bold text-[var(--text-muted)] mb-1.5 uppercase">สิทธิ์ทั้งหมด (วัน) <span className="text-rose-500">*</span></label>
                   <input 
                     type="number" 
+                    step="any"
                     required
                     min="0"
                     max="365"
                     value={formData.max_days} 
-                    onChange={(e) => setFormData({...formData, max_days: Number(e.target.value)})}
+                    onChange={(e) => setFormData({...formData, max_days: e.target.value === '' ? '' : Number(e.target.value)})}
                     className="w-full px-4 py-2.5 bg-white dark:bg-slate-950 text-[var(--text-main)] border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none" 
                   />
                 </div>
@@ -359,10 +360,11 @@ export default function PolicyManagement({ userPolicies, setUserPolicies, users,
                   <label className="block text-xs font-bold text-[var(--text-muted)] mb-1.5 uppercase">ใช้ไปแล้ว (วัน)</label>
                   <input 
                     type="number" 
+                    step="any"
                     min="0"
                     max="365"
                     value={formData.used_days} 
-                    onChange={(e) => setFormData({...formData, used_days: Number(e.target.value)})}
+                    onChange={(e) => setFormData({...formData, used_days: e.target.value === '' ? '' : Number(e.target.value)})}
                     className="w-full px-4 py-2.5 bg-white dark:bg-slate-950 text-[var(--text-main)] border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none" 
                   />
                 </div>

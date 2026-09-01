@@ -374,7 +374,7 @@ export default function PolicyManagement({ userPolicies, setUserPolicies, users,
                 <button type="button" onClick={handleCloseModal} disabled={isSubmitting} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors disabled:opacity-50">
                   ยกเลิก
                 </button>
-                <button type="submit" disabled={isSubmitting} className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-2xl flex items-center justify-center gap-2 shadow-md shadow-blue-500/25 active:scale-95 transition-all disabled:opacity-50">
+                <button type="submit" disabled={isSubmitting} className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500/20 dark:hover:bg-blue-500/30 dark:text-blue-300 dark:border dark:border-blue-500/40 text-white font-bold rounded-2xl flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-all disabled:opacity-50">
                   <Save className="w-4 h-4" />
                   {isSubmitting ? 'กำลังบันทึก...' : 'บันทึกข้อมูล'}
                 </button>

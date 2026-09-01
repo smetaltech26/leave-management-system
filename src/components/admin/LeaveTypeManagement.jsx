@@ -218,7 +218,7 @@ export default function LeaveTypeManagement({ leaveTypes, setLeaveTypes }) {
                 type="submit"
                 form="leaveTypeForm"
                 disabled={isSubmitting}
-                className="flex-1 px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold transition-all shadow-sm shadow-blue-500/20 flex items-center justify-center gap-2 disabled:opacity-70"
+                className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500/20 dark:hover:bg-blue-500/30 dark:text-blue-300 dark:border dark:border-blue-500/40 text-white rounded-xl font-semibold transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-70"
               >
                 {isSubmitting ? (
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>

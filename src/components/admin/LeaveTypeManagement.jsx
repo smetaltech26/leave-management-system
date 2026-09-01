@@ -124,7 +124,7 @@ export default function LeaveTypeManagement({ leaveTypes, setLeaveTypes }) {
           </div>
           <button 
             onClick={() => handleOpenModal()} 
-            className="flex items-center gap-2 px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-xl transition-all shadow-sm shadow-blue-500/20 whitespace-nowrap font-medium"
+            className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500/20 dark:hover:bg-blue-500/30 dark:text-blue-300 dark:border dark:border-blue-500/40 text-white rounded-2xl font-bold transition-all shadow-sm whitespace-nowrap active:scale-95"
           >
             <Plus className="w-5 h-5" />
             <span className="hidden sm:inline">เพิ่มประเภทใหม่</span>

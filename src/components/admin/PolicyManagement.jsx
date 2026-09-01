@@ -200,7 +200,7 @@ export default function PolicyManagement({ userPolicies, setUserPolicies, users,
         </div>
         <button
           onClick={() => handleOpenModal()}
-          className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-2xl flex items-center gap-2 font-bold shadow-md shadow-blue-500/20 active:scale-95 transition-all"
+          className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500/20 dark:hover:bg-blue-500/30 dark:text-blue-300 dark:border dark:border-blue-500/40 text-white px-4 py-2.5 rounded-2xl flex items-center gap-2 font-bold shadow-sm active:scale-95 transition-all"
         >
           <Plus className="w-4 h-4" />
           เพิ่มสิทธิ์ใหม่

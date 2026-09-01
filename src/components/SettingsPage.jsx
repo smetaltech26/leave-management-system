@@ -24,51 +24,63 @@ export default function SettingsPage({ userPolicies, setUserPolicies, holidays, 
         </div>
 
         {/* Sub Tabs */}
-        <div className="flex flex-wrap gap-1.5 p-1 bg-slate-100/80 dark:bg-slate-900/80 rounded-2xl border border-slate-200/80 dark:border-slate-800 self-start sm:self-auto">
+        <div className="flex flex-wrap gap-1.5 p-1 bg-slate-100 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 self-start sm:self-auto shadow-inner">
           <button
             onClick={() => setActiveSubTab('policies')}
-            className={`px-3.5 py-2 text-xs font-semibold rounded-xl transition-all ${
-              activeSubTab === 'policies' ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-500/20' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+            className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all ${
+              activeSubTab === 'policies'
+                ? 'bg-blue-600 text-white dark:bg-blue-500/20 dark:text-blue-400 dark:border dark:border-blue-500/40 shadow-sm'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
             }`}
           >
             โควตาวันลา
           </button>
           <button
             onClick={() => setActiveSubTab('leavetypes')}
-            className={`px-3.5 py-2 text-xs font-semibold rounded-xl transition-all ${
-              activeSubTab === 'leavetypes' ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-500/20' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+            className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all ${
+              activeSubTab === 'leavetypes'
+                ? 'bg-blue-600 text-white dark:bg-blue-500/20 dark:text-blue-400 dark:border dark:border-blue-500/40 shadow-sm'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
             }`}
           >
             ประเภทการลา
           </button>
           <button
             onClick={() => setActiveSubTab('holidays')}
-            className={`px-3.5 py-2 text-xs font-semibold rounded-xl transition-all ${
-              activeSubTab === 'holidays' ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-500/20' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+            className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all ${
+              activeSubTab === 'holidays'
+                ? 'bg-blue-600 text-white dark:bg-blue-500/20 dark:text-blue-400 dark:border dark:border-blue-500/40 shadow-sm'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
             }`}
           >
             วันหยุดประจำปี
           </button>
           <button
             onClick={() => setActiveSubTab('agencies')}
-            className={`px-3.5 py-2 text-xs font-semibold rounded-xl transition-all ${
-              activeSubTab === 'agencies' ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-500/20' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+            className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all ${
+              activeSubTab === 'agencies'
+                ? 'bg-blue-600 text-white dark:bg-blue-500/20 dark:text-blue-400 dark:border dark:border-blue-500/40 shadow-sm'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
             }`}
           >
             หน่วยงาน
           </button>
           <button
             onClick={() => setActiveSubTab('departments')}
-            className={`px-3.5 py-2 text-xs font-semibold rounded-xl transition-all ${
-              activeSubTab === 'departments' ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-500/20' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+            className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all ${
+              activeSubTab === 'departments'
+                ? 'bg-blue-600 text-white dark:bg-blue-500/20 dark:text-blue-400 dark:border dark:border-blue-500/40 shadow-sm'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
             }`}
           >
             ฝ่าย/แผนก
           </button>
           <button
             onClick={() => setActiveSubTab('database')}
-            className={`px-3.5 py-2 text-xs font-semibold rounded-xl transition-all ${
-              activeSubTab === 'database' ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-500/20' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+            className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all ${
+              activeSubTab === 'database'
+                ? 'bg-blue-600 text-white dark:bg-blue-500/20 dark:text-blue-400 dark:border dark:border-blue-500/40 shadow-sm'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
             }`}
           >
             ฐานข้อมูล

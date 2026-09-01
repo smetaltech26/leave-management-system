@@ -49,7 +49,7 @@ export default function PermissionsPage({ permissions, setPermissions }) {
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-400 text-white font-bold rounded-2xl transition-all shadow-md shadow-blue-500/25 active:scale-95"
+          className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500/20 dark:hover:bg-blue-500/30 dark:text-blue-300 dark:border dark:border-blue-500/40 text-white font-bold rounded-2xl transition-all shadow-sm active:scale-95 disabled:opacity-50"
         >
           {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
           {isSaving ? 'กำลังบันทึก...' : 'บันทึกการตั้งค่าสิทธิ์'}

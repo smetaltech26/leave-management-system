@@ -281,24 +281,24 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="px-3 py-2 text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 hover:text-slate-800 dark:hover:text-slate-300 rounded-xl border border-slate-200 dark:border-slate-700 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center shadow-sm space-x-1.5"
+              className="px-3.5 py-2 text-xs font-semibold bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl border border-slate-200 dark:border-slate-700 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center shadow-sm space-x-1.5"
               title="โหลดข้อมูลล่าสุด"
             >
-              <RefreshCcw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-blue-500' : ''}`} />
+              <RefreshCcw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-blue-500' : 'text-slate-500 dark:text-slate-300'}`} />
               <span>รีโหลด</span>
             </button>
 
             {/* Sub Tabs */}
-            <div className="flex p-1 bg-slate-100/80 dark:bg-slate-900/80 rounded-2xl border border-slate-200/80 dark:border-slate-800">
+            <div className="flex p-1 bg-slate-100 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
               <button
                 onClick={() => {
                   setActiveSubTab('pending');
                   setCurrentPageCompleted(1);
                 }}
-                className={`px-4 py-2 text-xs font-semibold rounded-xl transition-all flex items-center space-x-2 ${
+                className={`px-4 py-2 text-xs font-bold rounded-xl transition-all flex items-center space-x-2 ${
                   activeSubTab === 'pending'
-                    ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-500/20'
-                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                    ? 'bg-blue-600 text-white dark:bg-blue-500/20 dark:text-blue-400 dark:border dark:border-blue-500/40 shadow-sm'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
                 }`}
               >
                 <span>รอการอนุมัติ</span>
@@ -314,10 +314,10 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
                   setActiveSubTab('completed');
                   setCurrentPageCompleted(1);
                 }}
-                className={`px-4 py-2 text-xs font-semibold rounded-xl transition-all ${
+                className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
                   activeSubTab === 'completed'
-                    ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-500/20'
-                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                    ? 'bg-blue-600 text-white dark:bg-blue-500/20 dark:text-blue-400 dark:border dark:border-blue-500/40 shadow-sm'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
                 }`}
               >
                 <span>ดำเนินการแล้ว</span>
@@ -329,7 +329,7 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
         {/* Search Bar */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full md:w-1/2 lg:w-5/12 max-w-lg">
           <div className="relative flex-1">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-400" />
             <input
               type="text"
               placeholder="ค้นหาชื่อ-นามสกุล, เลขที่คำขอ, แผนก หรือฝ่าย..."
@@ -338,7 +338,7 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
                 setSearchTerm(e.target.value);
                 setCurrentPageCompleted(1);
               }}
-              className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-[var(--card-bg)] border border-slate-200 dark:border-[var(--card-border)] rounded-2xl text-xs sm:text-sm text-[var(--text-main)] focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500 shadow-sm"
+              className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-xs sm:text-sm text-[var(--text-main)] focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500 shadow-sm"
             />
             {searchTerm && (
               <button
@@ -358,7 +358,7 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
           <button
             type="button"
             onClick={() => setCurrentPageCompleted(1)}
-            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-md shadow-blue-500/20 active:scale-95 transition-all shrink-0"
+            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500/20 dark:hover:bg-blue-500/30 dark:text-blue-300 dark:border dark:border-blue-500/40 text-white rounded-2xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-all shrink-0"
           >
             <Search className="w-4 h-4" />
             <span>ค้นหา</span>

@@ -174,7 +174,7 @@ export default function AdminEditLeaveModal({ isOpen, onClose, request, holidays
             <span className="text-[10px] font-bold text-center leading-tight">ยกเลิกการลา</span>
           </button>
 
-          <button onClick={handleUpdate} disabled={isSubmitting} className="flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-xl border border-blue-600 bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-500/30 transition-all disabled:opacity-50">
+          <button onClick={handleUpdate} disabled={isSubmitting} className="flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-xl border border-blue-600 bg-blue-600 text-white hover:bg-blue-700 dark:border-blue-500/30 dark:bg-blue-500/20 dark:text-blue-300 dark:hover:bg-blue-500/30 shadow-sm transition-all disabled:opacity-50">
             <Save className="w-4 h-4" />
             <span className="text-[10px] font-bold text-center leading-tight">บันทึกวันลา</span>
           </button>

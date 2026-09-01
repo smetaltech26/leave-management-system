@@ -327,18 +327,18 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
         </div>
 
         {/* Search Bar */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 bg-white/80 dark:bg-[var(--card-bg)]/80 p-2.5 sm:p-3 rounded-2xl border border-[var(--card-border)] shadow-sm backdrop-blur-md">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full md:w-1/2 lg:w-5/12 max-w-lg">
           <div className="relative flex-1">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
             <input
               type="text"
-              placeholder="ค้นหาชื่อ-นามสกุล, เลขที่คำขอ (LEV-xxxx), หรือแผนก..."
+              placeholder="ค้นหาชื่อ-นามสกุล, เลขที่คำขอ, แผนก หรือฝ่าย..."
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
                 setCurrentPageCompleted(1);
               }}
-              className="w-full pl-10 pr-10 py-2.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 rounded-xl text-xs sm:text-sm text-[var(--text-main)] focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
+              className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-[var(--card-bg)] border border-slate-200 dark:border-[var(--card-border)] rounded-2xl text-xs sm:text-sm text-[var(--text-main)] focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500 shadow-sm"
             />
             {searchTerm && (
               <button
@@ -358,7 +358,7 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
           <button
             type="button"
             onClick={() => setCurrentPageCompleted(1)}
-            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-sm shadow-blue-500/20 active:scale-95 transition-all shrink-0"
+            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-md shadow-blue-500/20 active:scale-95 transition-all shrink-0"
           >
             <Search className="w-4 h-4" />
             <span>ค้นหา</span>

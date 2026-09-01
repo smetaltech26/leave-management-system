@@ -24,51 +24,51 @@ export default function SettingsPage({ userPolicies, setUserPolicies, holidays, 
         </div>
 
         {/* Sub Tabs */}
-        <div className="flex flex-wrap gap-2 p-1 bg-[var(--card-bg)]/80 rounded-2xl border border-[var(--card-border)] self-start sm:self-auto">
+        <div className="flex flex-wrap gap-1.5 p-1 bg-slate-100/80 dark:bg-slate-900/80 rounded-2xl border border-slate-200/80 dark:border-slate-800 self-start sm:self-auto">
           <button
             onClick={() => setActiveSubTab('policies')}
-            className={`px-3 py-2 text-xs font-semibold rounded-xl transition-all ${
-              activeSubTab === 'policies' ? 'bg-blue-500 text-white shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+            className={`px-3.5 py-2 text-xs font-semibold rounded-xl transition-all ${
+              activeSubTab === 'policies' ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-500/20' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
             }`}
           >
             โควตาวันลา
           </button>
           <button
             onClick={() => setActiveSubTab('leavetypes')}
-            className={`px-3 py-2 text-xs font-semibold rounded-xl transition-all ${
-              activeSubTab === 'leavetypes' ? 'bg-blue-500 text-white shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+            className={`px-3.5 py-2 text-xs font-semibold rounded-xl transition-all ${
+              activeSubTab === 'leavetypes' ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-500/20' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
             }`}
           >
             ประเภทการลา
           </button>
           <button
             onClick={() => setActiveSubTab('holidays')}
-            className={`px-3 py-2 text-xs font-semibold rounded-xl transition-all ${
-              activeSubTab === 'holidays' ? 'bg-blue-500 text-white shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+            className={`px-3.5 py-2 text-xs font-semibold rounded-xl transition-all ${
+              activeSubTab === 'holidays' ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-500/20' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
             }`}
           >
             วันหยุดประจำปี
           </button>
           <button
             onClick={() => setActiveSubTab('agencies')}
-            className={`px-3 py-2 text-xs font-semibold rounded-xl transition-all ${
-              activeSubTab === 'agencies' ? 'bg-blue-500 text-white shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+            className={`px-3.5 py-2 text-xs font-semibold rounded-xl transition-all ${
+              activeSubTab === 'agencies' ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-500/20' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
             }`}
           >
             หน่วยงาน
           </button>
           <button
             onClick={() => setActiveSubTab('departments')}
-            className={`px-3 py-2 text-xs font-semibold rounded-xl transition-all ${
-              activeSubTab === 'departments' ? 'bg-blue-500 text-white shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+            className={`px-3.5 py-2 text-xs font-semibold rounded-xl transition-all ${
+              activeSubTab === 'departments' ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-500/20' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
             }`}
           >
             ฝ่าย/แผนก
           </button>
           <button
             onClick={() => setActiveSubTab('database')}
-            className={`px-3 py-2 text-xs font-semibold rounded-xl transition-all ${
-              activeSubTab === 'database' ? 'bg-blue-500 text-white shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+            className={`px-3.5 py-2 text-xs font-semibold rounded-xl transition-all ${
+              activeSubTab === 'database' ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-500/20' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
             }`}
           >
             ฐานข้อมูล

@@ -193,14 +193,14 @@ export default function PolicyManagement({ userPolicies, setUserPolicies, users,
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-xl font-bold text-[var(--text-main)] flex items-center gap-2">
-            <ShieldAlert className="w-6 h-6 text-purple-500" />
+            <ShieldAlert className="w-6 h-6 text-blue-500" />
             ตั้งค่าสิทธิการลา (โควต้า)
           </h2>
           <p className="text-sm text-[var(--text-muted)] mt-1">กำหนดจำนวนวันลาสูงสุดต่อปีของพนักงานแต่ละคน</p>
         </div>
         <button
           onClick={() => handleOpenModal()}
-          className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl flex items-center gap-2 font-semibold shadow-lg shadow-purple-500/30 transition-all transform hover:scale-105"
+          className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-2xl flex items-center gap-2 font-bold shadow-md shadow-blue-500/20 active:scale-95 transition-all"
         >
           <Plus className="w-4 h-4" />
           เพิ่มสิทธิ์ใหม่
@@ -306,7 +306,7 @@ export default function PolicyManagement({ userPolicies, setUserPolicies, users,
                   required
                   value={formData.user_id} 
                   onChange={(e) => handleUserOrTypeChange(e.target.value, formData.leave_type)}
-                  className="w-full px-4 py-2.5 bg-white dark:bg-slate-950 text-[var(--text-main)] border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 outline-none"
+                  className="w-full px-4 py-2.5 bg-white dark:bg-slate-950 text-[var(--text-main)] border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 outline-none"
                 >
                   <option value="" disabled>-- เลือกพนักงาน --</option>
                   {sortedUsers.map(u => (
@@ -323,7 +323,7 @@ export default function PolicyManagement({ userPolicies, setUserPolicies, users,
                   required
                   value={formData.leave_type} 
                   onChange={(e) => handleUserOrTypeChange(formData.user_id, e.target.value)}
-                  className="w-full px-4 py-2.5 bg-white dark:bg-slate-950 text-[var(--text-main)] border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 outline-none"
+                  className="w-full px-4 py-2.5 bg-white dark:bg-slate-950 text-[var(--text-main)] border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 outline-none"
                 >
                   {leaveTypes.length > 0 ? (
                     leaveTypes.map(t => (
@@ -353,7 +353,7 @@ export default function PolicyManagement({ userPolicies, setUserPolicies, users,
                     max="365"
                     value={formData.max_days} 
                     onChange={(e) => setFormData({...formData, max_days: e.target.value === '' ? '' : Number(e.target.value)})}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-950 text-[var(--text-main)] border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none" 
+                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-950 text-[var(--text-main)] border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 outline-none" 
                   />
                 </div>
                 <div>
@@ -365,16 +365,16 @@ export default function PolicyManagement({ userPolicies, setUserPolicies, users,
                     max="365"
                     value={formData.used_days} 
                     onChange={(e) => setFormData({...formData, used_days: e.target.value === '' ? '' : Number(e.target.value)})}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-950 text-[var(--text-main)] border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none" 
+                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-950 text-[var(--text-main)] border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 outline-none" 
                   />
                 </div>
               </div>
 
               <div className="pt-4 flex gap-3 shrink-0">
-                <button type="button" onClick={handleCloseModal} disabled={isSubmitting} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors disabled:opacity-50">
+                <button type="button" onClick={handleCloseModal} disabled={isSubmitting} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors disabled:opacity-50">
                   ยกเลิก
                 </button>
-                <button type="submit" disabled={isSubmitting} className="flex-1 py-3 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-700 flex items-center justify-center gap-2 shadow-lg shadow-purple-500/30 transition-colors disabled:opacity-50">
+                <button type="submit" disabled={isSubmitting} className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-2xl flex items-center justify-center gap-2 shadow-md shadow-blue-500/25 active:scale-95 transition-all disabled:opacity-50">
                   <Save className="w-4 h-4" />
                   {isSubmitting ? 'กำลังบันทึก...' : 'บันทึกข้อมูล'}
                 </button>

@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { CheckCircle2, XCircle, Clock, FileText, User, MessageSquare, AlertCircle, Sparkles, Edit2, RefreshCcw, Search, X } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { CheckCircle2, XCircle, Clock, FileText, User, MessageSquare, AlertCircle, Sparkles, Edit2, RefreshCcw, Search, X, Paperclip, Eye, ExternalLink, Image as ImageIcon, ZoomIn, ZoomOut, RotateCw, RotateCcw } from 'lucide-react';
 import { notifyLeaveApprover, sendLinePushToUser } from '../lib/lineNotify';
 import { sendEmailNotification } from '../services/emailService';
 import AdminEditLeaveModal from './admin/AdminEditLeaveModal';
@@ -21,6 +21,124 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
   const [adminEditRequest, setAdminEditRequest] = useState(null);
   const [isSubmittingAdmin, setIsSubmittingAdmin] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Lightbox State for Attachments
+  const [lightboxImage, setLightboxImage] = useState(null);
+  const [zoomScale, setZoomScale] = useState(1);
+  const [rotation, setRotation] = useState(0);
+  const [panPosition, setPanPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    if (lightboxImage) {
+      setZoomScale(1);
+      setRotation(0);
+      setPanPosition({ x: 0, y: 0 });
+      setIsDragging(false);
+    }
+  }, [lightboxImage]);
+
+  const handleZoomIn = () => {
+    setZoomScale(prev => Math.min(Number((prev + 0.5).toFixed(1)), 4));
+  };
+
+  const handleZoomOut = () => {
+    setZoomScale(prev => {
+      const next = Math.max(Number((prev - 0.5).toFixed(1)), 1);
+      if (next === 1) setPanPosition({ x: 0, y: 0 });
+      return next;
+    });
+  };
+
+  const handleRotate = () => {
+    setRotation(prev => (prev + 90) % 360);
+  };
+
+  const handleResetZoom = () => {
+    setZoomScale(1);
+    setRotation(0);
+    setPanPosition({ x: 0, y: 0 });
+  };
+
+  const handleWheel = (e) => {
+    e.preventDefault();
+    if (e.deltaY < 0) {
+      setZoomScale(prev => Math.min(Number((prev + 0.25).toFixed(2)), 4));
+    } else {
+      setZoomScale(prev => {
+        const next = Math.max(Number((prev - 0.25).toFixed(2)), 1);
+        if (next === 1) setPanPosition({ x: 0, y: 0 });
+        return next;
+      });
+    }
+  };
+
+  const handleMouseDown = (e) => {
+    if (zoomScale > 1) {
+      setIsDragging(true);
+      setDragStart({ x: e.clientX - panPosition.x, y: e.clientY - panPosition.y });
+    }
+  };
+
+  const handleMouseMove = (e) => {
+    if (isDragging && zoomScale > 1) {
+      setPanPosition({
+        x: e.clientX - dragStart.x,
+        y: e.clientY - dragStart.y
+      });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleTouchStart = (e) => {
+    if (zoomScale > 1 && e.touches.length === 1) {
+      setIsDragging(true);
+      setDragStart({ x: e.touches[0].clientX - panPosition.x, y: e.touches[0].clientY - panPosition.y });
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (isDragging && zoomScale > 1 && e.touches.length === 1) {
+      setPanPosition({
+        x: e.touches[0].clientX - dragStart.x,
+        y: e.touches[0].clientY - dragStart.y
+      });
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+  };
+
+  const isImageFile = (file) => {
+    if (!file) return false;
+    const url = (file.file_url || file.url || '').toLowerCase();
+    const name = (file.file_name || file.name || '').toLowerCase();
+    return (
+      url.startsWith('data:image/') ||
+      url.includes('.jpg') || url.includes('.jpeg') || url.includes('.png') || url.includes('.webp') || url.includes('.gif') || url.includes('.svg') ||
+      name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png') || name.endsWith('.webp') || name.endsWith('.gif') || name.endsWith('.svg')
+    );
+  };
+
+  const handleViewAttachment = (file) => {
+    if (!file) return;
+    const fileUrl = file.file_url || file.url;
+    if (!fileUrl) return;
+
+    if (isImageFile(file)) {
+      setLightboxImage({
+        url: fileUrl,
+        name: file.file_name || 'รูปภาพเอกสารแนบ'
+      });
+    } else {
+      window.open(fileUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
 
   const { showAlert } = useModal();
 
@@ -424,6 +542,39 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
                   </div>
                 </div>
 
+                {/* Attachments Section */}
+                {req.attachments && req.attachments.length > 0 && (
+                  <div className="pt-2.5 border-t border-[var(--card-border)]/80">
+                    <div className="flex items-center gap-1.5 mb-2 text-[11px] font-bold text-[var(--text-muted)]">
+                      <Paperclip className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                      <span>เอกสารแนบ ({req.attachments.length}):</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {req.attachments.map((file, idx) => {
+                        const isImg = isImageFile(file);
+                        const fileName = file.file_name || (isImg ? `รูปภาพแนบ ${idx + 1}` : `เอกสารแนบ ${idx + 1}`);
+                        return (
+                          <button
+                            key={file.id || idx}
+                            type="button"
+                            onClick={() => handleViewAttachment(file)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-50 hover:bg-blue-100 dark:bg-blue-500/10 dark:hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30 transition-all active:scale-95 shadow-xs group"
+                            title="คลิกเพื่อดูเอกสารแนบ"
+                          >
+                            {isImg ? (
+                              <ImageIcon className="w-3.5 h-3.5 text-blue-500 group-hover:scale-110 transition-transform" />
+                            ) : (
+                              <FileText className="w-3.5 h-3.5 text-rose-500 group-hover:scale-110 transition-transform" />
+                            )}
+                            <span className="max-w-[130px] sm:max-w-[170px] truncate">{fileName}</span>
+                            <Eye className="w-3 h-3 opacity-60 group-hover:opacity-100 ml-0.5" />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {/* Approvers Step Timeline */}
                 <div className="pt-3 border-t border-[var(--card-border)]/80">
                   <span className="text-[11px] font-semibold text-[var(--text-muted)] block mb-2">ขั้นตอนการอนุมัติ (Approval Chain):</span>
@@ -640,6 +791,61 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
                 </div>
               </div>
 
+              {/* Attachments Section in Modal */}
+              {selectedRequest.attachments && selectedRequest.attachments.length > 0 && (
+                <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2.5 shadow-sm">
+                  <span className="text-[11px] font-semibold text-[var(--text-muted)] flex items-center gap-1.5">
+                    <Paperclip className="w-3.5 h-3.5 text-blue-500" />
+                    <span>เอกสารแนบประกอบการลา ({selectedRequest.attachments.length}):</span>
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {selectedRequest.attachments.map((file, idx) => {
+                      const isImg = isImageFile(file);
+                      const fileName = file.file_name || (isImg ? `รูปภาพแนบ ${idx + 1}` : `เอกสารแนบ ${idx + 1}`);
+                      const fileUrl = file.file_url || file.url;
+
+                      return (
+                        <div
+                          key={file.id || idx}
+                          className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 text-xs"
+                        >
+                          <div className="flex items-center space-x-2 min-w-0 pr-2">
+                            <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${isImg ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400' : 'bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400'}`}>
+                              {isImg ? <ImageIcon className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
+                            </div>
+                            <span className="font-semibold text-[var(--text-main)] truncate text-[11px]" title={fileName}>
+                              {fileName}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center space-x-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => handleViewAttachment(file)}
+                              className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-bold flex items-center space-x-1 shadow-xs active:scale-95 transition-all"
+                            >
+                              <Eye className="w-3 h-3" />
+                              <span>ดูเอกสาร</span>
+                            </button>
+                            {fileUrl && (
+                              <a
+                                href={fileUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                                title="เปิดในแท็บใหม่"
+                              >
+                                <ExternalLink className="w-3.5 h-3.5" />
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* Approval Chain with comments */}
               {selectedRequest.approvers && selectedRequest.approvers.length > 0 && (
                 <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2 shadow-sm">
@@ -757,6 +963,124 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
               className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold rounded-2xl transition-all shadow-lg shadow-emerald-500/30 active:scale-95"
             >
               ตกลง (OK)
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* In-App Image Lightbox Modal with Zoom & Pan */}
+      {lightboxImage && (
+        <div 
+          className="fixed inset-0 z-[99999] bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-between p-3 sm:p-5 animate-in fade-in duration-200"
+          onClick={() => setLightboxImage(null)}
+        >
+          {/* Lightbox Header */}
+          <div 
+            className="w-full max-w-5xl flex items-center justify-between p-2 text-white shrink-0"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center space-x-2 min-w-0">
+              <span className="px-2.5 py-1 text-xs font-bold bg-blue-500/30 text-blue-300 border border-blue-400/30 rounded-lg shrink-0">รูปภาพแนบ</span>
+              <span className="text-sm font-semibold truncate text-slate-200">{lightboxImage.name || 'เอกสารประกอบการลา'}</span>
+            </div>
+            <div className="flex items-center space-x-2 shrink-0">
+              <a
+                href={lightboxImage.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 bg-white/10 hover:bg-white/20 rounded-xl text-slate-300 hover:text-white transition-colors"
+                title="เปิดไฟล์ในแท็บใหม่"
+              >
+                <ExternalLink className="w-4 h-4" />
+              </a>
+              <button
+                type="button"
+                onClick={() => setLightboxImage(null)}
+                className="py-1.5 px-3.5 bg-rose-600 hover:bg-rose-700 rounded-xl text-white text-xs font-bold transition-all flex items-center space-x-1.5 shadow-lg active:scale-95"
+              >
+                <X className="w-4 h-4" />
+                <span>ปิดรูปภาพ</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Lightbox Body (Interactive Zoom & Pan Viewport) */}
+          <div 
+            className={`relative max-w-5xl max-h-[72vh] sm:max-h-[76vh] w-full flex-1 flex items-center justify-center p-2 rounded-2xl bg-black/60 border border-white/10 shadow-2xl overflow-hidden select-none ${zoomScale > 1 ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}`}
+            onClick={e => e.stopPropagation()}
+            onWheel={handleWheel}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
+            <img
+              src={lightboxImage.url}
+              alt={lightboxImage.name || 'เอกสารแนบ'}
+              style={{
+                transform: `translate(${panPosition.x}px, ${panPosition.y}px) scale(${zoomScale}) rotate(${rotation}deg)`,
+                transition: isDragging ? 'none' : 'transform 0.15s ease-out'
+              }}
+              className="max-w-full max-h-[70vh] sm:max-h-[74vh] object-contain rounded-lg shadow-2xl select-none pointer-events-none"
+              draggable={false}
+            />
+          </div>
+
+          {/* Floating Bottom Zoom & Rotate Toolbar */}
+          <div 
+            className="mt-2 flex items-center space-x-2 bg-slate-900/90 border border-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-2xl shadow-2xl shrink-0"
+            onClick={e => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={handleZoomOut}
+              disabled={zoomScale <= 1}
+              className="p-2 text-white hover:bg-white/20 disabled:opacity-30 rounded-xl transition-all active:scale-95"
+              title="ย่อรูปภาพ (Zoom Out)"
+            >
+              <ZoomOut className="w-4 h-4 sm:w-5 sm:h-5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={handleResetZoom}
+              className="px-2.5 py-1 bg-white/10 hover:bg-white/20 text-white text-xs font-black rounded-lg transition-all active:scale-95"
+              title="รีเซ็ตเป็น 100%"
+            >
+              {Math.round(zoomScale * 100)}%
+            </button>
+
+            <button
+              type="button"
+              onClick={handleZoomIn}
+              disabled={zoomScale >= 4}
+              className="p-2 text-white hover:bg-white/20 disabled:opacity-30 rounded-xl transition-all active:scale-95"
+              title="ขยายรูปภาพ (Zoom In)"
+            >
+              <ZoomIn className="w-4 h-4 sm:w-5 sm:h-5" />
+            </button>
+
+            <div className="w-[1px] h-4 bg-white/20 mx-1"></div>
+
+            <button
+              type="button"
+              onClick={handleRotate}
+              className="p-2 text-white hover:bg-white/20 rounded-xl transition-all active:scale-95"
+              title="หมุนรูปภาพ 90 องศา"
+            >
+              <RotateCw className="w-4 h-4 sm:w-5 sm:h-5" />
+            </button>
+            
+            <button
+              type="button"
+              onClick={handleResetZoom}
+              className="p-2 text-slate-300 hover:text-white hover:bg-white/20 rounded-xl transition-all active:scale-95"
+              title="รีเซ็ตการหมุนและขนาดเดิม"
+            >
+              <RotateCcw className="w-4 h-4 sm:w-4 sm:h-4" />
             </button>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Users, X, Info, CheckCircle2, XCircle, Clock, Eye } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Users, X, Info, CheckCircle2, XCircle, Clock, Eye, Calendar } from 'lucide-react';
 import LeaveDetailsModal from './LeaveDetailsModal';
 import LeaveTypeBadge from './ui/LeaveTypeBadge';
 
@@ -13,7 +13,10 @@ export default function LeaveCalendar({
   leaveTypes = [],
   currentUser 
 }) {
-  const [currentMonth, setCurrentMonth] = useState(new Date(2026, 7, 1)); // สิงหาคม 2026
+  const [currentMonth, setCurrentMonth] = useState(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
   const [selectedGroup, setSelectedGroup] = useState(null); 
   const [selectedRequestDetails, setSelectedRequestDetails] = useState(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
@@ -28,6 +31,10 @@ export default function LeaveCalendar({
   };
   const prevMonth = () => {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
+  };
+  const goToCurrentMonth = () => {
+    const now = new Date();
+    setCurrentMonth(new Date(now.getFullYear(), now.getMonth(), 1));
   };
 
   const month = currentMonth.getMonth();
@@ -67,6 +74,15 @@ export default function LeaveCalendar({
         <h2 className="text-xl font-extrabold text-[var(--text-main)] flex items-center gap-2">
           ปฏิทินการลา
         </h2>
+        <button
+          type="button"
+          onClick={goToCurrentMonth}
+          className="px-3 py-1.5 text-xs font-bold bg-blue-50 hover:bg-blue-100 text-blue-600 dark:bg-blue-500/10 dark:hover:bg-blue-500/20 dark:text-blue-400 rounded-lg border border-blue-200 dark:border-blue-500/30 transition-all flex items-center gap-1.5 shadow-sm active:scale-95"
+          title="ไปยังเดือนปัจจุบัน"
+        >
+          <Calendar className="w-3.5 h-3.5" />
+          <span>เดือนปัจจุบัน</span>
+        </button>
       </div>
 
       <div className="bg-[var(--card-bg)] p-4 md:p-6 rounded-2xl shadow-lg border border-[var(--card-border)]">

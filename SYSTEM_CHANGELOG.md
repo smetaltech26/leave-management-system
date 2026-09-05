@@ -124,6 +124,19 @@
 - **Content Integrity 100%:**
   - คงเนื้อหา, ตัวแปร, และข้อความแจ้งเตือนเดิมในทุกๆ ขั้นตอน (Step 1, Step ถัดไป, อนุมัติแล้ว, ไม่อนุมัติ) ไว้อย่างสมบูรณ์แบบตามที่พี่ต้นต้องการ
 
+### 🔹 Version 2.11.0-reject-cascade-workflow: แก้ไขและรับประกันสถานะ Rejected ทุกขั้นตอนการอนุมัติ (Fix Step 3 Pending)
+- **สืบสวนหาสาเหตุของปัญหา (Root Cause Analysis):**
+  - จากกรณีคำขอลา `LEV-0706` ที่ผู้อนุมัติ Step 2 (คุณพงษ์ศักดิ์ บุนนาค) ปฏิเสธไม่อนุมัติ แต่ Step 3 (คุณศิวพร อนันตะสุข) ยังคงค้างสถานะ `(Pending)` / `รอดำเนินการ`
+  - ตรวจพบว่าสาเหตุเกิดจาก **Row Level Security (RLS)** ของตาราง `approval_steps` ใน Supabase อนุญาตให้อัปเดตได้เฉพาะแถวที่เป็นของตนเองเท่านั้น เมื่อ Step 2 สั่งอัปเดตขั้นตอนถัดไปด้วยคำสั่ง `.gte('step_number', 2)` ทาง PostgreSQL จึงบล็อกการแก้ไขแถวของ Step 3 แบบเงียบๆ (Silent ignore) โดยไม่มี Error
+- **การแก้ไขข้อมูลในฐานข้อมูล Supabase (Database Fix):**
+  - ปรับปรุงข้อมูลของ `LEV-0706-STEP3` ใน Supabase ให้เป็นสถานะ `Rejected` พร้อมระบุความเห็น `"ไม่อนุมัติ (ตามลำดับขั้นที่ 2)"` และบันทึก `action_date` เรียบร้อยแล้ว
+  - กวาดล้างและปรับปรุงข้อมูลเก่าที่เคยค้างในอดีต (เช่น `LEV-0476`, `LEV-0557`, `LEV-0227`) ให้มีสถานะเป็น `Rejected` สอดคล้องกันทั้งหมด 100% (Inconsistent = 0)
+- **การเสริมเกราะป้องกันในโค้ด (Frontend Defensive Normalization):**
+  - เพิ่มการตรวจสอบใน `fetchAllRequests` (`supabaseApi.js`): หากใบลาใดมีสถานะเป็น `Rejected` หรือมี Step ก่อนหน้าใดถูกปฏิเสธแล้ว ระบบจะแปลงสถานะของ Step ถัดไปที่ค้าง `Pending` ให้แสดงผลเป็น `Rejected` อัตโนมัติ ป้องกันปัญหาการแสดงผลคลาดเคลื่อนในทุกหน้าจอ (Dashboard, Approval Page, Leave Details Modal, Calendar, Report)
+  - ปรับปรุง `rejectStep` ให้รองรับการเรียก Stored Function `reject_leave_request` ที่รันด้วย `SECURITY DEFINER` เพื่อข้ามข้อจำกัด RLS ในระดับฐานข้อมูล
+- **สคริปต์ SQL Migration (`supabase_fix_reject_workflow.sql`):**
+  - จัดทำฟังก์ชัน PostgreSQL `public.reject_leave_request` เพื่อให้สามารถอัปเดตทุก Step ที่เกี่ยวข้องได้อย่างสมบูรณ์แบบโดยไม่มีข้อจำกัดสิทธิ์ RLS
+
 ---
 
 ## 🔮 4. แผนงานและพิมพ์เขียวการปรับปรุงในอนาคต (Future Roadmap & Notification Blueprint)

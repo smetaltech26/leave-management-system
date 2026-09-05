@@ -351,9 +351,14 @@ export default function App() {
       setRequests(prev => {
         return prev.map(r => {
           if (r.id === requestId) {
+            const numStep = Number(stepNumber) || 1;
             const updatedApprovers = r.approvers.map(a => {
-              if (a.step_number >= stepNumber) {
-                return { ...a, status: 'Rejected', comment, action_date: new Date().toISOString() };
+              const currentStepNum = Number(a.step_number) || 1;
+              if (currentStepNum >= numStep) {
+                const stepComment = currentStepNum === numStep 
+                  ? comment 
+                  : (a.comment || `ไม่อนุมัติ (ตามลำดับขั้นที่ ${numStep})`);
+                return { ...a, status: 'Rejected', comment: stepComment, action_date: new Date().toISOString() };
               }
               return a;
             });

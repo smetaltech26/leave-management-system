@@ -55,11 +55,32 @@ export const fetchAllRequests = async () => {
   if (error) throw error;
   
   // Format the returned data to match the existing state structure
-  return (data || []).map(req => ({
-    ...req,
-    approvers: req.approvers || [],
-    attachments: req.attachments || []
-  }));
+  return (data || []).map(req => {
+    let approvers = [...(req.approvers || [])].sort((a, b) => (Number(a.step_number) || 0) - (Number(b.step_number) || 0));
+
+    // ตรวจสอบความถูกต้อง: หากใบลาถูกปฏิเสธ (Rejected) หรือมี Step ใดเป็น Rejected ให้ปรับทุก Step ถัดไปเป็น Rejected เสมอ
+    const hasRejectedStep = approvers.find(a => a.status === 'Rejected');
+    if (req.status === 'Rejected' || hasRejectedStep) {
+      const rejectStepNum = hasRejectedStep ? Number(hasRejectedStep.step_number) : (Number(req.current_step) || 1);
+      approvers = approvers.map(a => {
+        const stepNum = Number(a.step_number) || 1;
+        if (stepNum > rejectStepNum && a.status === 'Pending') {
+          return {
+            ...a,
+            status: 'Rejected',
+            comment: a.comment || `ไม่อนุมัติ (ตามลำดับขั้นที่ ${rejectStepNum})`
+          };
+        }
+        return a;
+      });
+    }
+
+    return {
+      ...req,
+      approvers,
+      attachments: req.attachments || []
+    };
+  });
 };
 
 export const fetchAllHolidays = async () => {
@@ -264,16 +285,32 @@ export const approveStep = async (requestId, stepNumber, comment, isFinalStep) =
 };
 
 export const rejectStep = async (requestId, stepNumber, comment) => {
-  // 1. Update the approval step
+  const numStep = Number(stepNumber) || 1;
+
+  // 1. พยายามเรียก RPC reject_leave_request (รันด้วย SECURITY DEFINER ข้ามข้อจำกัด RLS ของ PostgreSQL)
+  try {
+    const { error: rpcError } = await supabase.rpc('reject_leave_request', {
+      p_request_id: requestId,
+      p_step_number: numStep,
+      p_comment: comment || ''
+    });
+    if (!rpcError) {
+      return;
+    }
+  } catch (e) {
+    console.warn("RPC reject_leave_request fallback to direct update:", e);
+  }
+
+  // 2. Fallback: Update the approval step(s)
   const { error: stepError } = await supabase
     .from('approval_steps')
     .update({ status: 'Rejected', comment, action_date: new Date().toISOString() })
     .eq('request_id', requestId)
-    .gte('step_number', stepNumber);
+    .gte('step_number', numStep);
     
   if (stepError) throw stepError;
 
-  // 2. Update the main request
+  // 3. Update the main request
   const { error: reqError } = await supabase
     .from('leave_requests')
     .update({ status: 'Rejected', reject_reason: comment })

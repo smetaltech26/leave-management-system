@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Calendar, Upload, FileText, CheckCircle2, UserCheck, AlertCircle } from 'lucide-react';
 import { notifyLeaveApprover } from '../lib/lineNotify';
-import { sendEmailNotification } from '../services/emailService';
+import { sendEmailNotification, buildRequestApprovalEmail } from '../services/emailService';
 
 export default function LeaveFormModal({ 
   isOpen, 
@@ -372,28 +372,17 @@ export default function LeaveFormModal({
           // Email Notification
           if (firstApprover.email && !editingRequest) {
             const periodText = leavePeriod === 'Morning' ? 'เช้า' : leavePeriod === 'Afternoon' ? 'บ่าย' : 'ทั้งวัน';
-            const htmlBody = `
-              <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.6;">
-                <h2 style="color: #059669;">แจ้งเตือนขออนุมัติการลา</h2>
-                <p>เรียน คุณ${firstApprover.fullname},</p>
-                <p>ระบบได้รับคำขออนุมัติการลา โปรดพิจารณาอนุมัติคำขอดังกล่าว โดยมีรายละเอียดดังนี้:</p>
-                <div style="background-color: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #e2e8f0;">
-                  <ul style="list-style: none; padding: 0; margin: 0;">
-                    <li style="margin-bottom: 8px;"><strong>รหัสคำขอ:</strong> ${newRequest.id}</li>
-                    <li style="margin-bottom: 8px;"><strong>พนักงานผู้ขอลา:</strong> ${currentUser?.fullname}</li>
-                    <li style="margin-bottom: 8px;"><strong>ประเภทการลา:</strong> ${leaveType}</li>
-                    <li style="margin-bottom: 8px;"><strong>วันที่ลา:</strong> ${dateStart.split('-').reverse().join('-')} ถึง ${dateEnd.split('-').reverse().join('-')}</li>
-                    <li style="margin-bottom: 8px;"><strong>ช่วงเวลา:</strong> ${periodText}</li>
-                    <li style="margin-bottom: 8px;"><strong>จำนวนวัน:</strong> ${leaveDuration} วัน</li>
-                    <li style="margin-bottom: 0;"><strong>เหตุผลการลา:</strong> ${description}</li>
-                  </ul>
-                </div>
-                <p>กรุณาเข้าสู่ระบบเพื่อตรวจสอบและพิจารณาอนุมัติคำขอ:</p>
-                <p><a href="https://smetaltech26.github.io/leave-management-system/" style="display: inline-block; background-color: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">เข้าสู่ระบบ</a></p>
-                <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
-                <p style="font-size: 12px; color: #64748b;"><i>นี่คืออีเมลอัตโนมัติจากระบบ Leave Management System กรุณาอย่าตอบกลับ</i></p>
-              </div>
-            `;
+            const htmlBody = buildRequestApprovalEmail({
+              approverName: firstApprover.fullname,
+              requesterName: currentUser?.fullname,
+              requestId: newRequest.id,
+              leaveType,
+              dateRange: `${dateStart.split('-').reverse().join('-')} ถึง ${dateEnd.split('-').reverse().join('-')}`,
+              periodText,
+              duration: leaveDuration,
+              description,
+              stepNum: null
+            });
             sendEmailNotification({
               to: firstApprover.email,
               subject: `📢 แจ้งเตือน: ขออนุมัติการลาจาก ${currentUser?.fullname} (รหัส: ${newRequest.id})`,

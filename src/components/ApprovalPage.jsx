@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { CheckCircle2, XCircle, Clock, FileText, User, MessageSquare, AlertCircle, Sparkles, Edit2, RefreshCcw, Search, X, Paperclip, Eye, ExternalLink, Image as ImageIcon, ZoomIn, ZoomOut, RotateCw, RotateCcw } from 'lucide-react';
 import { notifyLeaveApprover, sendLinePushToUser } from '../lib/lineNotify';
-import { sendEmailNotification } from '../services/emailService';
+import { sendEmailNotification, buildRequestApprovalEmail, buildApprovedEmail, buildRejectedEmail } from '../services/emailService';
 import AdminEditLeaveModal from './admin/AdminEditLeaveModal';
 import LeaveTypeBadge from './ui/LeaveTypeBadge';
 import { useModal } from '../contexts/ModalContext';
@@ -257,28 +257,17 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
             }
             if (nextApprover.email) {
               const periodText = selectedRequest.leave_period === 'Morning' ? 'เช้า' : selectedRequest.leave_period === 'Afternoon' ? 'บ่าย' : 'ทั้งวัน';
-              const htmlBody = `
-                <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.6;">
-                  <h2 style="color: #059669;">แจ้งเตือนขออนุมัติการลา (ขั้นที่ ${nextStepNum})</h2>
-                  <p>เรียน คุณ${nextApprover.fullname},</p>
-                  <p>ระบบได้รับคำขออนุมัติการลา โปรดพิจารณาอนุมัติคำขอดังกล่าว โดยมีรายละเอียดดังนี้:</p>
-                  <div style="background-color: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #e2e8f0;">
-                    <ul style="list-style: none; padding: 0; margin: 0;">
-                      <li style="margin-bottom: 8px;"><strong>รหัสคำขอ:</strong> ${selectedRequest.id}</li>
-                      <li style="margin-bottom: 8px;"><strong>พนักงานผู้ขอลา:</strong> ${requester?.fullname || 'พนักงาน'}</li>
-                      <li style="margin-bottom: 8px;"><strong>ประเภทการลา:</strong> ${selectedRequest.leave_type}</li>
-                      <li style="margin-bottom: 8px;"><strong>วันที่ลา:</strong> ${selectedRequest.date_start.split('-').reverse().join('-')} ถึง ${selectedRequest.date_end.split('-').reverse().join('-')}</li>
-                      <li style="margin-bottom: 8px;"><strong>ช่วงเวลา:</strong> ${periodText}</li>
-                      <li style="margin-bottom: 8px;"><strong>จำนวนวัน:</strong> ${selectedRequest.leave_duration} วัน</li>
-                      <li style="margin-bottom: 0;"><strong>เหตุผลการลา:</strong> ${selectedRequest.description || '-'}</li>
-                    </ul>
-                  </div>
-                  <p>กรุณาเข้าสู่ระบบเพื่อตรวจสอบและพิจารณาอนุมัติคำขอ:</p>
-                  <p><a href="https://smetaltech26.github.io/leave-management-system/" style="display: inline-block; background-color: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">เข้าสู่ระบบ</a></p>
-                  <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
-                  <p style="font-size: 12px; color: #64748b;"><i>นี่คืออีเมลอัตโนมัติจากระบบ Leave Management System กรุณาอย่าตอบกลับ</i></p>
-                </div>
-              `;
+              const htmlBody = buildRequestApprovalEmail({
+                approverName: nextApprover.fullname,
+                requesterName: requester?.fullname || 'พนักงาน',
+                requestId: selectedRequest.id,
+                leaveType: selectedRequest.leave_type,
+                dateRange: `${selectedRequest.date_start.split('-').reverse().join('-')} ถึง ${selectedRequest.date_end.split('-').reverse().join('-')}`,
+                periodText,
+                duration: selectedRequest.leave_duration,
+                description: selectedRequest.description || '-',
+                stepNum: nextStepNum
+              });
               sendEmailNotification({
                 to: nextApprover.email,
                 subject: `📢 แจ้งเตือน: ขออนุมัติการลาจาก ${requester?.fullname || 'พนักงาน'} (รหัส: ${selectedRequest.id})`,
@@ -297,24 +286,15 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
             );
           }
           if (requester.email) {
-            const htmlBody = `
-              <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.6;">
-                <h2 style="color: #059669;">✅ อนุมัติการลา</h2>
-                <p>เรียน คุณ${requester.fullname},</p>
-                <p>คำขออนุมัติการลาของคุณได้รับการพิจารณา <strong>"อนุมัติ"</strong> ครบทุกขั้นตอนเรียบร้อยแล้ว โดยมีรายละเอียดดังนี้:</p>
-                <div style="background-color: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #e2e8f0;">
-                  <ul style="list-style: none; padding: 0; margin: 0;">
-                    <li style="margin-bottom: 8px;"><strong>รหัสคำขอ:</strong> ${selectedRequest.id}</li>
-                    <li style="margin-bottom: 8px;"><strong>ประเภทการลา:</strong> ${selectedRequest.leave_type}</li>
-                      <li style="margin-bottom: 8px;"><strong>วันที่เริ่ม:</strong> ${selectedRequest.date_start.split('-').reverse().join('-')} <strong>ถึง</strong> ${selectedRequest.date_end.split('-').reverse().join('-')}</li>
-                      <li style="margin-bottom: 8px;"><strong>จำนวนวัน:</strong> ${selectedRequest.leave_duration} วัน ${selectedRequest.leave_period === 'Morning' ? '(เช้า)' : selectedRequest.leave_period === 'Afternoon' ? '(บ่าย)' : ''}</li>
-                  </ul>
-                </div>
-                <p><a href="https://smetaltech26.github.io/leave-management-system/" style="display: inline-block; background-color: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">ตรวจสอบประวัติการลาของคุณ</a></p>
-                <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
-                <p style="font-size: 12px; color: #64748b;"><i>นี่คืออีเมลอัตโนมัติจากระบบ Leave Management System กรุณาอย่าตอบกลับ</i></p>
-              </div>
-            `;
+            const periodText = selectedRequest.leave_period === 'Morning' ? 'เช้า' : selectedRequest.leave_period === 'Afternoon' ? 'บ่าย' : '';
+            const htmlBody = buildApprovedEmail({
+              requesterName: requester.fullname,
+              requestId: selectedRequest.id,
+              leaveType: selectedRequest.leave_type,
+              dateRange: `${selectedRequest.date_start.split('-').reverse().join('-')} <strong>ถึง</strong> ${selectedRequest.date_end.split('-').reverse().join('-')}`,
+              duration: selectedRequest.leave_duration,
+              periodText
+            });
             sendEmailNotification({
               to: requester.email,
               subject: `✅ อนุมัติ: คำขอลาของคุณได้รับการอนุมัติเรียบร้อยแล้ว (รหัส: ${selectedRequest.id})`,
@@ -336,26 +316,14 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
           );
         }
         if (requester.email) {
-          const htmlBody = `
-            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.6;">
-              <h2 style="color: #ef4444;">❌ ไม่อนุมัติการลา</h2>
-              <p>เรียน คุณ${requester.fullname},</p>
-              <p>คำขออนุมัติการลาของคุณ <strong>"ไม่ได้รับการอนุมัติ"</strong> โดยมีรายละเอียดดังนี้:</p>
-              <div style="background-color: #fef2f2; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #fecaca;">
-                <ul style="list-style: none; padding: 0; margin: 0; color: #991b1b;">
-                  <li style="margin-bottom: 8px;"><strong>รหัสคำขอ:</strong> ${selectedRequest.id}</li>
-                  <li style="margin-bottom: 8px;"><strong>ประเภทการลา:</strong> ${selectedRequest.leave_type}</li>
-                  <li style="margin-bottom: 8px;"><strong>วันที่ลา:</strong> ${selectedRequest.date_start.split('-').reverse().join('-')} ถึง ${selectedRequest.date_end.split('-').reverse().join('-')}</li>
-                  <li style="margin-bottom: 8px;"><strong>ผู้ปฏิเสธคำขอ:</strong> ${currentUser?.fullname}</li>
-                  <li style="margin-bottom: 0;"><strong>เหตุผลที่ไม่อนุมัติ:</strong> ${comment || 'ไม่ระบุ'}</li>
-                </ul>
-              </div>
-              <p>หากมีข้อสงสัย กรุณาติดต่อหัวหน้างานหรือฝ่ายบุคคลค่ะ</p>
-              <p><a href="https://smetaltech26.github.io/leave-management-system/" style="display: inline-block; background-color: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">เข้าสู่ระบบ</a></p>
-              <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
-              <p style="font-size: 12px; color: #64748b;"><i>นี่คืออีเมลอัตโนมัติจากระบบ Leave Management System กรุณาอย่าตอบกลับ</i></p>
-            </div>
-          `;
+          const htmlBody = buildRejectedEmail({
+            requesterName: requester.fullname,
+            requestId: selectedRequest.id,
+            leaveType: selectedRequest.leave_type,
+            dateRange: `${selectedRequest.date_start.split('-').reverse().join('-')} ถึง ${selectedRequest.date_end.split('-').reverse().join('-')}`,
+            rejectorName: currentUser?.fullname,
+            comment: comment || 'ไม่ระบุ'
+          });
           sendEmailNotification({
             to: requester.email,
             subject: `❌ แจ้งผล: คำขอลาของคุณไม่ได้รับการอนุมัติ (รหัส: ${selectedRequest.id})`,

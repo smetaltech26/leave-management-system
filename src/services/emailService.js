@@ -197,8 +197,8 @@ export const buildRequestApprovalEmail = ({
   return buildOutlookEmailWrapper({
     headerTitle: requestId,
     badgeText,
-    greeting: `เรียน คุณ${approverName},`,
-    leadText: 'ระบบได้รับคำขออนุมัติการลา โปรดพิจารณาอนุมัติคำขอดังกล่าว โดยมีรายละเอียดดังนี้ค่ะ:',
+    greeting: `เรียน คุณ${approverName}`,
+    leadText: 'ระบบได้รับคำขออนุมัติการลา โปรดพิจารณาอนุมัติคำขอดังกล่าว โดยมีรายละเอียดดังนี้',
     boxTitle: `รหัสคำขอลา: ${requestId}`,
     rows,
     buttonText: 'คลิกเข้าสู่ระบบ (เฉพาะผู้อนุมัติ)',
@@ -223,8 +223,8 @@ export const buildApprovedEmail = ({
   return buildOutlookEmailWrapper({
     headerTitle: requestId,
     badgeText: 'อนุมัติเสร็จสมบูรณ์',
-    greeting: `เรียน คุณ${requesterName},`,
-    leadText: 'คำขออนุมัติการลาของคุณได้รับการพิจารณา <strong>"อนุมัติ"</strong> ครบทุกขั้นตอนเรียบร้อยแล้ว โดยมีรายละเอียดดังนี้ค่ะ:',
+    greeting: `เรียน คุณ${requesterName}`,
+    leadText: 'คำขออนุมัติการลาของคุณได้รับการพิจารณา <strong>"อนุมัติ"</strong> ครบทุกขั้นตอนเรียบร้อยแล้ว โดยมีรายละเอียดดังนี้',
     boxTitle: `รหัสคำขอลา: ${requestId}`,
     rows: [
       { label: 'ประเภทการลา', value: leaveType },
@@ -253,8 +253,8 @@ export const buildRejectedEmail = ({
   return buildOutlookEmailWrapper({
     headerTitle: requestId,
     badgeText: 'ไม่อนุมัติ',
-    greeting: `เรียน คุณ${requesterName},`,
-    leadText: 'คำขออนุมัติการลาของคุณ <strong>"ไม่ได้รับการอนุมัติ"</strong> โดยมีรายละเอียดดังนี้ค่ะ:',
+    greeting: `เรียน คุณ${requesterName}`,
+    leadText: 'คำขออนุมัติการลาของคุณ <strong>"ไม่ได้รับการอนุมัติ"</strong> โดยมีรายละเอียดดังนี้',
     boxTitle: `รหัสคำขอลา: ${requestId}`,
     rows: [
       { label: 'ประเภทการลา', value: leaveType },
@@ -262,7 +262,7 @@ export const buildRejectedEmail = ({
       { label: 'ผู้ปฏิเสธคำขอ', value: rejectorName || 'ผู้อนุมัติ' },
       { label: 'เหตุผลที่ไม่อนุมัติ', value: `<span style="color: #dc2626; font-weight: bold;">${comment || 'ไม่ระบุ'}</span>` },
     ],
-    noteHtml: 'หากมีข้อสงสัย กรุณาติดต่อหัวหน้างานหรือฝ่ายบุคคลค่ะ',
+    noteHtml: 'หากมีข้อสงสัย กรุณาติดต่อหัวหน้างานหรือฝ่ายบุคคล',
     buttonText: 'คลิกเข้าสู่ระบบ',
     buttonUrl: SYSTEM_URL,
     statusText: 'สถานะปัจจุบัน: ไม่อนุมัติ (Rejected)',

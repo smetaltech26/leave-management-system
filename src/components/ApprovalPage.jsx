@@ -266,7 +266,9 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
                 periodText,
                 duration: selectedRequest.leave_duration,
                 description: selectedRequest.description || '-',
-                stepNum: nextStepNum
+                stepNum: nextStepNum,
+                prevApproverName: currentUser?.fullname,
+                prevApproverComment: comment
               });
               sendEmailNotification({
                 to: nextApprover.email,

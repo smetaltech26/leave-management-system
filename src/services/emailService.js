@@ -2,7 +2,7 @@
 
 // You can set this in your .env file as VITE_GAS_EMAIL_URL
 // For now, if it's not set, we'll just log it so the app doesn't crash before you deploy it.
-const GAS_URL = import.meta.env.VITE_GAS_EMAIL_URL || '';
+const GAS_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GAS_EMAIL_URL) || '';
 const SYSTEM_URL = 'https://smetaltech26.github.io/leave-management-system/';
 
 /**
@@ -23,25 +23,25 @@ const buildOutlookEmailWrapper = ({
   const accentColor = theme === 'rose' ? '#ef4444' : '#059669';
   const boxBg = theme === 'rose' ? '#fef2f2' : '#f8fafc';
   const boxBorder = theme === 'rose' ? '#fecaca' : '#e2e8f0';
-  const labelColor = theme === 'rose' ? '#991b1b' : '#64748b';
-  const valColor = theme === 'rose' ? '#991b1b' : '#1e293b';
+  const labelColor = theme === 'rose' ? '#991b1b' : '#475569';
+  const valColor = theme === 'rose' ? '#991b1b' : '#0f172a';
 
   const rowsHtml = rows.map(r => `
     <tr>
-      <td style="padding: 6px 12px 6px 0; width: 130px; color: ${labelColor}; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; font-size: 13px; font-weight: bold; vertical-align: top; white-space: nowrap;">
+      <td style="padding: 9px 12px 9px 0; width: 145px; color: ${labelColor}; font-family: 'Segoe UI', Tahoma, Arial, 'Sarabun', sans-serif; font-size: 15px; font-weight: bold; vertical-align: top; white-space: nowrap;">
         ${r.label}:
       </td>
-      <td style="padding: 6px 0 6px 8px; color: ${valColor}; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; font-size: 13px; font-weight: 500; line-height: 1.5; vertical-align: top;">
+      <td style="padding: 9px 0 9px 8px; color: ${valColor}; font-family: 'Segoe UI', Tahoma, Arial, 'Sarabun', sans-serif; font-size: 16px; font-weight: 600; line-height: 1.6; vertical-align: top;">
         ${r.value}
       </td>
     </tr>
   `).join('');
 
   const buttonHtml = buttonText ? `
-    <table role="presentation" border="0" cellspacing="0" cellpadding="0" style="margin: 18px 0 6px 0;">
+    <table role="presentation" border="0" cellspacing="0" cellpadding="0" style="margin: 20px 0 8px 0;">
       <tr>
-        <td align="center" bgcolor="#2563eb" style="border-radius: 6px; background-color: #2563eb; padding: 12px 24px;">
-          <a href="${buttonUrl}" target="_blank" style="color: #ffffff; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; font-size: 14px; font-weight: bold; text-decoration: none; display: inline-block; line-height: 1.2;">
+        <td align="center" bgcolor="#2563eb" style="border-radius: 8px; background-color: #2563eb; padding: 14px 32px;">
+          <a href="${buttonUrl}" target="_blank" style="color: #ffffff; font-family: 'Segoe UI', Tahoma, Arial, 'Sarabun', sans-serif; font-size: 16px; font-weight: bold; text-decoration: none; display: inline-block; line-height: 1.3;">
             ${buttonText}
           </a>
         </td>
@@ -66,31 +66,31 @@ const buildOutlookEmailWrapper = ({
 <body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: 'Segoe UI', Tahoma, Arial, 'Sarabun', sans-serif; -webkit-font-smoothing: antialiased;">
   <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f1f5f9; width: 100%;">
     <tr>
-      <td align="center" style="padding: 24px 12px;">
+      <td align="center" style="padding: 28px 12px;">
         <!--[if mso]>
-        <table role="presentation" width="600" align="center" border="0" cellspacing="0" cellpadding="0">
+        <table role="presentation" width="620" align="center" border="0" cellspacing="0" cellpadding="0">
         <tr>
         <td>
         <![endif]-->
-        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 620px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
           <tr>
-            <td style="height: 4px; background-color: ${accentColor}; font-size: 0; line-height: 0;">&nbsp;</td>
+            <td style="height: 5px; background-color: ${accentColor}; font-size: 0; line-height: 0;">&nbsp;</td>
           </tr>
           <tr>
-            <td style="padding: 28px 30px; font-family: 'Segoe UI', Tahoma, Arial, 'Sarabun', sans-serif;">
-              <h2 style="margin: 0 0 16px 0; color: ${titleColor}; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; font-size: 20px; font-weight: bold; line-height: 1.4;">
+            <td style="padding: 32px 36px; font-family: 'Segoe UI', Tahoma, Arial, 'Sarabun', sans-serif;">
+              <h2 style="margin: 0 0 18px 0; color: ${titleColor}; font-family: 'Segoe UI', Tahoma, Arial, 'Sarabun', sans-serif; font-size: 22px; font-weight: bold; line-height: 1.4;">
                 ${title}
               </h2>
-              <p style="margin: 0 0 10px 0; color: #1e293b; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; font-size: 15px; font-weight: bold; line-height: 1.6;">
+              <p style="margin: 0 0 12px 0; color: #0f172a; font-family: 'Segoe UI', Tahoma, Arial, 'Sarabun', sans-serif; font-size: 17px; font-weight: bold; line-height: 1.6;">
                 ${greeting}
               </p>
-              <p style="margin: 0 0 16px 0; color: #334155; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; font-size: 14px; line-height: 1.6;">
+              <p style="margin: 0 0 18px 0; color: #1e293b; font-family: 'Segoe UI', Tahoma, Arial, 'Sarabun', sans-serif; font-size: 16px; line-height: 1.65;">
                 ${leadText}
               </p>
               
-              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: ${boxBg}; border: 1px solid ${boxBorder}; border-radius: 8px; margin: 0 0 18px 0;">
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: ${boxBg}; border: 1px solid ${boxBorder}; border-radius: 8px; margin: 0 0 20px 0;">
                 <tr>
-                  <td style="padding: 14px 18px;">
+                  <td style="padding: 16px 20px;">
                     <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
                       ${rowsHtml}
                     </table>
@@ -98,19 +98,19 @@ const buildOutlookEmailWrapper = ({
                 </tr>
               </table>
 
-              ${noteHtml ? `<p style="margin: 0 0 14px 0; color: #334155; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; font-size: 14px; line-height: 1.6;">${noteHtml}</p>` : ''}
+              ${noteHtml ? `<p style="margin: 0 0 16px 0; color: #334155; font-family: 'Segoe UI', Tahoma, Arial, 'Sarabun', sans-serif; font-size: 15px; line-height: 1.6;">${noteHtml}</p>` : ''}
 
-              ${ctaText ? `<p style="margin: 0 0 12px 0; color: #334155; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; font-size: 14px; line-height: 1.6;">${ctaText}</p>` : ''}
+              ${ctaText ? `<p style="margin: 0 0 14px 0; color: #0f172a; font-family: 'Segoe UI', Tahoma, Arial, 'Sarabun', sans-serif; font-size: 16px; font-weight: bold; line-height: 1.6;">${ctaText}</p>` : ''}
 
               ${buttonHtml}
 
-              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin: 22px 0 14px 0;">
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin: 24px 0 16px 0;">
                 <tr>
                   <td style="border-top: 1px solid #e2e8f0; font-size: 0; line-height: 0;">&nbsp;</td>
                 </tr>
               </table>
 
-              <p style="margin: 0; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; font-size: 12px; color: #64748b; line-height: 1.5;">
+              <p style="margin: 0; font-family: 'Segoe UI', Tahoma, Arial, 'Sarabun', sans-serif; font-size: 13px; color: #64748b; line-height: 1.6;">
                 <i>นี่คืออีเมลอัตโนมัติจากระบบ Leave Management System กรุณาอย่าตอบกลับ</i>
               </p>
             </td>

@@ -20,9 +20,9 @@ const buildOutlookEmailWrapper = ({
   buttonText = 'คลิกเข้าสู่ระบบ (เฉพาะผู้อนุมัติ)',
   buttonUrl = SYSTEM_URL,
   statusText = '',
-  theme = 'orange' // 'orange' | 'green' | 'red'
+  theme = 'blue' // 'blue' | 'green' | 'red'
 }) => {
-  const accentColor = theme === 'red' ? '#dc2626' : theme === 'green' ? '#16a34a' : '#ea580c';
+  const accentColor = theme === 'red' ? '#dc2626' : theme === 'green' ? '#16a34a' : '#1d4ed8';
 
   const rowsHtml = rows.map(r => `
     <tr>
@@ -60,17 +60,17 @@ const buildOutlookEmailWrapper = ({
         <![endif]-->
         <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07);">
           
-          <!-- Colored Header Banner (Like Image 1 MRS) -->
+          <!-- Colored Header Banner (Royal Blue with Pure White Text) -->
           <tr>
             <td bgcolor="${accentColor}" style="background-color: ${accentColor}; padding: 24px 28px; text-align: left;">
-              <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 11px; font-weight: bold; color: rgba(255, 255, 255, 0.95); letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 6px;">
+              <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 11px; font-weight: bold; color: #ffffff; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 6px;">
                 ${systemSubtitle}
               </div>
               <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 26px; font-weight: bold; color: #ffffff; line-height: 1.2; margin-bottom: 12px;">
                 ${headerTitle}
               </div>
               <div>
-                <span style="display: inline-block; border: 1px solid rgba(255, 255, 255, 0.7); background-color: rgba(0, 0, 0, 0.12); border-radius: 4px; padding: 4px 12px; color: #ffffff; font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 12px; font-weight: bold;">
+                <span style="display: inline-block; border: 1px solid #ffffff; background-color: rgba(255, 255, 255, 0.15); border-radius: 4px; padding: 4px 12px; color: #ffffff; font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 12px; font-weight: bold;">
                   ${badgeText}
                 </span>
               </div>
@@ -204,7 +204,7 @@ export const buildRequestApprovalEmail = ({
     buttonText: 'คลิกเข้าสู่ระบบ (เฉพาะผู้อนุมัติ)',
     buttonUrl: SYSTEM_URL,
     statusText: `สถานะปัจจุบัน: รอพิจารณาอนุมัติ (ขั้นที่ ${stepNum || 1})`,
-    theme: 'orange'
+    theme: 'blue'
   });
 };
 

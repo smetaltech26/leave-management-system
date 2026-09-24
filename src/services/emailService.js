@@ -26,10 +26,10 @@ const buildOutlookEmailWrapper = ({
 
   const rowsHtml = rows.map(r => `
     <tr>
-      <td style="padding: 7px 12px 7px 0; width: 140px; color: #4b5563; font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 15px; font-weight: bold; vertical-align: top; white-space: nowrap;">
+      <td width="140" style="padding: 7px 12px 7px 0; width: 140px; color: #4b5563; font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 15px; font-weight: bold; line-height: 1.5; vertical-align: top; word-wrap: break-word; overflow-wrap: break-word;">
         ${r.label}:
       </td>
-      <td style="padding: 7px 0 7px 4px; color: #111827; font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 15px; font-weight: 500; line-height: 1.5; vertical-align: top;">
+      <td style="padding: 7px 0 7px 4px; color: #111827; font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 15px; font-weight: 500; line-height: 1.5; vertical-align: top; word-wrap: break-word; overflow-wrap: break-word;">
         ${r.value}
       </td>
     </tr>
@@ -44,7 +44,7 @@ const buildOutlookEmailWrapper = ({
   <title>${headerTitle || 'แจ้งเตือนคำขอลางาน'}</title>
   <style type="text/css">
     html, body {
-      margin: 0 auto !important;
+      margin: 0 !important;
       padding: 0 !important;
       width: 100% !important;
     }
@@ -63,9 +63,29 @@ const buildOutlookEmailWrapper = ({
       border-spacing: 0 !important;
       border-collapse: collapse !important;
     }
+    .email-container {
+      width: 600px !important;
+      max-width: 600px !important;
+      table-layout: fixed !important;
+    }
+    .content-table {
+      width: 544px !important;
+      max-width: 544px !important;
+      table-layout: fixed !important;
+    }
+    .rows-table {
+      width: 498px !important;
+      max-width: 498px !important;
+      table-layout: fixed !important;
+    }
     /* Mobile responsive constraint */
     @media only screen and (max-width: 620px) {
       .email-container {
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+      .content-table,
+      .rows-table {
         width: 100% !important;
         max-width: 100% !important;
       }
@@ -83,14 +103,17 @@ const buildOutlookEmailWrapper = ({
   </style>
   <![endif]-->
 </head>
-<body bgcolor="#f3f4f6" style="margin: 0; padding: 24px 0; background-color: #f3f4f6; font-family: Tahoma, 'Segoe UI', Arial, sans-serif; -webkit-font-smoothing: antialiased;">
-  <center style="width: 100%;">
-    <!-- Main Card Table (Width 600 fixed, Centered, No outer 100% table) -->
-    <table role="presentation" class="email-container" width="600" align="center" border="0" cellpadding="0" cellspacing="0" style="width: 600px; max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07); text-align: left;">
+<body bgcolor="#f3f4f6" style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: Tahoma, 'Segoe UI', Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+  <!-- Full-width background wrapper; only the inner card is fixed at 600px. -->
+  <table role="presentation" width="100%" align="center" border="0" cellpadding="0" cellspacing="0" bgcolor="#f3f4f6" style="width: 100%; background-color: #f3f4f6;">
+    <tr>
+      <td align="center" style="padding: 24px 12px;">
+        <!-- Fixed desktop card. Outlook uses the HTML width attribute instead of max-width. -->
+        <table role="presentation" class="email-container" width="600" align="center" border="0" cellpadding="0" cellspacing="0" style="width: 600px; max-width: 600px; table-layout: fixed; margin: 0 auto; background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07); text-align: left;">
       
       <!-- Colored Header Banner -->
       <tr>
-        <td width="600" bgcolor="${accentColor}" style="width: 600px; background-color: ${accentColor}; padding: 24px 28px; text-align: left;">
+        <td class="mobile-padding" bgcolor="${accentColor}" style="background-color: ${accentColor}; padding: 24px 28px; text-align: left;">
           <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 11px; font-weight: bold; color: #ffffff; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 6px;">
             ${systemSubtitle}
           </div>
@@ -107,7 +130,7 @@ const buildOutlookEmailWrapper = ({
 
       <!-- Main White Body -->
       <tr>
-        <td class="mobile-padding" width="600" style="width: 600px; padding: 28px 28px 24px 28px; font-family: Tahoma, 'Segoe UI', Arial, sans-serif; text-align: left;">
+        <td class="mobile-padding" style="padding: 28px 28px 24px 28px; font-family: Tahoma, 'Segoe UI', Arial, sans-serif; text-align: left;">
           
           <!-- Greeting -->
           <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 18px; font-weight: bold; color: #111827; margin-bottom: 10px;">
@@ -119,8 +142,8 @@ const buildOutlookEmailWrapper = ({
             ${leadText}
           </div>
 
-          <!-- Details Box with Left Accent Bar (No width="100%" attribute) -->
-          <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="width: 100%; max-width: 544px; background-color: #f9fafb; border: 1px solid #e5e7eb; border-left: 5px solid ${accentColor}; border-radius: 6px; margin: 0 0 22px 0;">
+          <!-- Fixed 544px content box prevents nested content from widening the card in Outlook. -->
+          <table role="presentation" class="content-table" width="544" border="0" cellpadding="0" cellspacing="0" style="width: 544px; max-width: 544px; table-layout: fixed; background-color: #f9fafb; border: 1px solid #e5e7eb; border-left: 5px solid ${accentColor}; border-radius: 6px; margin: 0 0 22px 0;">
             <tr>
               <td style="padding: 18px 20px;">
                 
@@ -130,7 +153,7 @@ const buildOutlookEmailWrapper = ({
                 </div>
                 ` : ''}
 
-                <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="width: 100%;">
+                <table role="presentation" class="rows-table" width="498" border="0" cellpadding="0" cellspacing="0" style="width: 498px; max-width: 498px; table-layout: fixed;">
                   ${rowsHtml}
                 </table>
 
@@ -145,7 +168,7 @@ const buildOutlookEmailWrapper = ({
           ` : ''}
 
           <!-- Wide Action Button -->
-          <table role="presentation" border="0" cellpadding="0" cellspacing="0" align="center" style="width: 100%; max-width: 544px; margin: 22px 0 16px 0;">
+          <table role="presentation" class="content-table" width="544" border="0" cellpadding="0" cellspacing="0" align="center" style="width: 544px; max-width: 544px; table-layout: fixed; margin: 22px 0 16px 0;">
             <tr>
               <td align="center" bgcolor="${accentColor}" style="border-radius: 6px; background-color: ${accentColor}; padding: 13px 24px; text-align: center;">
                 <a href="${buttonUrl}" target="_blank" style="color: #ffffff; font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 15px; font-weight: bold; text-decoration: none; display: block; text-align: center; line-height: 1.3;">
@@ -170,8 +193,10 @@ const buildOutlookEmailWrapper = ({
         </td>
       </tr>
 
-    </table>
-  </center>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>`;
 };
@@ -326,4 +351,3 @@ export const sendEmailNotification = async ({ to, subject, body }) => {
     console.error('Error sending email:', error);
   }
 };
-

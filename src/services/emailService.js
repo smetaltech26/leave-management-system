@@ -40,7 +40,38 @@ const buildOutlookEmailWrapper = ({
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <title>${headerTitle || 'แจ้งเตือนคำขอลางาน'}</title>
+  <style type="text/css">
+    html, body {
+      margin: 0 auto !important;
+      padding: 0 !important;
+      width: 100% !important;
+    }
+    * {
+      -ms-text-size-adjust: 100%;
+      -webkit-text-size-adjust: 100%;
+    }
+    body, table, td, th, p, a, span, h1, h2, h3, div, strong, b, i {
+      font-family: Tahoma, 'Segoe UI', Arial, sans-serif !important;
+    }
+    table, td {
+      mso-table-lspace: 0pt !important;
+      mso-table-rspace: 0pt !important;
+    }
+    table {
+      border-spacing: 0 !important;
+      border-collapse: collapse !important;
+    }
+    /* Mobile responsive constraint */
+    @media only screen and (max-width: 620px) {
+      .email-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 auto !important;
+      }
+    }
+  </style>
   <!--[if mso]>
   <style type="text/css">
     body, table, td, th, p, a, span, h1, h2, h3, div, strong, b, i {
@@ -49,108 +80,110 @@ const buildOutlookEmailWrapper = ({
   </style>
   <![endif]-->
 </head>
-<body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: Tahoma, 'Segoe UI', Arial, sans-serif; -webkit-font-smoothing: antialiased;">
-  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f3f4f6; width: 100%;">
-    <tr>
-      <td align="center" style="padding: 24px 12px;">
-        <!--[if mso]>
-        <table role="presentation" width="600" align="center" border="0" cellspacing="0" cellpadding="0">
-        <tr>
-        <td>
-        <![endif]-->
-        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07);">
-          
-          <!-- Colored Header Banner (Royal Blue with Pure White Text) -->
+<body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: Tahoma, 'Segoe UI', Arial, sans-serif; -webkit-font-smoothing: antialiased; width: 100% !important;">
+  <center style="width: 100%; background-color: #f3f4f6; text-align: center;">
+    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" align="center" style="background-color: #f3f4f6; width: 100%; margin: 0; padding: 0; border-collapse: collapse;">
+      <tr>
+        <td align="center" valign="top" style="padding: 24px 12px; text-align: center;">
+          <!--[if mso]>
+          <table role="presentation" width="600" align="center" border="0" cellspacing="0" cellpadding="0">
           <tr>
-            <td bgcolor="${accentColor}" style="background-color: ${accentColor}; padding: 24px 28px; text-align: left;">
-              <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 11px; font-weight: bold; color: #ffffff; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 6px;">
-                ${systemSubtitle}
-              </div>
-              <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 26px; font-weight: bold; color: #ffffff; line-height: 1.2; margin-bottom: 12px;">
-                ${headerTitle}
-              </div>
-              <div>
-                <span style="display: inline-block; border: 1px solid #ffffff; background-color: rgba(255, 255, 255, 0.15); border-radius: 4px; padding: 4px 12px; color: #ffffff; font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 12px; font-weight: bold;">
-                  ${badgeText}
-                </span>
-              </div>
-            </td>
+          <td align="center" valign="top">
+          <![endif]-->
+          <table role="presentation" class="email-container" width="600" align="center" border="0" cellspacing="0" cellpadding="0" style="width: 600px; max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07); text-align: left;">
+            
+            <!-- Colored Header Banner (Royal Blue with Pure White Text) -->
+            <tr>
+              <td bgcolor="${accentColor}" style="background-color: ${accentColor}; padding: 24px 28px; text-align: left;">
+                <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 11px; font-weight: bold; color: #ffffff; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 6px;">
+                  ${systemSubtitle}
+                </div>
+                <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 26px; font-weight: bold; color: #ffffff; line-height: 1.2; margin-bottom: 12px;">
+                  ${headerTitle}
+                </div>
+                <div>
+                  <span style="display: inline-block; border: 1px solid #ffffff; background-color: rgba(255, 255, 255, 0.15); border-radius: 4px; padding: 4px 12px; color: #ffffff; font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 12px; font-weight: bold;">
+                    ${badgeText}
+                  </span>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Main White Body (Like Image 1 MRS) -->
+            <tr>
+              <td style="padding: 28px 28px 24px 28px; font-family: Tahoma, 'Segoe UI', Arial, sans-serif; text-align: left;">
+                
+                <!-- Greeting -->
+                <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 18px; font-weight: bold; color: #111827; margin-bottom: 10px;">
+                  ${greeting}
+                </div>
+
+                <!-- Lead Text -->
+                <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 15px; color: #374151; line-height: 1.6; margin-bottom: 20px;">
+                  ${leadText}
+                </div>
+
+                <!-- Details Box with Left Accent Bar (Like Image 1 MRS) -->
+                <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-left: 5px solid ${accentColor}; border-radius: 6px; margin: 0 0 22px 0;">
+                  <tr>
+                    <td style="padding: 18px 20px;">
+                      
+                      ${boxTitle ? `
+                      <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 17px; font-weight: bold; color: #111827; margin-bottom: 14px; border-bottom: 1px dashed #e5e7eb; padding-bottom: 10px;">
+                        ${boxTitle}
+                      </div>
+                      ` : ''}
+
+                      <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+                        ${rowsHtml}
+                      </table>
+
+                    </td>
+                  </tr>
+                </table>
+
+                ${noteHtml ? `
+                <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 14px; color: #4b5563; line-height: 1.6; margin-bottom: 18px;">
+                  ${noteHtml}
+                </div>
+                ` : ''}
+
+                <!-- Wide Action Button (Like Image 1 MRS) -->
+                <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin: 22px 0 16px 0;">
+                  <tr>
+                    <td align="center" bgcolor="${accentColor}" style="border-radius: 6px; background-color: ${accentColor}; padding: 13px 24px; text-align: center;">
+                      <a href="${buttonUrl}" target="_blank" style="color: #ffffff; font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 15px; font-weight: bold; text-decoration: none; display: block; line-height: 1.3;">
+                        ${buttonText}
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+
+                <!-- Status Text (Like Image 1 MRS) -->
+                ${statusText ? `
+                <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: bold; color: ${accentColor}; margin: 0 0 6px 0;">
+                  ${statusText}
+                </div>
+                ` : ''}
+
+                <!-- Disclaimer -->
+                <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 12px; color: #6b7280; line-height: 1.5; margin: 4px 0 0 0;">
+                  ข้อความอัตโนมัติจากระบบ Leave Management System (LMS) กรุณาอย่าตอบกลับ
+                </div>
+
+              </td>
+            </tr>
+
+          </table>
+          <!--[if mso]>
+          </td>
           </tr>
-
-          <!-- Main White Body (Like Image 1 MRS) -->
-          <tr>
-            <td style="padding: 28px 28px 24px 28px; font-family: Tahoma, 'Segoe UI', Arial, sans-serif;">
-              
-              <!-- Greeting -->
-              <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 18px; font-weight: bold; color: #111827; margin-bottom: 10px;">
-                ${greeting}
-              </div>
-
-              <!-- Lead Text -->
-              <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 15px; color: #374151; line-height: 1.6; margin-bottom: 20px;">
-                ${leadText}
-              </div>
-
-              <!-- Details Box with Left Accent Bar (Like Image 1 MRS) -->
-              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-left: 5px solid ${accentColor}; border-radius: 6px; margin: 0 0 22px 0;">
-                <tr>
-                  <td style="padding: 18px 20px;">
-                    
-                    ${boxTitle ? `
-                    <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 17px; font-weight: bold; color: #111827; margin-bottom: 14px; border-bottom: 1px dashed #e5e7eb; padding-bottom: 10px;">
-                      ${boxTitle}
-                    </div>
-                    ` : ''}
-
-                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
-                      ${rowsHtml}
-                    </table>
-
-                  </td>
-                </tr>
-              </table>
-
-              ${noteHtml ? `
-              <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 14px; color: #4b5563; line-height: 1.6; margin-bottom: 18px;">
-                ${noteHtml}
-              </div>
-              ` : ''}
-
-              <!-- Wide Action Button (Like Image 1 MRS) -->
-              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin: 22px 0 16px 0;">
-                <tr>
-                  <td align="left" bgcolor="${accentColor}" style="border-radius: 6px; background-color: ${accentColor}; padding: 13px 24px; text-align: center;">
-                    <a href="${buttonUrl}" target="_blank" style="color: #ffffff; font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 15px; font-weight: bold; text-decoration: none; display: block; line-height: 1.3;">
-                      ${buttonText}
-                    </a>
-                  </td>
-                </tr>
-              </table>
-
-              <!-- Status Text (Like Image 1 MRS) -->
-              ${statusText ? `
-              <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: bold; color: ${accentColor}; margin: 0 0 6px 0;">
-                ${statusText}
-              </div>
-              ` : ''}
-
-              <!-- Disclaimer -->
-              <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 12px; color: #6b7280; line-height: 1.5; margin: 4px 0 0 0;">
-                ข้อความอัตโนมัติจากระบบ Leave Management System (LMS) กรุณาอย่าตอบกลับ
-              </div>
-
-            </td>
-          </tr>
-
-        </table>
-        <!--[if mso]>
+          </table>
+          <![endif]-->
         </td>
-        </tr>
-        </table>
-        <![endif]-->
-      </td>
-    </tr>
-  </table>
+      </tr>
+    </table>
+  </center>
 </body>
 </html>`;
 };

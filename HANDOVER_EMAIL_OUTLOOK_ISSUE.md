@@ -2,7 +2,98 @@
 **เอกสารสำหรับ:** น้องจ๊ะ (Codex), พี่ต้น (P'Ton) และทีมพัฒนา  
 **จัดทำโดย:** แอ๊น (Antigravity)  
 **วันที่บันทึก:** 24 กันยายน 2026  
-**สถานะปัจจุบัน:** ติดปัญหาการเรนเดอร์ใน Outlook Desktop (Windows) แถบสีน้ำเงินและตารางยังคงยืดยาวเต็มหน้าจอ (Full-width) แม้แก้ไปแล้ว 3 รอบ  
+**อัปเดตผลการรับช่วงโดย:** จ๊ะ (Codex) วันที่ 24 กันยายน 2026
+
+**สถานะปัจจุบัน:** ✅ ปิดปัญหา Outlook Desktop แล้ว และปรับปรุงความเร็วการยื่นลา/อนุมัติเรียบร้อย โดยพี่ต้นทดสอบจากอุปกรณ์จริงและยืนยันผล
+
+---
+
+## ✅ อัปเดตล่าสุดสำหรับแอ๊น (Antigravity): ผลการรับช่วงงานโดยจ๊ะ
+
+### 1. ปิดปัญหาอีเมลขยายเต็มจอใน Classic Outlook Desktop แล้ว
+
+**สาเหตุจริงที่พบ:**
+
+1. ตารางหลักกำหนด `width="600"` ซ้ำกับเซลล์ด้านในที่มี Padding ทำให้ Word Rendering Engine ของ Outlook คำนวณความกว้างเกินกรอบ
+2. ตารางปุ่มมี `align="center"` ซึ่ง Outlook ตีความเป็น Floating Table ทำให้กล่องรายละเอียดอยู่ซ้าย แต่ปุ่มไปอยู่ขวา และดันตารางแม่ให้ขยายเต็มหน้าจอ
+3. สีพื้น Header ถูกกำหนดบน `<td>` ของแถวตารางแม่ เมื่อ Outlook ขยายตารางแม่ แถบสีน้ำเงินจึงขยายตามทั้งแถว
+
+**แนวทางแก้สุดท้ายใน `src/services/emailService.js`:**
+
+- ใช้ Background wrapper กว้าง `100%` แต่แยกส่วนเนื้อหาเป็นตารางคงที่
+- การ์ด Desktop ใช้ความกว้าง `600px`
+- Header, กล่องรายละเอียด และปุ่มใช้ตารางย่อยความกว้าง `544px` เท่ากัน
+- ตารางรายการรายละเอียดภายในใช้ `498px`
+- นำ `align` ที่ทำให้เกิด Floating Table ออกจากตารางการ์ดและตารางปุ่ม
+- แยกพื้นสีน้ำเงินออกจากเซลล์เต็มแถวมาอยู่บนตาราง Header `544px`
+- เอา `white-space: nowrap` ที่อาจดันตารางออก และเพิ่มการตัดบรรทัดสำหรับข้อความยาว
+- คง Media Query สำหรับมือถือให้ตารางปรับเป็น `width: 100%`
+
+**Commit ที่เกี่ยวข้อง:**
+
+- `886bbaf` — ล็อกความกว้างตารางและเนื้อหาสำหรับ Outlook
+- `22a6cf6` — แก้ Floating Table ของปุ่มและบังคับให้เรียงใต้รายละเอียด
+- `60219d1` — แยก Header เป็นตารางย่อย `544px`
+
+**ผลยืนยัน:**
+
+- พี่ต้นทดสอบอีเมลใหม่บน Classic Outlook Desktop ทั้ง Reading Pane และหน้าต่าง Message แยกแล้ว
+- Header, กล่องรายละเอียด และปุ่มกว้างตรงกัน ไม่ขยายเต็มจอ และไม่วางเหลื่อมซ้าย/ขวา
+- Production Asset ที่ใช้ยืนยันรอบปิดปัญหา: `index-DAcejB3Y.js`
+
+### 2. ปรับปรุงความเร็วการยื่นลาและอนุมัติบนมือถือ
+
+**ผลตรวจเดิม:** UI รอ `await` การส่ง LINE ผ่าน Google Apps Script ก่อนแสดงผลสำเร็จ ทำให้ผู้ใช้ค้างที่ `กำลังส่งข้อมูล...` แม้ข้อมูลหลักใน Supabase อาจบันทึกสำเร็จแล้ว
+
+**เวลาที่วัดจากระบบจริง:**
+
+- GitHub Pages: Median ประมาณ `135ms`
+- Supabase Read baseline: Median ประมาณ `86ms`
+- LINE GAS แบบ No-op ซึ่งยังไม่เรียก LINE API จริง: `1.75s`, `8.79s`, และ `16.75s`
+- สรุป: คอขวดหลักคือ LINE GAS/Cold start และการรอ Network หลายทอด ไม่ใช่ GitHub Pages หรือ Supabase outage
+
+**สิ่งที่แก้ใน Commit `2b86e33`:**
+
+- `LeaveFormModal.jsx` และ `ApprovalPage.jsx` ยังคงรอให้ Core Database operation สำเร็จก่อนเหมือนเดิม แต่ไม่ `await` LINE ที่ระดับ UI
+- LINE เริ่มส่งทันทีแบบ Background และใช้ `keepalive: true`
+- **ไม่มี timeout 5 วินาทีและไม่มี AbortController** ตาม Requirement ล่าสุดของพี่ต้น เพื่อให้ LINE รอ GAS ตอบตามจริงและไม่ถูก App ยกเลิก
+- Email ยังคงส่งแบบ Fire-and-forget ตาม Flow เดิม
+- Popup สำเร็จแสดงหลัง Supabase สำเร็จ โดยข้อความแจ้งชัดว่า Notification กำลังส่งเบื้องหลัง
+- เพิ่ม `isCompressing` และ Run ID Guard: ปุ่มส่งถูก Disable ระหว่างเตรียมรูป ป้องกันอัปโหลดไฟล์ต้นฉบับขนาดใหญ่ก่อนบีบอัดเสร็จ และป้องกันผลบีบอัดเก่ากลับมาทับไฟล์ใหม่/ไฟล์ที่ลบแล้ว
+- `App.jsx` ส่ง Error ของ Approve/Reject กลับไปยัง Caller (`throw err`) เพื่อหยุด Notification และ Success Popup เมื่อ Database operation ล้มเหลว
+- ไม่มีการเปลี่ยน Database schema, Dependency, ผู้อนุมัติ 3 ขั้น, โควตา, เนื้อหา LINE/Email หรือ Business workflow
+
+**ผลยืนยันจากพี่ต้นบนมือถือจริง:**
+
+- ข้อความส่งคำขอสำเร็จแสดงก่อนโดยไม่ต้องรอ LINE
+- LINE Notification ส่งตามหลังมาติด ๆ และได้รับครบ
+- Flow การยื่นลาและแจ้งเตือนทำงานถูกต้อง แต่เวลารอของผู้ใช้ลดลงชัดเจน
+- Production Asset ปัจจุบัน: `index-C-71Jjmr.js`
+
+### 3. Flow ปัจจุบันที่ต้องรักษาเมื่อพัฒนาต่อ
+
+1. บันทึก Core data ใน Supabase ให้สำเร็จก่อน
+2. หาก Supabase ล้มเหลว ต้องไม่แสดง Success และไม่เริ่ม Notification
+3. หลัง Core data สำเร็จ ให้เริ่ม LINE/Email Background notification ทันที
+4. UI แสดง Success โดยไม่รอ LINE GAS
+5. ห้ามเพิ่ม timeout/Abort ที่ยกเลิก LINE โดยไม่ได้รับอนุมัติจากพี่ต้น
+6. การส่ง LINE จาก Browser ยังเป็น Best-effort หาก Browser ถูกปิดทั้งแอปหรือ Network หลุด จึงยังไม่ใช่ Guaranteed delivery แบบ Server-side
+
+### 4. งานที่ยังเปิดไว้สำหรับอนาคต (ยังไม่ได้ Implement)
+
+- ย้าย `VITE_LINE_CHANNEL_ACCESS_TOKEN` ออกจาก Frontend ไปไว้ใน Backend secret/GAS Script Properties เพื่อลดความเสี่ยง Token ถูกอ่านจาก Browser bundle
+- หากต้องการ Guaranteed delivery ให้ทำ Notification Outbox + Server-side worker/Edge Function พร้อม Retry
+- พิจารณารวม Create/Approve/Reject/Quota เป็น Transactional RPC เพื่อลดจำนวน Network round trip และป้องกัน Partial update
+- เพิ่ม Pagination ให้ `fetchAllRequests()` ซึ่งปัจจุบันโหลดคำขอทั้งหมดพร้อม Approval steps และ Attachments
+
+### 5. สถานะ Repository ล่าสุด ณ วันที่ส่งต่อ
+
+- Branch: `main`
+- Latest application code commit: `2b86e33`
+- GitHub Pages ใช้ `gh-pages`
+- Build: ผ่าน (`npm run build`)
+- Production verification: HTTP 200 และ Asset `index-C-71Jjmr.js` มี `keepalive`, File preparation guard และ Background notification โดยไม่พบ LINE timeout
+- Working tree ก่อนแก้เอกสาร Handover: สะอาด
 
 ---
 

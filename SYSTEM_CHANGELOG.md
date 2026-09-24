@@ -188,6 +188,48 @@
 - **ปุ่มกดและข้อความจัดระเบียบสวยงาม:**
   - ปุ่มเข้าสู่ระบบ (Action Button) ปรับขนาดพอดีกับกรอบ 600px ไม่ยืดยาวเต็มจอ สวยงามตามมาตรฐาน MRS ครอบคลุมทุกขั้นตอนการแจ้งเตือน (Step 1, Step ถัดไป, อนุมัติแล้ว, ปฏิเสธ)
 
+### 🔹 Version 2.17.0-outlook-fixed-sections: ปิดปัญหาความกว้างอีเมลใน Classic Outlook Desktop
+
+> หมายเหตุ: Version 2.16.0 เป็นความพยายามแก้รอบแรก แต่ Outlook Desktop ยังขยาย Header และจัดปุ่มเหลื่อมอยู่ การแก้ใน Version 2.17.0 เป็นผลลัพธ์สุดท้ายที่ผ่านการทดสอบจริง
+
+- **แก้สาเหตุ Word Rendering Engine ขยายตารางแม่:**
+  - แยก Wrapper พื้นหลัง `100%` ออกจากตารางเนื้อหาคงที่
+  - การ์ด Desktop ใช้ `600px`; Header, กล่องรายละเอียด และปุ่มใช้ `544px`; ตารางรายการภายในใช้ `498px`
+  - นำ `width="600"` ที่ซ้ำบนเซลล์ซึ่งมี Padding ออก และเปิดให้ข้อความยาวตัดบรรทัดได้
+- **แก้ Floating Table ของ Outlook:**
+  - นำ `align="center"` ออกจากตารางการ์ดและตารางปุ่ม หลังพบว่า Outlook นำปุ่มไปวางด้านขวาคู่กับกล่องรายละเอียดและดันตารางแม่ให้เต็มจอ
+  - เพิ่ม `clear: both` ที่ตารางปุ่มเพื่อรักษาการเรียงแนวตั้ง
+- **แยก Header ออกจากแถวเต็ม:**
+  - ย้ายพื้น Royal Blue จาก `<td>` ของแถวตารางแม่ไปยังตาราง Header ย่อย `544px`
+  - ทำให้ Header, รายละเอียด และปุ่มมีความกว้างตรงกันแม้ Outlook ขยายพื้นที่สีขาวภายนอก
+- **ผลทดสอบจริง:**
+  - ผ่าน Classic Outlook Desktop ทั้ง Reading Pane และหน้าต่าง Message แยก
+  - พี่ต้นยืนยันจากภาพทดสอบว่า Header/รายละเอียด/ปุ่มตรงแนวและไม่ขยายเต็มจอ
+- **Commits:** `886bbaf`, `22a6cf6`, `60219d1`
+
+### 🔹 Version 2.18.0-background-notifications: ลดเวลารอยื่นลาและอนุมัติบนมือถือ
+
+- **ผลวิเคราะห์ Performance:**
+  - GitHub Pages Median ประมาณ `135ms`
+  - Supabase Read baseline Median ประมาณ `86ms`
+  - LINE GAS No-op ใช้เวลา `1.75–16.75s` (Median `8.79s`) จึงเป็นคอขวดหลักของ Spinner ฝั่งผู้ใช้
+- **แยก Notification ออกจาก Critical UI path:**
+  - ยังคงรอ Core Database operation ใน Supabase ให้สำเร็จก่อน
+  - `LeaveFormModal.jsx` และ `ApprovalPage.jsx` เริ่มส่ง LINE/Email แบบ Background หลัง DB สำเร็จ โดย UI ไม่ `await` LINE
+  - LINE ใช้ `keepalive: true` และ **ไม่มี timeout/AbortController** เพื่อรักษาการส่งแจ้งเตือนเป็นสำคัญตาม Requirement ของพี่ต้น
+  - Success Popup แสดงทันทีหลัง DB สำเร็จ และแจ้งว่า Notification กำลังส่งเบื้องหลัง
+- **ป้องกันผลสำเร็จผิดกรณี:**
+  - `App.jsx` ส่ง Error จาก Approve/Reject กลับไปยัง Caller เพื่อหยุด Notification และ Success Popup เมื่อ DB ล้มเหลว
+- **ป้องกัน Upload ไฟล์ต้นฉบับก่อนบีบอัด:**
+  - เพิ่ม `isCompressing` และ Run ID Guard
+  - Disable ปุ่มส่งพร้อมข้อความ `กำลังเตรียมไฟล์...` จนกว่าการบีบอัดเสร็จ
+  - ป้องกันผลบีบอัดเก่ากลับมาทับไฟล์ใหม่หรือไฟล์ที่ผู้ใช้ลบแล้ว
+- **ผลทดสอบจริง:**
+  - พี่ต้นทดสอบบนมือถือและยืนยันว่า Success แสดงเร็วกว่าของเดิม ขณะที่ LINE ส่งตามหลังและได้รับครบ
+  - ไม่มีการเปลี่ยน Database schema, Dependency, Approval 3 Steps, Quota หรือ Business workflow
+- **Commit:** `2b86e33`
+- **Production Asset:** `index-C-71Jjmr.js`
+
 ---
 
 ## 🔮 4. แผนงานและพิมพ์เขียวการปรับปรุงในอนาคต (Future Roadmap & Notification Blueprint)
@@ -220,4 +262,3 @@
 ---
 
 *เอกสารนี้ถูกบันทึกเพื่อเป็นคู่มือและประวัติการทำงาน ให้ทีมพัฒนา (พี่ต้น, น้องจ๊ะ, น้องแอ๊น) สามารถตรวจสอบและต่อยอดระบบได้อย่างราบรื่นค่ะ* 💕
-

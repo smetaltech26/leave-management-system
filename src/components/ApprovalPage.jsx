@@ -246,13 +246,19 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
           const nextApprover = users.find(u => u.id === nextStepObj.approver_id);
           if (nextApprover) {
             if (nextApprover.line_user_id) {
-              await notifyLeaveApprover({
+              void notifyLeaveApprover({
                 approverName: nextApprover.fullname,
                 lineUserId: nextApprover.line_user_id,
                 requesterName: requester?.fullname || 'พนักงาน',
                 leaveType: selectedRequest.leave_type,
                 dateRange: `${selectedRequest.date_start} ถึง ${selectedRequest.date_end}`,
                 stepNum: nextStepNum
+              }).then((notifyResult) => {
+                if (notifyResult && !notifyResult.success) {
+                  console.warn('Next approver LINE notification failed:', notifyResult.errorMsg);
+                }
+              }).catch((notifyError) => {
+                console.warn('Next approver LINE notification failed:', notifyError);
               });
             }
             if (nextApprover.email) {
@@ -282,10 +288,16 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
         // Step สุดท้าย อนุมัติเสร็จสมบูรณ์ -> ยิง LINE Push 1:1 และ Email แจ้งเตือนผู้ขอลา!
         if (requester) {
           if (requester.line_user_id) {
-            await sendLinePushToUser(
+            void sendLinePushToUser(
               requester.line_user_id,
               `🎉 ใบขอลาของคุณ (${selectedRequest.leave_type}) เลขที่ ${selectedRequest.id} ได้รับการอนุมัติเรียบร้อยแล้วค่ะ!`
-            );
+            ).then((notifyResult) => {
+              if (notifyResult && !notifyResult.success) {
+                console.warn('Requester approval LINE notification failed:', notifyResult.errorMsg);
+              }
+            }).catch((notifyError) => {
+              console.warn('Requester approval LINE notification failed:', notifyError);
+            });
           }
           if (requester.email) {
             const periodText = selectedRequest.leave_period === 'Morning' ? 'เช้า' : selectedRequest.leave_period === 'Afternoon' ? 'บ่าย' : '';
@@ -312,10 +324,16 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
       const requester = users.find(u => u.id === selectedRequest.user_id);
       if (requester) {
         if (requester.line_user_id) {
-          await sendLinePushToUser(
+          void sendLinePushToUser(
             requester.line_user_id,
             `❌ ใบขอลาของคุณ (${selectedRequest.leave_type}) เลขที่ ${selectedRequest.id} ถูกปฏิเสธการอนุมัติ (เหตุผล: ${comment || 'ไม่ระบุ'})`
-          );
+          ).then((notifyResult) => {
+            if (notifyResult && !notifyResult.success) {
+              console.warn('Requester rejection LINE notification failed:', notifyResult.errorMsg);
+            }
+          }).catch((notifyError) => {
+            console.warn('Requester rejection LINE notification failed:', notifyError);
+          });
         }
         if (requester.email) {
           const htmlBody = buildRejectedEmail({
@@ -700,8 +718,8 @@ export default function ApprovalPage({ currentUser, requests, users, agencies = 
                   </h2>
                   <p className="text-sm text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
                     {successType === 'approved' 
-                      ? 'คำขอลางานได้รับการอนุมัติและแจ้งเตือนผู้เกี่ยวข้องแล้ว' 
-                      : 'คำขอลางานถูกปฏิเสธและแจ้งเตือนผู้ขอลาแล้ว'}
+                      ? 'คำขอลางานได้รับการอนุมัติแล้ว ระบบกำลังส่งการแจ้งเตือนผู้เกี่ยวข้องในเบื้องหลัง'
+                      : 'คำขอลางานถูกปฏิเสธแล้ว ระบบกำลังส่งการแจ้งเตือนผู้ขอลาในเบื้องหลัง'}
                   </p>
                   <button
                     onClick={handleSuccessOk}

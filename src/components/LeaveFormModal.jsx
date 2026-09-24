@@ -37,12 +37,16 @@ export default function LeaveFormModal({
   const [filePreview, setFilePreview] = useState(null);
   const [isPdf, setIsPdf] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false);
   const fileInputRef = useRef(null);
+  const compressionRunIdRef = useRef(0);
 
   useEffect(() => {
     if (isOpen) {
       if (!isInitializedRef.current) {
         isInitializedRef.current = true;
+        compressionRunIdRef.current += 1;
+        setIsCompressing(false);
         if (editingRequest) {
           setLeaveType(editingRequest.leave_type || 'ลาพักร้อน');
           setDescription(editingRequest.description || '');
@@ -215,6 +219,9 @@ export default function LeaveFormModal({
     const uploaded = e.target.files && e.target.files[0];
     if (!uploaded) return;
 
+    const compressionRunId = compressionRunIdRef.current + 1;
+    compressionRunIdRef.current = compressionRunId;
+
     const fileName = (uploaded.name || '').toLowerCase();
     const fileType = (uploaded.type || '').toLowerCase();
     const isPdfFile = fileType.includes('pdf') || fileName.endsWith('.pdf');
@@ -223,8 +230,10 @@ export default function LeaveFormModal({
     setFile(uploaded);
 
     if (isPdfFile) {
+      setIsCompressing(false);
       setFilePreview(null);
     } else {
+      setIsCompressing(true);
       // แสดง Preview รูปภาพทันทีผ่าน Object URL (0ms เร็วทันใจบน Android / iOS)
       try {
         const instantPreviewUrl = URL.createObjectURL(uploaded);
@@ -237,17 +246,35 @@ export default function LeaveFormModal({
 
       // บีบอัดรูปภาพเบื้องหลังเพื่อเตรียมส่ง API อย่างรวดเร็ว
       compressImage(uploaded).then(({ file: optimizedFile, preview }) => {
+        if (compressionRunIdRef.current !== compressionRunId) return;
         if (optimizedFile) setFile(optimizedFile);
         if (preview) setFilePreview(preview);
-      }).catch(console.warn);
+      }).catch(console.warn).finally(() => {
+        if (compressionRunIdRef.current === compressionRunId) {
+          setIsCompressing(false);
+        }
+      });
     }
 
     // เคลียร์ค่า input ให้เลือกไฟล์เดิมซ้ำได้ถ้ายกเลิก
     if (e.target) e.target.value = '';
   };
 
+  const clearAttachment = () => {
+    compressionRunIdRef.current += 1;
+    setIsCompressing(false);
+    setFile(null);
+    setFilePreview(null);
+    setIsPdf(false);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (isCompressing) {
+      setAlertMessage('กรุณารอให้ระบบเตรียมไฟล์แนบให้เรียบร้อยก่อนส่งคำขอ');
+      return;
+    }
 
     // Validate dates
     if (new Date(dateEnd) < new Date(dateStart)) {
@@ -353,18 +380,20 @@ export default function LeaveFormModal({
         if (firstApprover) {
           // Line Notification
           if (firstApprover.line_user_id) {
-            const notifyResult = await notifyLeaveApprover({
+            void notifyLeaveApprover({
               approverName: firstApprover.fullname,
               lineUserId: firstApprover.line_user_id,
               requesterName: currentUser?.fullname,
               leaveType,
               dateRange: `${dateStart} ถึง ${dateEnd}`,
               stepNum: 1
+            }).then((notifyResult) => {
+              if (notifyResult && !notifyResult.success) {
+                console.warn("Line Notification failed:", notifyResult.errorMsg);
+              }
+            }).catch((notifyError) => {
+              console.warn("Line Notification failed:", notifyError);
             });
-            
-            if (notifyResult && !notifyResult.success) {
-              console.warn("Line Notification failed:", notifyResult.errorMsg);
-            }
           } else {
             console.warn("ผู้อนุมัติขั้นที่ 1 ไม่มี Line User ID");
           }
@@ -651,7 +680,7 @@ export default function LeaveFormModal({
                 </div>
                 <button
                   type="button"
-                  onClick={() => { setFile(null); setFilePreview(null); setIsPdf(false); }}
+                  onClick={clearAttachment}
                   className="p-1.5 hover:bg-rose-100 dark:hover:bg-rose-500/20 rounded-full text-rose-500 transition-colors"
                   title="ลบไฟล์แนบ"
                 >
@@ -666,7 +695,7 @@ export default function LeaveFormModal({
                 </div>
                 <button
                   type="button"
-                  onClick={() => { setFile(null); setFilePreview(null); setIsPdf(false); }}
+                  onClick={clearAttachment}
                   className="absolute top-1.5 right-1.5 bg-slate-900/80 hover:bg-rose-600 p-1.5 rounded-full text-white transition-colors shadow-sm"
                   title="ลบรูปภาพ"
                 >
@@ -688,7 +717,7 @@ export default function LeaveFormModal({
                 </div>
                 <button
                   type="button"
-                  onClick={() => { setFile(null); setFilePreview(null); setIsPdf(false); }}
+                  onClick={clearAttachment}
                   className="p-1.5 hover:bg-blue-100 dark:hover:bg-blue-500/20 rounded-full text-blue-500 transition-colors"
                   title="ลบไฟล์แนบ"
                 >
@@ -714,10 +743,16 @@ export default function LeaveFormModal({
           <button
             type="submit"
             form="leave-form"
-            disabled={isSubmitting}
-            className="px-6 py-2.5 rounded-xl text-sm font-bold bg-emerald-500 hover:bg-emerald-600 text-white transition-colors shadow-lg shadow-emerald-500/30 dark:shadow-none dark:bg-emerald-600/80 dark:hover:bg-emerald-600 flex items-center space-x-2"
+            disabled={isSubmitting || isCompressing}
+            className="px-6 py-2.5 rounded-xl text-sm font-bold bg-emerald-500 hover:bg-emerald-600 text-white transition-colors shadow-lg shadow-emerald-500/30 dark:shadow-none dark:bg-emerald-600/80 dark:hover:bg-emerald-600 flex items-center space-x-2 disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {isSubmitting ? <span>กำลังส่งข้อมูล...</span> : <span>ส่งคำขออนุมัติ</span>}
+            {isSubmitting ? (
+              <span>กำลังส่งข้อมูล...</span>
+            ) : isCompressing ? (
+              <span>กำลังเตรียมไฟล์...</span>
+            ) : (
+              <span>ส่งคำขออนุมัติ</span>
+            )}
           </button>
         </div>
 

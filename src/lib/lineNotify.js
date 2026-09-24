@@ -40,7 +40,8 @@ export const sendLinePushToUser = async (lineUserId, messageText, channelAccessT
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: headers,
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      keepalive: true
     });
 
     if (response.ok) {

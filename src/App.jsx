@@ -328,6 +328,7 @@ export default function App() {
     } catch (err) {
       console.error("Approve Error:", err);
       await showAlert("ไม่สามารถอนุมัติได้: " + err.message);
+      throw err;
     }
   };
 
@@ -375,6 +376,7 @@ export default function App() {
     } catch (err) {
       console.error("Reject Error:", err);
       await showAlert("ไม่สามารถปฏิเสธได้: " + err.message);
+      throw err;
     }
   };
 

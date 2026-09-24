@@ -65,14 +65,13 @@ const buildOutlookEmailWrapper = ({
     }
     /* Mobile responsive constraint */
     @media only screen and (max-width: 620px) {
-      .spacer-col {
-        display: none !important;
-        width: 0 !important;
-      }
       .email-container {
         width: 100% !important;
         max-width: 100% !important;
-        padding: 12px 6px !important;
+      }
+      .mobile-padding {
+        padding-left: 16px !important;
+        padding-right: 16px !important;
       }
     }
   </style>
@@ -84,102 +83,95 @@ const buildOutlookEmailWrapper = ({
   </style>
   <![endif]-->
 </head>
-<body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: Tahoma, 'Segoe UI', Arial, sans-serif; -webkit-font-smoothing: antialiased; width: 100% !important;">
-  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f3f4f6; width: 100%; margin: 0; padding: 0; table-layout: fixed;">
-    <tr>
-      <td class="spacer-col" style="font-size: 0px; line-height: 0px; padding: 0; margin: 0;">&nbsp;</td>
-      <td class="email-container" width="600" align="center" valign="top" style="width: 600px; max-width: 600px; padding: 24px 0;">
-        
-        <!-- Main Card Table (Width 600 fixed) -->
-        <table role="presentation" width="600" align="center" border="0" cellspacing="0" cellpadding="0" style="width: 600px; max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07); text-align: left;">
+<body bgcolor="#f3f4f6" style="margin: 0; padding: 24px 0; background-color: #f3f4f6; font-family: Tahoma, 'Segoe UI', Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+  <center style="width: 100%;">
+    <!-- Main Card Table (Width 600 fixed, Centered, No outer 100% table) -->
+    <table role="presentation" class="email-container" width="600" align="center" border="0" cellpadding="0" cellspacing="0" style="width: 600px; max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07); text-align: left;">
+      
+      <!-- Colored Header Banner -->
+      <tr>
+        <td width="600" bgcolor="${accentColor}" style="width: 600px; background-color: ${accentColor}; padding: 24px 28px; text-align: left;">
+          <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 11px; font-weight: bold; color: #ffffff; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 6px;">
+            ${systemSubtitle}
+          </div>
+          <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 26px; font-weight: bold; color: #ffffff; line-height: 1.2; margin-bottom: 12px;">
+            ${headerTitle}
+          </div>
+          <div>
+            <span style="display: inline-block; border: 1px solid #ffffff; background-color: rgba(255, 255, 255, 0.15); border-radius: 4px; padding: 4px 12px; color: #ffffff; font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 12px; font-weight: bold;">
+              ${badgeText}
+            </span>
+          </div>
+        </td>
+      </tr>
+
+      <!-- Main White Body -->
+      <tr>
+        <td class="mobile-padding" width="600" style="width: 600px; padding: 28px 28px 24px 28px; font-family: Tahoma, 'Segoe UI', Arial, sans-serif; text-align: left;">
           
-          <!-- Colored Header Banner -->
-          <tr>
-            <td width="600" bgcolor="${accentColor}" style="width: 600px; background-color: ${accentColor}; padding: 24px 28px; text-align: left;">
-              <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 11px; font-weight: bold; color: #ffffff; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 6px;">
-                ${systemSubtitle}
-              </div>
-              <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 26px; font-weight: bold; color: #ffffff; line-height: 1.2; margin-bottom: 12px;">
-                ${headerTitle}
-              </div>
-              <div>
-                <span style="display: inline-block; border: 1px solid #ffffff; background-color: rgba(255, 255, 255, 0.15); border-radius: 4px; padding: 4px 12px; color: #ffffff; font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 12px; font-weight: bold;">
-                  ${badgeText}
-                </span>
-              </div>
-            </td>
-          </tr>
+          <!-- Greeting -->
+          <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 18px; font-weight: bold; color: #111827; margin-bottom: 10px;">
+            ${greeting}
+          </div>
 
-          <!-- Main White Body -->
-          <tr>
-            <td width="600" style="width: 600px; padding: 28px 28px 24px 28px; font-family: Tahoma, 'Segoe UI', Arial, sans-serif; text-align: left;">
-              
-              <!-- Greeting -->
-              <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 18px; font-weight: bold; color: #111827; margin-bottom: 10px;">
-                ${greeting}
-              </div>
+          <!-- Lead Text -->
+          <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 15px; color: #374151; line-height: 1.6; margin-bottom: 20px;">
+            ${leadText}
+          </div>
 
-              <!-- Lead Text -->
-              <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 15px; color: #374151; line-height: 1.6; margin-bottom: 20px;">
-                ${leadText}
-              </div>
+          <!-- Details Box with Left Accent Bar (No width="100%" attribute) -->
+          <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="width: 100%; max-width: 544px; background-color: #f9fafb; border: 1px solid #e5e7eb; border-left: 5px solid ${accentColor}; border-radius: 6px; margin: 0 0 22px 0;">
+            <tr>
+              <td style="padding: 18px 20px;">
+                
+                ${boxTitle ? `
+                <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 17px; font-weight: bold; color: #111827; margin-bottom: 14px; border-bottom: 1px dashed #e5e7eb; padding-bottom: 10px;">
+                  ${boxTitle}
+                </div>
+                ` : ''}
 
-              <!-- Details Box with Left Accent Bar (No width="100%" attribute) -->
-              <table role="presentation" border="0" cellspacing="0" cellpadding="0" style="width: 100%; max-width: 544px; background-color: #f9fafb; border: 1px solid #e5e7eb; border-left: 5px solid ${accentColor}; border-radius: 6px; margin: 0 0 22px 0;">
-                <tr>
-                  <td style="padding: 18px 20px;">
-                    
-                    ${boxTitle ? `
-                    <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 17px; font-weight: bold; color: #111827; margin-bottom: 14px; border-bottom: 1px dashed #e5e7eb; padding-bottom: 10px;">
-                      ${boxTitle}
-                    </div>
-                    ` : ''}
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="width: 100%;">
+                  ${rowsHtml}
+                </table>
 
-                    <table role="presentation" border="0" cellspacing="0" cellpadding="0" style="width: 100%;">
-                      ${rowsHtml}
-                    </table>
+              </td>
+            </tr>
+          </table>
 
-                  </td>
-                </tr>
-              </table>
+          ${noteHtml ? `
+          <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 14px; color: #4b5563; line-height: 1.6; margin-bottom: 18px;">
+            ${noteHtml}
+          </div>
+          ` : ''}
 
-              ${noteHtml ? `
-              <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 14px; color: #4b5563; line-height: 1.6; margin-bottom: 18px;">
-                ${noteHtml}
-              </div>
-              ` : ''}
+          <!-- Wide Action Button -->
+          <table role="presentation" border="0" cellpadding="0" cellspacing="0" align="center" style="width: 100%; max-width: 544px; margin: 22px 0 16px 0;">
+            <tr>
+              <td align="center" bgcolor="${accentColor}" style="border-radius: 6px; background-color: ${accentColor}; padding: 13px 24px; text-align: center;">
+                <a href="${buttonUrl}" target="_blank" style="color: #ffffff; font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 15px; font-weight: bold; text-decoration: none; display: block; text-align: center; line-height: 1.3;">
+                  ${buttonText}
+                </a>
+              </td>
+            </tr>
+          </table>
 
-              <!-- Wide Action Button -->
-              <table role="presentation" border="0" cellspacing="0" cellpadding="0" align="center" style="width: 100%; max-width: 544px; margin: 22px 0 16px 0;">
-                <tr>
-                  <td align="center" bgcolor="${accentColor}" style="border-radius: 6px; background-color: ${accentColor}; padding: 13px 24px; text-align: center;">
-                    <a href="${buttonUrl}" target="_blank" style="color: #ffffff; font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 15px; font-weight: bold; text-decoration: none; display: inline-block; text-align: center; line-height: 1.3;">
-                      ${buttonText}
-                    </a>
-                  </td>
-                </tr>
-              </table>
+          <!-- Status Text -->
+          ${statusText ? `
+          <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: bold; color: ${accentColor}; margin: 0 0 6px 0;">
+            ${statusText}
+          </div>
+          ` : ''}
 
-              <!-- Status Text -->
-              ${statusText ? `
-              <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: bold; color: ${accentColor}; margin: 0 0 6px 0;">
-                ${statusText}
-              </div>
-              ` : ''}
+          <!-- Disclaimer -->
+          <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 12px; color: #6b7280; line-height: 1.5; margin: 4px 0 0 0;">
+            ข้อความอัตโนมัติจากระบบ Leave Management System (LMS) กรุณาอย่าตอบกลับ
+          </div>
 
-              <!-- Disclaimer -->
-              <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 12px; color: #6b7280; line-height: 1.5; margin: 4px 0 0 0;">
-                ข้อความอัตโนมัติจากระบบ Leave Management System (LMS) กรุณาอย่าตอบกลับ
-              </div>
+        </td>
+      </tr>
 
-            </td>
-          </tr>
-
-        </table>
-      </td>
-      <td class="spacer-col" style="font-size: 0px; line-height: 0px; padding: 0; margin: 0;">&nbsp;</td>
-    </tr>
-  </table>
+    </table>
+  </center>
 </body>
 </html>`;
 };

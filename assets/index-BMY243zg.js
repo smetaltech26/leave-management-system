@@ -487,7 +487,7 @@ ${A}`}class hr extends Error{constructor({message:e,code:r,cause:s,name:i}){var 
     <tr>
       <td align="center" style="padding: 24px 12px;">
         <!-- Fixed desktop card. Outlook uses the HTML width attribute instead of max-width. -->
-        <table role="presentation" class="email-container" width="600" align="center" border="0" cellpadding="0" cellspacing="0" style="width: 600px; max-width: 600px; table-layout: fixed; margin: 0 auto; background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07); text-align: left;">
+        <table role="presentation" class="email-container" width="600" border="0" cellpadding="0" cellspacing="0" style="width: 600px; max-width: 600px; table-layout: fixed; margin: 0 auto; background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07); text-align: left;">
       
       <!-- Colored Header Banner -->
       <tr>
@@ -545,8 +545,8 @@ ${A}`}class hr extends Error{constructor({message:e,code:r,cause:s,name:i}){var 
           </div>
           `:""}
 
-          <!-- Wide Action Button -->
-          <table role="presentation" class="content-table" width="544" border="0" cellpadding="0" cellspacing="0" align="center" style="width: 544px; max-width: 544px; table-layout: fixed; margin: 22px 0 16px 0;">
+          <!-- Wide Action Button: do not use table align here; Outlook treats it as a floating table. -->
+          <table role="presentation" class="content-table" width="544" border="0" cellpadding="0" cellspacing="0" style="width: 544px; max-width: 544px; table-layout: fixed; clear: both; margin: 22px 0 16px 0;">
             <tr>
               <td align="center" bgcolor="${y}" style="border-radius: 6px; background-color: ${y}; padding: 13px 24px; text-align: center;">
                 <a href="${m}" target="_blank" style="color: #ffffff; font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 15px; font-weight: bold; text-decoration: none; display: block; text-align: center; line-height: 1.3;">

@@ -113,18 +113,25 @@ const buildOutlookEmailWrapper = ({
       
       <!-- Colored Header Banner -->
       <tr>
-        <td class="mobile-padding" bgcolor="${accentColor}" style="background-color: ${accentColor}; padding: 24px 28px; text-align: left;">
-          <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 11px; font-weight: bold; color: #ffffff; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 6px;">
-            ${systemSubtitle}
-          </div>
-          <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 26px; font-weight: bold; color: #ffffff; line-height: 1.2; margin-bottom: 12px;">
-            ${headerTitle}
-          </div>
-          <div>
-            <span style="display: inline-block; border: 1px solid #ffffff; background-color: rgba(255, 255, 255, 0.15); border-radius: 4px; padding: 4px 12px; color: #ffffff; font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 12px; font-weight: bold;">
-              ${badgeText}
-            </span>
-          </div>
+        <td class="mobile-padding" style="padding: 0 28px; text-align: left;">
+          <!-- Keep the colored header independent from Outlook's expanded parent table. -->
+          <table role="presentation" class="content-table" width="544" border="0" cellpadding="0" cellspacing="0" bgcolor="${accentColor}" style="width: 544px; max-width: 544px; table-layout: fixed; clear: both; background-color: ${accentColor}; border-radius: 8px 8px 0 0;">
+            <tr>
+              <td bgcolor="${accentColor}" style="background-color: ${accentColor}; padding: 24px 28px; text-align: left;">
+                <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 11px; font-weight: bold; color: #ffffff; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 6px;">
+                  ${systemSubtitle}
+                </div>
+                <div style="font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 26px; font-weight: bold; color: #ffffff; line-height: 1.2; margin-bottom: 12px;">
+                  ${headerTitle}
+                </div>
+                <div>
+                  <span style="display: inline-block; border: 1px solid #ffffff; background-color: rgba(255, 255, 255, 0.15); border-radius: 4px; padding: 4px 12px; color: #ffffff; font-family: Tahoma, 'Segoe UI', Arial, sans-serif; font-size: 12px; font-weight: bold;">
+                    ${badgeText}
+                  </span>
+                </div>
+              </td>
+            </tr>
+          </table>
         </td>
       </tr>
 

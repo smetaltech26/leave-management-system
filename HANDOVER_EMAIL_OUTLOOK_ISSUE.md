@@ -10,6 +10,21 @@
 
 ## ✅ อัปเดตล่าสุดสำหรับแอ๊น (Antigravity): ผลการรับช่วงงานโดยจ๊ะ
 
+### เพิ่มเติม 30 กันยายน 2026 — การบันทึกวันหยุดบริษัท
+
+- อาการ: แก้วันหยุดใน Settings แล้วดูเหมือนสำเร็จ แต่ Login บัญชีอื่น/Reload กลับเห็นข้อมูลเดิม
+- สาเหตุที่ยืนยันจากโค้ด: `HolidayManagement.jsx` เรียกเพียง `setHolidays` ทั้งเพิ่ม/แก้ไข/ลบ ไม่มี Database mutation ขณะที่การ Login โหลด `holidays` จาก Supabase ใหม่
+- แก้ `supabaseApi.js`: เพิ่ม `createHoliday`, `updateHoliday`, `deleteHoliday`; ใช้ UUID ที่ Database สร้าง, ตรวจวันที่/ชื่อ, ตั้ง `year` ตามวันที่ และให้ Update/Delete คืนแถวจริงก่อนถือว่าสำเร็จ; โหลดรายการเรียงตามวันที่
+- แก้ `HolidayManagement.jsx`: รอ API ก่อนเปลี่ยน State/ปิด Modal, แสดง Error ภายในหน้า, ป้องกันกดซ้ำและแก้ฟอร์มระหว่างบันทึก, คง Confirmation ก่อนลบ
+- Modal ใช้ Portal เดิม พร้อม `100svh`, Safe area, จัดจากด้านบนบนมือถือ และเลื่อนเฉพาะ Body
+- ไม่เปลี่ยน Schema/RLS, Notification หรือคำนวณใบลา/โควตาเดิมย้อนหลัง; หน้าฟอร์มลาและปฏิทินใช้ Holiday state ที่อัปเดตหลังบันทึกสำเร็จ
+- ทดสอบ: `node --test tests/holiday-persistence.test.cjs` ผ่าน 9 กรณี ใช้โค้ด API/Component จริงกับ Supabase stub และ Hook harness ในเครื่อง ไม่ใช่ Browser/Production integration test
+- `npm run build` ผ่าน (ยังมีคำเตือน Bundle ใหญ่เดิม), `git diff --check` ผ่าน
+- สถานะ ณ บันทึกนี้: แก้ใน Local ยังไม่ได้ Deploy; ยังไม่ได้ทดสอบสิทธิ์เขียนด้วยบัญชีจริงหรือ iPhone Safari/Chrome จริง และไม่ได้เพิ่ม/แก้/ลบวันหยุด Production เพื่อทดสอบ
+- หลังอนุมัติ Deploy ให้ทดสอบวันหยุดที่ผู้ดูแลตั้งใจเปลี่ยนจริง: บันทึก → Reload → Login อีกบัญชี → ตรวจปฏิทินและการนับวันลา โดยไม่กดยื่นใบลาเพื่อทดสอบโดยไม่จำเป็น
+
+หัวข้อวันที่ 24 กันยายนด้านล่างเป็นประวัติงาน Outlook และ LINE ที่ส่งมอบก่อนหน้านี้
+
 ### 1. ปิดปัญหาอีเมลขยายเต็มจอใน Classic Outlook Desktop แล้ว
 
 **สาเหตุจริงที่พบ:**

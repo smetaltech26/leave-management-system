@@ -84,9 +84,45 @@ export const fetchAllRequests = async () => {
 };
 
 export const fetchAllHolidays = async () => {
-  const { data, error } = await supabase.from('holidays').select('*');
+  const { data, error } = await supabase.from('holidays').select('*').order('date', { ascending: true });
   if (error) throw error;
   return data || [];
+};
+
+// Persist only editable holiday fields; let the database generate the UUID.
+const holidayPayload = ({ date, title }) => {
+  const parsedDate = new Date(`${date}T00:00:00Z`);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date || '') ||
+      !Number.isFinite(parsedDate.getTime()) || parsedDate.toISOString().slice(0, 10) !== date) {
+    throw new Error('กรุณาระบุวันที่ให้ถูกต้อง');
+  }
+  const trimmedTitle = typeof title === 'string' ? title.trim() : '';
+  if (!trimmedTitle) throw new Error('กรุณาระบุชื่อวันหยุด');
+  return { date, title: trimmedTitle, year: Number(date.slice(0, 4)) };
+};
+
+export const createHoliday = async (values) => {
+  const { data, error } = await supabase.from('holidays')
+    .insert([holidayPayload(values)]).select('*').single();
+  if (error) throw error;
+  return data;
+};
+
+export const updateHoliday = async (id, values) => {
+  if (!id) throw new Error('ไม่พบรหัสวันหยุด');
+  const { data, error } = await supabase.from('holidays')
+    .update(holidayPayload(values)).eq('id', id).select('*').single();
+  if (error) throw error;
+  return data;
+};
+
+export const deleteHoliday = async (id) => {
+  if (!id) throw new Error('ไม่พบรหัสวันหยุด');
+  // Require a returned row: an RLS-filtered/no-op delete must not look successful.
+  const { data, error } = await supabase.from('holidays')
+    .delete().eq('id', id).select('id').single();
+  if (error) throw error;
+  return data;
 };
 
 export const fetchAllPermissions = async () => {

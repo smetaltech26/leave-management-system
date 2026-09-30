@@ -232,15 +232,17 @@
 
 ---
 
-### 🔹 30 กันยายน 2026: แก้วันหยุดบริษัทไม่คงอยู่หลังเปลี่ยนบัญชี (Local — ยังไม่ Deploy)
+### 🔹 30 กันยายน 2026: แก้วันหยุดบริษัทไม่คงอยู่หลังเปลี่ยนบัญชี (Production)
 
 - **สาเหตุ:** หน้า Settings เคยเพิ่ม/แก้ไข/ลบเฉพาะ React state โดยไม่ได้บันทึก `public.holidays`; เมื่อ Login ใหม่จึงโหลดข้อมูลเดิมจากฐานข้อมูลกลับมา
 - **การแก้ไข:** เพิ่ม `createHoliday`, `updateHoliday`, `deleteHoliday` ใน `supabaseApi.js` และให้ `HolidayManagement.jsx` รอผลฐานข้อมูลก่อนปรับหน้าจอ ใช้ UUID จากฐานข้อมูลและปรับ `year` ตามวันที่
 - **กรณีผิดพลาด:** แสดงข้อผิดพลาดโดยไม่ปิดฟอร์มหรือเปลี่ยนรายการเมื่อบันทึกไม่สำเร็จ ตรวจชื่อ/วันที่ ป้องกันการกดซ้ำ และคงการยืนยันก่อนลบ
 - **Mobile:** คง Portal และปรับ Modal วันหยุดให้จำกัดความสูงด้วย `100svh`, Safe Area และเลื่อนเฉพาะ Body
 - **ขอบเขต:** ไม่เปลี่ยน Schema, RLS, Flow อนุมัติ, LINE/Email หรือคำนวณโควตาใบลาเก่าย้อนหลัง
-- **ผลตรวจ:** `node --test tests/holiday-persistence.test.cjs` ผ่าน 9 กรณีด้วยฐานข้อมูลจำลอง, `npm run build` และ `git diff --check` ผ่าน; ยังไม่ได้ทดสอบสิทธิ์เขียน Supabase จริงหรือ iPhone จริง และไม่ได้แก้ข้อมูลวันหยุด Production
-- **ตรวจหลัง Deploy:** บันทึกวันหยุดที่ผู้ดูแลตั้งใจแก้ → Reload → Login อีกบัญชี → ตรวจปฏิทินและการนับวันลา รายละเอียดส่งต่ออยู่ใน `HANDOVER_EMAIL_OUTLOOK_ISSUE.md`
+- **ผลตรวจอัตโนมัติ:** `node --test tests/holiday-persistence.test.cjs` ผ่าน 9 กรณีด้วยฐานข้อมูลจำลอง, `npm run build` และ `git diff --check` ผ่าน
+- **Release:** Commit `502b3a5` ถูก Push ไป `origin/main`; GitHub Pages publish สำเร็จและตอบ HTTP 200 ด้วย Production Asset `index-zHsKaG0J.js` ซึ่งตรวจพบโค้ดแก้ Holiday persistence จริง
+- **ผลตรวจโดยผู้ใช้:** พี่ต้นแก้ข้อมูลวันหยุดบน Production และยืนยันว่าข้อมูลที่เปลี่ยนคงอยู่พร้อมแสดงในปฏิทินเดือนตุลาคม 2026 เรียบร้อย
+- **ข้อจำกัดการตรวจ:** ยังไม่ได้ทดสอบบน iPhone Safari/Chrome จริง และไม่ได้สร้างใบลาจริงเพื่อทดสอบการนับวันลา รายละเอียดส่งต่ออยู่ใน `HANDOVER_EMAIL_OUTLOOK_ISSUE.md`
 
 ## 🔮 4. แผนงานและพิมพ์เขียวการปรับปรุงในอนาคต (Future Roadmap & Notification Blueprint)
 

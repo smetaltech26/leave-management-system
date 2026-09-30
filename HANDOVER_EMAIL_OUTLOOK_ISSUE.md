@@ -20,8 +20,9 @@
 - ไม่เปลี่ยน Schema/RLS, Notification หรือคำนวณใบลา/โควตาเดิมย้อนหลัง; หน้าฟอร์มลาและปฏิทินใช้ Holiday state ที่อัปเดตหลังบันทึกสำเร็จ
 - ทดสอบ: `node --test tests/holiday-persistence.test.cjs` ผ่าน 9 กรณี ใช้โค้ด API/Component จริงกับ Supabase stub และ Hook harness ในเครื่อง ไม่ใช่ Browser/Production integration test
 - `npm run build` ผ่าน (ยังมีคำเตือน Bundle ใหญ่เดิม), `git diff --check` ผ่าน
-- สถานะ ณ บันทึกนี้: แก้ใน Local ยังไม่ได้ Deploy; ยังไม่ได้ทดสอบสิทธิ์เขียนด้วยบัญชีจริงหรือ iPhone Safari/Chrome จริง และไม่ได้เพิ่ม/แก้/ลบวันหยุด Production เพื่อทดสอบ
-- หลังอนุมัติ Deploy ให้ทดสอบวันหยุดที่ผู้ดูแลตั้งใจเปลี่ยนจริง: บันทึก → Reload → Login อีกบัญชี → ตรวจปฏิทินและการนับวันลา โดยไม่กดยื่นใบลาเพื่อทดสอบโดยไม่จำเป็น
+- Deploy Production แล้วเมื่อ 30 กันยายน 2026: Commit `502b3a5` อยู่บน `origin/main`, GitHub Pages publish สำเร็จ และ Production ใช้ Asset `index-zHsKaG0J.js` (HTTP 200; ตรวจพบโค้ด Holiday persistence และ Saving state ใน Asset จริง)
+- พี่ต้นทดสอบกับข้อมูล Production แล้วและยืนยันว่าแก้วันหยุดสำเร็จ ข้อมูลที่เปลี่ยนคงอยู่และแสดงในปฏิทินหลังกลับเข้าระบบ; ภาพยืนยันแสดงปฏิทินเดือนตุลาคม 2026 พร้อมข้อมูลวันหยุดที่อัปเดต
+- สถานะปิดงาน: Production write/read ผ่านการทดสอบโดยผู้ใช้แล้ว ส่วน iPhone Safari/Chrome จริงยังไม่ได้ทดสอบในงานนี้ และไม่ได้ยื่นใบลาจริงเพื่อทดสอบผลการนับวันลา
 
 หัวข้อวันที่ 24 กันยายนด้านล่างเป็นประวัติงาน Outlook และ LINE ที่ส่งมอบก่อนหน้านี้
 

@@ -250,9 +250,9 @@
 
 เพิ่ม Checkbox และลบรายการที่เลือกตามตัวกรองทุกหน้า รองรับ Desktop/Mobile, Confirmation, ป้องกันกดซ้ำ และอัปเดตข้อมูลกลางของโควตา/ปฏิทินหลังฐานข้อมูลยืนยัน เตรียม RPC ตรวจสิทธิ์ฝั่งฐานข้อมูลและคืนโควตาเฉพาะ Pending/Approved ใน Transaction เดียว โดยป้องกันคืนซ้ำ/ผิดปี และแบ่งโหลดรายงานกับโควตาให้ครบเกิน 1,000 แถว
 
-ทดสอบอัตโนมัติ 16/16, Browser fixture, Build และ SQL ในตารางชั่วคราวแบบ Rollback ผ่าน ตรวจ Live Schema/RLS/FK/Trigger แล้ว พี่ต้นยอมรับเลขใบลาซ้ำกับประวัติที่ลบแล้ว จึงคง MAX+1 เดิม ไม่เพิ่ม Sequence **ติดตั้ง RPC ใน Supabase LMS ตามอนุมัติแล้ว แต่ยังไม่ Push/Deploy Frontend** เปิด `http://localhost:3108/leave-management-system/` ให้พี่ทดสอบก่อน (เชื่อมฐานข้อมูลจริง) ตรวจแล้วว่าฟังก์ชันมีอยู่และผู้ไม่ล็อกอินถูกปฏิเสธ ไม่ลบใบลาจริงเพื่อทดสอบและไม่แก้ยอดโควตาเดิม รายละเอียด: `HANDOVER_REPORT_BULK_DELETE.md`
+ทดสอบอัตโนมัติ 16/16, Browser fixture, Build และ SQL ในตารางชั่วคราวแบบ Rollback ผ่าน ตรวจ Live Schema/RLS/FK/Trigger แล้ว พี่ต้นยอมรับเลขใบลาซ้ำกับประวัติที่ลบแล้ว จึงคง MAX+1 เดิม ไม่เพิ่ม Sequence ติดตั้ง RPC ใน Supabase LMS ตามอนุมัติ และหลังพี่ต้นอนุมัติจาก localhost ได้ Push/Deploy Frontend แล้ว: source `e81ea67`, Production asset `index-B3zzoeYG.js` HTTP 200, GitHub Pages status `built` ตรวจแล้วว่าผู้ไม่ล็อกอินถูกปฏิเสธ ไม่ลบใบลาจริงเพื่อทดสอบและไม่แก้ยอดโควตาเดิม รายละเอียด: `HANDOVER_REPORT_BULK_DELETE.md`
 
-เพิ่มคอลัมน์ `จัดการ` ตาม OMS สำหรับ SuperAdmin เท่านั้น: ดูรายละเอียดด้วย Modal เดิม และลบรายรายการด้วย Confirmation/RPC/คืนโควตา Flow เดียวกับการลบที่เลือก พร้อมปุ่มใน Mobile Card; ตรวจ Desktop จริงบน localhost, viewport 390x700 ไม่ล้นแนวนอน และ Fixture ยืนยัน Admin ไม่เห็น Action แล้ว โดยยังไม่กดยืนยันลบข้อมูลจริงและยังไม่ Deploy
+เพิ่มคอลัมน์ `จัดการ` ตาม OMS สำหรับ SuperAdmin เท่านั้น: ดูรายละเอียดด้วย Modal เดิม และลบรายรายการด้วย Confirmation/RPC/คืนโควตา Flow เดียวกับการลบที่เลือก พร้อมปุ่มใน Mobile Card; ตรวจ Desktop จริงบน localhost, viewport 390x700 ไม่ล้นแนวนอน และ Fixture ยืนยัน Admin ไม่เห็น Action แล้ว โดยไม่กดยืนยันลบข้อมูลจริง ก่อน Deploy Production สำเร็จตามหลักฐานข้างต้น
 
 ### 📧 สถาปัตยกรรมระบบแจ้งเตือนแบบไฮบริด (Hybrid Notification Architecture: Supabase + GAS)
 จากข้อเสนอแนะของ **น้องจ๊ะ (Codex)** และ **พี่ต้น (P'Ton)** ได้ข้อสรุปแนวทางการปรับปรุงระบบแจ้งเตือนในอนาคตดังนี้:

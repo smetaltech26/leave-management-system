@@ -1,7 +1,7 @@
 # 📘 ระบบลางานออนไลน์ (Leave Management System - S Metal Tech)
 ## 📝 เอกสารประวัติการพัฒนา สถาปัตยกรรมระบบ และบันทึกการแก้ไข (System Changelog & Architecture)
 
-> **บันทึกข้อมูลล่าสุดเมื่อ:** 30 กันยายน 2026<br>
+> **บันทึกข้อมูลล่าสุดเมื่อ:** 3 ตุลาคม 2026<br>
 > **จัดทำโดย:** แอ๊น (Antigravity AI Assistant) ร่วมกับ พี่ต้น (P'Ton)  
 > **สำหรับ:** พี่ต้น, น้องจ๊ะ (Codex), น้องแอ๊น (Antigravity) และทีมพัฒนาในอนาคต
 
@@ -24,7 +24,7 @@
 | `public.users` | ข้อมูลโปรไฟล์พนักงาน (UID, Email, Fullname, Role, แผนก, รูป) | **ไม่มีการเก็บรหัสผ่าน (password_hash = NULL)** |
 | `auth.users` | ข้อมูลบัญชีความปลอดภัยของ Supabase Auth | จัดเก็บและเข้ารหัสรหัสผ่านด้วย `bcrypt` |
 | `public.user_policies` | โควตาวันลาของพนักงานแต่ละคนในแต่ละปี (9 ประเภท) | มี Unique Key `(user_id, leave_type, year)` |
-| `public.leave_requests` | ข้อมูลคำขอลางาน (รหัส `LEV-XXXX`, วันที่, ประเภท, สถานะ) | รหัสรันต่อแบบ Atomic ด้วย PostgreSQL Function |
+| `public.leave_requests` | ข้อมูลคำขอลางาน (รหัส `LEV-XXXX`, วันที่, ประเภท, สถานะ) | Live 3 ต.ค. 2026 ใช้ Function แบบ MAX+1; พี่ต้นยอมรับเลขซ้ำกับประวัติที่ลบแล้ว จึงคงวิธีเดิม |
 | `public.approval_steps` | ขั้นตอนการอนุมัติ 3 ลำดับ (หัวหน้า -> ผู้จัดการ -> HR) | เก็บประวัติและ Comment ของผู้อนุมัติแต่ละท่าน |
 | `public.attachments` | ไฟล์แนบเอกสารใบลา | เก็บใน Supabase Storage Bucket `attachments` |
 | `public.agencies` / `departments` | ข้อมูลฝ่าย และ แผนก ขององค์กร | |
@@ -245,6 +245,14 @@
 - **ข้อจำกัดการตรวจ:** ยังไม่ได้ทดสอบบน iPhone Safari/Chrome จริง และไม่ได้สร้างใบลาจริงเพื่อทดสอบการนับวันลา รายละเอียดส่งต่ออยู่ใน `HANDOVER_EMAIL_OUTLOOK_ISSUE.md`
 
 ## 🔮 4. แผนงานและพิมพ์เขียวการปรับปรุงในอนาคต (Future Roadmap & Notification Blueprint)
+
+### งานที่เตรียมในเครื่อง 3 ตุลาคม 2026: SuperAdmin ลบรายการจากรายงาน
+
+เพิ่ม Checkbox และลบรายการที่เลือกตามตัวกรองทุกหน้า รองรับ Desktop/Mobile, Confirmation, ป้องกันกดซ้ำ และอัปเดตข้อมูลกลางของโควตา/ปฏิทินหลังฐานข้อมูลยืนยัน เตรียม RPC ตรวจสิทธิ์ฝั่งฐานข้อมูลและคืนโควตาเฉพาะ Pending/Approved ใน Transaction เดียว โดยป้องกันคืนซ้ำ/ผิดปี และแบ่งโหลดรายงานกับโควตาให้ครบเกิน 1,000 แถว
+
+ทดสอบอัตโนมัติ 16/16, Browser fixture, Build และ SQL ในตารางชั่วคราวแบบ Rollback ผ่าน ตรวจ Live Schema/RLS/FK/Trigger แล้ว พี่ต้นยอมรับเลขใบลาซ้ำกับประวัติที่ลบแล้ว จึงคง MAX+1 เดิม ไม่เพิ่ม Sequence **ติดตั้ง RPC ใน Supabase LMS ตามอนุมัติแล้ว แต่ยังไม่ Push/Deploy Frontend** เปิด `http://localhost:3108/leave-management-system/` ให้พี่ทดสอบก่อน (เชื่อมฐานข้อมูลจริง) ตรวจแล้วว่าฟังก์ชันมีอยู่และผู้ไม่ล็อกอินถูกปฏิเสธ ไม่ลบใบลาจริงเพื่อทดสอบและไม่แก้ยอดโควตาเดิม รายละเอียด: `HANDOVER_REPORT_BULK_DELETE.md`
+
+เพิ่มคอลัมน์ `จัดการ` ตาม OMS สำหรับ SuperAdmin เท่านั้น: ดูรายละเอียดด้วย Modal เดิม และลบรายรายการด้วย Confirmation/RPC/คืนโควตา Flow เดียวกับการลบที่เลือก พร้อมปุ่มใน Mobile Card; ตรวจ Desktop จริงบน localhost, viewport 390x700 ไม่ล้นแนวนอน และ Fixture ยืนยัน Admin ไม่เห็น Action แล้ว โดยยังไม่กดยืนยันลบข้อมูลจริงและยังไม่ Deploy
 
 ### 📧 สถาปัตยกรรมระบบแจ้งเตือนแบบไฮบริด (Hybrid Notification Architecture: Supabase + GAS)
 จากข้อเสนอแนะของ **น้องจ๊ะ (Codex)** และ **พี่ต้น (P'Ton)** ได้ข้อสรุปแนวทางการปรับปรุงระบบแจ้งเตือนในอนาคตดังนี้:

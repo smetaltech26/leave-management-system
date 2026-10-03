@@ -35,24 +35,33 @@ export const fetchAllLeaveTypes = async () => {
   return data || [];
 };
 
-export const fetchAllUserPolicies = async () => {
-  const { data, error } = await supabase.from('user_policies').select('*');
-  if (error) throw error;
-  return data || [];
+// Annual reports can exceed PostgREST's per-response row limit.
+const fetchAllRows = async (makeQuery) => {
+  const rows = [];
+  const pageSize = 500;
+  for (let offset = 0; ; offset += pageSize) {
+    const { data, error } = await makeQuery().range(offset, offset + pageSize - 1);
+    if (error) throw error;
+    rows.push(...(data || []));
+    if (!data || data.length < pageSize) return rows;
+  }
 };
+
+export const fetchAllUserPolicies = async () => fetchAllRows(() =>
+  supabase.from('user_policies').select('*').order('id', { ascending: true })
+);
 
 export const fetchAllRequests = async () => {
   // We need to fetch requests along with their approval steps and attachments
-  const { data, error } = await supabase
+  const data = await fetchAllRows(() => supabase
     .from('leave_requests')
     .select(`
       *,
       approvers:approval_steps(*),
       attachments:attachments(*)
     `)
-    .order('created_at', { ascending: false });
-    
-  if (error) throw error;
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: false }));
   
   // Format the returned data to match the existing state structure
   return (data || []).map(req => {
@@ -290,6 +299,29 @@ export const deleteLeaveRequest = async (requestId) => {
   // Cascading deletes will handle approval_steps and attachments
   const { error } = await supabase.from('leave_requests').delete().eq('id', requestId);
   if (error) throw error;
+};
+
+// No direct-delete fallback: authorization, deletion and refunds belong to one transaction.
+export const deleteReportRequests = async (requestIds) => {
+  if (!Array.isArray(requestIds) || !requestIds.length ||
+      requestIds.some(id => typeof id !== 'string' || !id.trim())) {
+    throw new Error('กรุณาเลือกรายการที่ต้องการลบ');
+  }
+  const ids = [...new Set(requestIds)];
+  const { data, error } = await supabase.rpc('lms_delete_report_requests', { p_request_ids: ids });
+  if (error) {
+    if (error.code === 'PGRST202') {
+      throw new Error('ยังไม่ได้ติดตั้งฟังก์ชันลบรายงานในฐานข้อมูล กรุณาติดต่อผู้ดูแลระบบ');
+    }
+    throw error;
+  }
+  const returned = new Set(Array.isArray(data?.deleted_ids) ? data.deleted_ids : []);
+  if (!Array.isArray(data?.deleted_ids) || returned.size !== ids.length ||
+      ids.some(id => !returned.has(id)) || !Array.isArray(data?.policies) ||
+      data.policies.some(policy => !policy || typeof policy.id !== 'string')) {
+    throw new Error('ไม่สามารถยืนยันผลการลบได้ กรุณาโหลดข้อมูลใหม่ก่อนดำเนินการต่อ');
+  }
+  return data;
 };
 
 // ==========================================

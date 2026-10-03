@@ -1,0 +1,19 @@
+<!doctype html><html lang="th"><head><meta charset="UTF-8"><title>LMS rollback SQL test preview</title></head>
+<body><h1>LMS: isolated temporary-table SQL test</h1>
+<p>All fixtures and the test function use pg_temp. The transaction ends with ROLLBACK; no production records are modified.</p>
+<pre id="sql" style="white-space:pre-wrap"></pre>
+<details><summary>Approved installation SQL: LMS jkndpfqefprfrnftqqxs only</summary>
+<pre id="installation-sql" style="white-space:pre-wrap"></pre></details>
+<script type="module">
+import migration from '../../supabase/migrations/20261003_report_bulk_delete.sql?raw';
+import fixture from '../report-delete.database.sql?raw';
+const tables = fixture.slice(fixture.indexOf('CREATE TABLE public.users'), fixture.indexOf('\\ir '))
+  .replaceAll('CREATE TABLE public.', 'CREATE TEMP TABLE public.');
+const routine = migration.slice(migration.indexOf('CREATE OR REPLACE FUNCTION'), migration.lastIndexOf('COMMIT;'));
+const cases = fixture.slice(fixture.indexOf('INSERT INTO public.users'), fixture.lastIndexOf('ROLLBACK;'));
+const sql = 'BEGIN;\nSET LOCAL statement_timeout = \'15s\';\n' +
+  (tables + '\n' + routine + '\n' + cases).replaceAll('public.', 'pg_temp.') +
+  "\nSELECT 'PASS: role checks, mixed statuses, cascades, old/new year, stale selection, ambiguity, transaction rollback, insufficient balance' AS test_result;\nROLLBACK;";
+document.getElementById('sql').textContent = sql;
+document.getElementById('installation-sql').textContent = migration;
+</script></body></html>

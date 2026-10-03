@@ -14,6 +14,7 @@ import PermissionsPage from './components/admin/PermissionsPage';
 import * as api from './services/supabaseApi';
 import { supabase } from './lib/supabase';
 import { useModal } from './contexts/ModalContext';
+import { applyDeletedRequests, applyReturnedPolicies } from './lib/reportSelection';
 
 export default function App() {
   const [users, setUsers] = useState([]);
@@ -295,6 +296,21 @@ export default function App() {
       console.error("Delete Error:", err);
       await showAlert("ไม่สามารถลบคำขอลาได้: " + err.message);
     }
+  };
+
+  // Report-only bulk operation. Only apply the balances returned by the database.
+  const handleDeleteReportRequests = async (requestIds) => {
+    if (currentUserRef.current?.role !== 'SuperAdmin' || currentUserRef.current.id !== currentUser?.id) {
+      throw new Error('เฉพาะ Super admin เท่านั้นที่ลบรายการจากรายงานได้');
+    }
+    const actorId = currentUserRef.current.id;
+    const result = await api.deleteReportRequests(requestIds);
+    if (currentUserRef.current?.id === actorId) {
+      setRequests(previous => applyDeletedRequests(previous, result.deleted_ids));
+      setUserPolicies(previous => applyReturnedPolicies(previous, result.policies));
+      setEditingRequest(previous => result.deleted_ids.includes(previous?.id) ? null : previous);
+    }
+    return result;
   };
 
   // ดำเนินการอนุมัติ Step
@@ -602,11 +618,14 @@ export default function App() {
 
           {activeTab === 'report' && (
             <ReportPage
+              currentUser={currentUser}
+              onDeleteRequests={handleDeleteReportRequests}
               requests={requests}
               users={users}
               agencies={agencies}
               departments={departments}
               leaveTypes={leaveTypes}
+              userPolicies={userPolicies}
             />
           )}
 

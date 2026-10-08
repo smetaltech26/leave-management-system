@@ -566,7 +566,7 @@ export default function UserManagement({ users, setUsers, pendingCount = 0, user
                     onChange={(e) => setFormData({...formData, role: e.target.value})}
                     className="w-full px-4 py-2.5 bg-white dark:bg-slate-950 text-[var(--text-main)] border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                   >
-                    <option value="Employee">Employee (พนักงาน)</option>
+                    <option value="Employee">User (พนักงาน)</option>
                     <option value="SuperUser">SuperUser (หัวหน้า/รอง)</option>
                     <option value="Admin">Admin / Manager (บุคคล/ผู้จัดการ)</option>
                     <option value="SuperAdmin">SuperAdmin</option>

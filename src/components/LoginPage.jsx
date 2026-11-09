@@ -1,7 +1,16 @@
 import React, { useState } from 'react';
-import { Lock, User, AlertCircle, Eye, EyeOff, Moon, Sun, Info, X } from 'lucide-react';
+import { User, AlertCircle, Eye, EyeOff, Moon, Sun, Snowflake, Info, X } from 'lucide-react';
 import logoUrl from '../assets/smt-logo.jpg';
 import { supabase } from '../lib/supabase';
+import './LoginPage.css';
+
+const SNOW_FLAKES = Array.from({ length: 28 }, (_, index) => ({
+  left: `${(index * 37 + 11) % 100}%`,
+  delay: `${-((index * 7) % 19)}s`,
+  duration: `${12 + (index * 5) % 13}s`,
+  size: `${3 + (index * 3) % 5}px`,
+  drift: `${(index % 2 === 0 ? 1 : -1) * (16 + index % 23)}px`,
+}));
 
 export default function LoginPage({ onLogin, theme = 'light', toggleTheme }) {
   const [username, setUsername] = useState('');
@@ -10,6 +19,7 @@ export default function LoginPage({ onLogin, theme = 'light', toggleTheme }) {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [isSnowing, setIsSnowing] = useState(true);
   
   // State for HR Popup
   const [showHRPopup, setShowHRPopup] = useState(false);
@@ -79,37 +89,62 @@ export default function LoginPage({ onLogin, theme = 'light', toggleTheme }) {
   };
 
   return (
-    <div className="min-h-[100svh] flex flex-col items-center justify-center p-4 bg-slate-50 dark:bg-slate-950">
-      {/* Background layer */}
-      <div className={`absolute inset-0 transition-colors duration-500 ${theme === 'dark' ? 'bg-slate-950' : 'bg-slate-50'}`}></div>
+    <div className="winter-login">
+      <div className={`winter-login__snow${isSnowing ? '' : ' winter-login__snow--paused'}`} aria-hidden="true">
+        {SNOW_FLAKES.map((flake, index) => (
+          <span
+            key={index}
+            className="winter-login__flake"
+            style={{
+              '--flake-left': flake.left,
+              '--flake-delay': flake.delay,
+              '--flake-duration': flake.duration,
+              '--flake-size': flake.size,
+              '--flake-drift': flake.drift,
+            }}
+          />
+        ))}
+      </div>
 
-      <div className="w-full max-w-md relative z-10 p-8 rounded-3xl shadow-xl bg-white dark:bg-slate-900 transition-all">
+      <main className="winter-login__card">
         
         {/* Theme Toggle Button & New Version top right inside card */}
-        <div className="absolute top-4 right-4 flex items-center space-x-2">
-          <span className="text-blue-600 dark:text-blue-400 font-bold text-[10px] animate-pulse bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded-md shadow-sm border border-blue-100 dark:border-blue-800 pointer-events-none">
+        <div className="winter-login__controls">
+          <span className="winter-login__version">
             New Version ✨
           </span>
+          <button
+            type="button"
+            onClick={() => setIsSnowing((current) => !current)}
+            className="winter-login__control winter-login__snow-toggle"
+            aria-label={isSnowing ? 'หยุดหิมะตก' : 'เปิดหิมะตก'}
+            aria-pressed={isSnowing}
+            title={isSnowing ? 'หยุดหิมะตก' : 'เปิดหิมะตก'}
+          >
+            <Snowflake className="w-4 h-4" aria-hidden="true" />
+          </button>
           <button 
+            type="button"
             onClick={toggleTheme} 
-            className="p-1.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors"
+            className="winter-login__control"
+            aria-label={theme === 'dark' ? 'เปลี่ยนเป็นโหมดสว่าง' : 'เปลี่ยนเป็นโหมดมืด'}
             title={theme === 'dark' ? "เปลี่ยนเป็นโหมดสว่าง" : "เปลี่ยนเป็นโหมดมืด"}
           >
-            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            {theme === 'dark' ? <Sun className="w-4 h-4" aria-hidden="true" /> : <Moon className="w-4 h-4" aria-hidden="true" />}
           </button>
         </div>
 
         {/* Logo and Title Section */}
-        <div className="flex items-center justify-center mt-4 mb-6 space-x-3">
+        <div className="winter-login__brand flex items-center justify-center mb-6 space-x-3">
           <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center p-1 border border-slate-100 overflow-hidden shrink-0">
-            <img src={logoUrl} alt="SMT Logo" className="w-full h-full object-contain" />
+            <img src={logoUrl} alt="SMT Logo" width="48" height="48" className="w-full h-full object-contain" />
           </div>
-          <h1 className="text-lg font-bold text-slate-800 dark:text-slate-100">
+          <h1 className="winter-login__brand-title text-lg font-bold text-slate-800 dark:text-slate-100">
             Leave Management System (LMS)
           </h1>
         </div>
         
-        <h2 className="text-xl font-bold text-center text-slate-800 dark:text-slate-100 mb-6">
+        <h2 className="winter-login__heading text-xl font-bold text-center text-slate-800 dark:text-slate-100 mb-6">
           เข้าสู่ระบบ
         </h2>
 
@@ -117,8 +152,8 @@ export default function LoginPage({ onLogin, theme = 'light', toggleTheme }) {
         <form onSubmit={handleLogin} className="space-y-5">
           
           {error && (
-            <div className="bg-rose-50 border border-rose-200 text-rose-600 px-4 py-3 rounded-xl flex items-center space-x-3 shadow-sm">
-              <AlertCircle className="w-5 h-5 text-rose-500 flex-shrink-0" />
+            <div role="alert" className="bg-rose-50 border border-rose-200 text-rose-600 px-4 py-3 rounded-xl flex items-center space-x-3 shadow-sm">
+              <AlertCircle className="w-5 h-5 text-rose-500 flex-shrink-0" aria-hidden="true" />
               <p className="text-sm font-medium">{error}</p>
             </div>
           )}
@@ -126,14 +161,18 @@ export default function LoginPage({ onLogin, theme = 'light', toggleTheme }) {
           <div className="space-y-4">
             {/* Username Input */}
             <div>
-              <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1.5">อีเมลหรือชื่อผู้ใช้</label>
+              <label htmlFor="login-username" className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1.5">อีเมลหรือชื่อผู้ใช้</label>
               <div className="relative">
                 <input
                   type="text"
+                  id="login-username"
+                  name="username"
+                  autoComplete="username"
+                  spellCheck={false}
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm"
+                  className="winter-login__input block w-full px-4 py-3 rounded-xl text-sm"
                   placeholder="ป้อนอีเมลหรือชื่อผู้ใช้ของคุณ"
                 />
               </div>
@@ -141,22 +180,26 @@ export default function LoginPage({ onLogin, theme = 'light', toggleTheme }) {
 
             {/* Password Input */}
             <div>
-              <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1.5">รหัสผ่าน</label>
+              <label htmlFor="login-password" className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1.5">รหัสผ่าน</label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
+                  id="login-password"
+                  name="password"
+                  autoComplete="current-password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-4 pr-12 py-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm"
+                  className="winter-login__input block w-full pl-4 pr-12 py-3 rounded-xl text-sm"
                   placeholder="ป้อนรหัสผ่านของคุณ"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
+                  className="winter-login__eye absolute inset-y-0 right-0 pr-4 flex items-center"
+                  aria-label={showPassword ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'}
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
                 </button>
               </div>
             </div>
@@ -168,7 +211,7 @@ export default function LoginPage({ onLogin, theme = 'light', toggleTheme }) {
               <div className="relative">
                 <input 
                   type="checkbox" 
-                  className="sr-only" 
+                  className="winter-login__remember sr-only"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
                 />
@@ -189,7 +232,7 @@ export default function LoginPage({ onLogin, theme = 'light', toggleTheme }) {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3.5 px-4 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600/30 dark:hover:bg-blue-600/50 dark:border dark:border-blue-500/50 text-white dark:text-blue-300 font-medium rounded-xl shadow-sm dark:shadow-none transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+            className="winter-login__submit w-full py-3.5 px-4 font-medium rounded-xl disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {isLoading ? (
               <span className="flex items-center justify-center space-x-2">
@@ -220,30 +263,32 @@ export default function LoginPage({ onLogin, theme = 'light', toggleTheme }) {
             Create by S Metal Tech Co., Ltd.
           </p>
         </div>
-      </div>
+      </main>
       
       {/* HR Contact Popup Modal */}
       {showHRPopup && (
-        <div className="fixed inset-0 z-50 flex items-start md:items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-2xl flex flex-col overflow-hidden max-h-[calc(100svh-2rem)] md:max-h-[85dvh] min-h-0 shadow-2xl">
+        <div className="winter-login__modal fixed inset-0 z-50 flex items-start md:items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="login-hr-dialog-title">
+          <div className="winter-login__modal-panel bg-white dark:bg-slate-900 w-full max-w-sm rounded-2xl flex flex-col overflow-hidden min-h-0 shadow-2xl">
             
             <div className="p-4 border-b border-slate-100 dark:border-slate-800 shrink-0 flex items-center justify-between">
               <div className="flex items-center space-x-2 text-blue-600 dark:text-blue-400">
-                <Info className="w-5 h-5" />
-                <h3 className="font-bold text-slate-800 dark:text-slate-100">แจ้งเตือน</h3>
+                <Info className="w-5 h-5" aria-hidden="true" />
+                <h3 id="login-hr-dialog-title" className="font-bold text-slate-800 dark:text-slate-100">แจ้งเตือน</h3>
               </div>
               <button 
+                type="button"
                 onClick={() => setShowHRPopup(false)}
                 className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                aria-label="ปิดหน้าต่างแจ้งเตือน"
               >
-                <X className="w-5 h-5" />
+                <X className="w-5 h-5" aria-hidden="true" />
               </button>
             </div>
 
-            <div className="p-6 flex-1 min-h-0 overflow-y-auto">
+            <div className="winter-login__modal-body p-6 flex-1 min-h-0 overflow-y-auto">
               <div className="text-center">
                 <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <User className="w-8 h-8 text-blue-500 dark:text-blue-400" />
+                  <User className="w-8 h-8 text-blue-500 dark:text-blue-400" aria-hidden="true" />
                 </div>
                 <h4 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2">ติดต่อฝ่ายบุคคล</h4>
                 <p className="text-sm text-slate-600 dark:text-slate-400">

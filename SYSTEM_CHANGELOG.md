@@ -1,9 +1,12 @@
 # 📘 ระบบลางานออนไลน์ (Leave Management System - S Metal Tech)
 ## 📝 เอกสารประวัติการพัฒนา สถาปัตยกรรมระบบ และบันทึกการแก้ไข (System Changelog & Architecture)
 
-> **บันทึกข้อมูลล่าสุดเมื่อ:** 3 ตุลาคม 2026<br>
+> **บันทึกข้อมูลล่าสุดเมื่อ:** 23 พฤศจิกายน 2026 (เพิ่มฟีเจอร์รีเซ็ตคำขอลาขึ้นปีใหม่ LEV-0001 & ล้าง Storage Bucket สำหรับ SuperAdmin + Deploy Production)<br>
 > **จัดทำโดย:** แอ๊น (Antigravity AI Assistant) ร่วมกับ พี่ต้น (P'Ton)  
-> **สำหรับ:** พี่ต้น, น้องจ๊ะ (Codex), น้องแอ๊น (Antigravity) และทีมพัฒนาในอนาคต
+> **สำหรับ:** พี่ต้น, น้องจ๊ะ (Codex), น้องแอ๊น (Antigravity) และทีมพัฒนาในอนาคต<br>
+> **อัปเดตบันทึกหน้า Login โดย:** จ๊ะ (Codex) วันที่ 9 พฤศจิกายน 2026<br>
+> **อัปเดตบันทึกความปลอดภัย LINE โดย:** แอ๊น (Antigravity) วันที่ 19 พฤศจิกายน 2026<br>
+> **อัปเดตบันทึกรีเซ็ตขึ้นปีใหม่โดย:** แอ๊น (Antigravity) วันที่ 23 พฤศจิกายน 2026
 
 ---
 
@@ -243,6 +246,44 @@
 - **Release:** Commit `502b3a5` ถูก Push ไป `origin/main`; GitHub Pages publish สำเร็จและตอบ HTTP 200 ด้วย Production Asset `index-zHsKaG0J.js` ซึ่งตรวจพบโค้ดแก้ Holiday persistence จริง
 - **ผลตรวจโดยผู้ใช้:** พี่ต้นแก้ข้อมูลวันหยุดบน Production และยืนยันว่าข้อมูลที่เปลี่ยนคงอยู่พร้อมแสดงในปฏิทินเดือนตุลาคม 2026 เรียบร้อย
 - **ข้อจำกัดการตรวจ:** ยังไม่ได้ทดสอบบน iPhone Safari/Chrome จริง และไม่ได้สร้างใบลาจริงเพื่อทดสอบการนับวันลา รายละเอียดส่งต่ออยู่ใน `HANDOVER_EMAIL_OUTLOOK_ISSUE.md`
+
+### 🔹 9 พฤศจิกายน 2026: หน้า Login ธีมฤดูหนาวแบบ B
+
+- **ขอบเขต:** ปรับ `src/components/LoginPage.jsx`, เพิ่ม `src/components/LoginPage.css` และ `src/assets/login-winter-background.png` ให้ฟอร์ม Login อยู่กลางฉากหิมะ ต้นสน และไฟฤดูหนาวตามแบบ B ที่พี่ต้นเลือก
+- **การโต้ตอบ:** เพิ่มหิมะตกแบบ CSS พร้อมปุ่มหยุด/เปิด และหยุดแอนิเมชันเมื่อระบบตั้งค่า Reduce Motion; รองรับโหมดสว่าง/มืดและหน้าจอมือถือ
+- **การใช้งานเดิม:** คงการยืนยันตัวตนผ่าน Supabase และขั้นตอนโหลดโปรไฟล์เดิม เพิ่มชื่อกำกับช่องกรอก, `autocomplete`, ชื่อปุ่มสำหรับ Screen Reader และปรับ Modal ติดต่อ HR ให้เว้น Safe Area บนมือถือ
+- **ผลตรวจ:** `npm run build` ผ่าน; Chrome headless แสดงหน้าที่ 1440, 390 และ 320 px โดยไม่ล้นแนวนอน; Production Build ผ่าน `vite preview` ที่ 390 px ภาพฉากหลังตอบ HTTP 200 และปุ่มหิมะ โหมดมืด ดูรหัสผ่าน และ Modal ทำงานตามที่ตรวจ
+- **สถานะส่งมอบ:** Commit `27f53a0` เป็น HEAD และตรงกับ `origin/main` tracking ref ในเครื่องเมื่อ 9 พฤศจิกายน 2026; ยังไม่ได้ยืนยันสถานะ GitHub Pages ปัจจุบัน พี่ต้นให้รอ Deploy LMS พร้อม OMS หลังแก้ OMS เสร็จ รายละเอียดและข้อจำกัดอยู่ใน `HANDOVER_LOGIN_WINTER_20261109.md`
+
+### 🔹 19 พฤศจิกายน 2026: จัดการช่องโหว่ความปลอดภัย LINE Messaging Key หลุด, Reissue Token ใหม่ และ Deploy Production
+
+- **ที่มาและการตรวจพบ:** GitGuardian ส่งอีเมลแจ้งเตือนความปลอดภัย (Good Samaritan program) ตรวจพบ LINE Messaging Key หลุดใน Public Repository `smetaltech26/leave-management-system` บน Branch `gh-pages` (ไฟล์ `assets/index-DGiISEdL.js`) จากการ Build เว็บไซต์ในอดีต (10 สิงหาคม 2026)
+- **การแก้ไขและจัดการความเสี่ยง (Key Revocation & Rotation):**
+  - ดำเนินการ **Reissue Channel Access Token ใหม่** บน LINE Developers Console (บอท `SMT_Notification`, Channel ID: `2009342450`)
+  - ตรวจสอบ Token ตัวเดิมที่หลุด พบว่าสถานะกลายเป็น `401 Unauthorized` ทันที ตัดความเสี่ยงที่บุคคลภายนอกจะนำไปใช้งานได้ 100%
+  - GitGuardian ตรวจสอบความถูกต้องและขึ้นสถานะยืนยัน *"Congrats, your secret is revoked"* ปิดเคสแจ้งเตือนอย่างสมบูรณ์
+  - อัปเดต Token ตัวใหม่ลงในไฟล์คอนฟิก `.env` (`VITE_LINE_CHANNEL_ACCESS_TOKEN`)
+- **การตรวจสอบและการ Deploy (Production):**
+  - ทดสอบเชื่อมต่อ API ของ LINE ด้วย Token ใหม่ และทดสอบเรียกผ่าน Proxy Webhook (`VITE_GAS_LINE_URL`) สำเร็จ
+  - รัน `npm run build` ตรวจสอบ Syntax และโครงสร้างผ่านสมบูรณ์ 100%
+  - รันคำสั่ง `npm run deploy` Deploy โค้ดเวอร์ชันล่าสุดขึ้นสู่ GitHub Pages (`gh-pages`, Commit `cf65ced`, Production Asset `index-D-cVtHBI.js`)
+  - **ผลตรวจโดยผู้ใช้:** พี่ต้นทดสอบระบบบน Production จริง และยืนยันว่าการแจ้งเตือนทาง LINE (1:1 Direct Push) ทำงานเข้าสู่ผู้รับได้ถูกต้องตามปกติสมบูรณ์ 100%
+
+### 🔹 23 พฤศจิกายน 2026: ฟีเจอร์รีเซ็ตข้อมูลคำขอลาขึ้นปีใหม่ (เริ่ม LEV-0001) & ลบไฟล์ใน Storage Bucket (`attachments`) สำหรับ SuperAdmin
+
+- **ขอบเขตและฟีเจอร์ใหม่:**
+  - เพิ่มกรอบ **Danger Zone — รีเซ็ตระบบขึ้นปีใหม่** ในเมนู **ตั้งค่าระบบ → ฐานข้อมูล** (`src/components/SettingsPage.jsx`) แสดงเฉพาะ `currentUser?.role === 'SuperAdmin'` เท่านั้น
+  - **ปุ่มที่ 1 — รีเซ็ตคำขอลาขึ้นปีใหม่ (LEV-0001):** แสดงจำนวนคำขอลา, ประวัติขั้นตอนอนุมัติ และเอกสารแนบใน DB ปัจจุบัน พร้อม Modal ยืนยัน 2 ชั้นที่ต้องพิมพ์ **`Reset เลขที่คำขอทั้งหมดเป็น LEV-0001`** ให้ตรงทุกตัวอักษร
+  - **ปุ่มที่ 2 — ลบไฟล์ใน Storage Bucket (`attachments`):** แสดงจำนวนไฟล์ปัจจุบันใน Bucket `attachments` พร้อมปุ่มรีเฟรช และ Modal ยืนยัน 2 ชั้นที่ต้องพิมพ์ **`ลบไฟล์แนบทั้งหมดใน Storage`** โดยไม่แตะรูปโปรไฟล์ใน Bucket `avatars`
+  - Modal ทั้งหมดทำตามมาตรฐาน iOS Safari (`100svh`, `items-start md:items-center`, `min-h-0`, `createPortal` ไปที่ `document.body`)
+- **ฐานข้อมูลและความปลอดภัย (`supabase/migrations/20261123_annual_reset_requests.sql`):**
+  - ติดตั้ง RPC `public.lms_reset_leave_requests_for_new_year(p_confirmation text)` แบบ `SECURITY DEFINER`, `SET search_path = ''`, ล็อกสิทธิ์ `REVOKE ALL FROM PUBLIC, anon` / `GRANT EXECUTE TO authenticated`
+  - ตรวจสิทธิ์ `SuperAdmin` จาก `auth.uid()` เทียบ `public.users` และตรวจคำยืนยันฝั่ง DB ซ้ำ ทำงานแบบ Atomic (`LOCK TABLE` → ลบ `leave_requests` ซึ่ง cascade ลบ `approval_steps` และ `attachments` → ยืนยัน `get_next_leave_request_id()` คืน `'LEV-0001'`) โดย **ไม่แตะ** `users`, `agencies`, `departments`, `leave_types`, `user_policies`, `holidays`, `day_of_week`, `role_permissions`
+  - เพิ่ม RLS Policy `"Allow SuperAdmin delete attachments"` บน `storage.objects` เฉพาะ `FOR DELETE` ใน bucket `attachments` สำหรับ `SuperAdmin` เท่านั้น
+- **การตรวจสอบและ Release:**
+  - รัน SQL Preflight + Migration + Verification บน Supabase LMS (`jkndpfqefprfrnftqqxs`) สำเร็จ (`anon_can_exec = false`, `auth_can_exec = true`, policy สร้างเรียบร้อย) โดยไม่มีการลบข้อมูลจริงระหว่างทดสอบ
+  - รัน Unit Tests (`tests/annual-reset.test.cjs`, `tests/report-delete.test.cjs`, `tests/holiday-persistence.test.cjs`) ผ่าน **20/20** และ `npm run build` ผ่านเรียบร้อย
+  - Push ขึ้น `origin/main` (Commit `4814f59`) และ Deploy ขึ้น GitHub Pages (`gh-pages`, Production Asset `index-CKRFXzwn.js`) สำเร็จ — รายละเอียดส่งต่ออยู่ใน `HANDOVER_ANNUAL_RESET_20261123.md`
 
 ## 🔮 4. แผนงานและพิมพ์เขียวการปรับปรุงในอนาคต (Future Roadmap & Notification Blueprint)
 

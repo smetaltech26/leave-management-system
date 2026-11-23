@@ -595,3 +595,114 @@ export const deleteLeaveType = async (id) => {
     .eq('id', id);
   if (error) throw error;
 };
+
+
+// ==========================================
+// 10. SuperAdmin Annual Reset & Storage Cleanup
+// ==========================================
+export const ANNUAL_RESET_CONFIRMATION_TEXT = 'Reset เลขที่คำขอทั้งหมดเป็น LEV-0001';
+export const STORAGE_PURGE_CONFIRMATION_TEXT = 'ลบไฟล์แนบทั้งหมดใน Storage';
+const ATTACHMENTS_BUCKET = 'attachments';
+
+// No direct-delete fallback: authorization, deletion, and ID reset check belong to one atomic RPC transaction.
+export const resetLeaveRequestsForNewYear = async (confirmationText) => {
+  if (confirmationText !== ANNUAL_RESET_CONFIRMATION_TEXT) {
+    throw new Error('คำยืนยันไม่ถูกต้อง กรุณาพิมพ์ข้อความยืนยันให้ตรงทุกตัวอักษร');
+  }
+
+  const { data, error } = await supabase.rpc('lms_reset_leave_requests_for_new_year', {
+    p_confirmation: confirmationText
+  });
+
+  if (error) {
+    if (error.code === 'PGRST202') {
+      throw new Error('ยังไม่ได้ติดตั้งฟังก์ชันรีเซ็ตข้อมูลในฐานข้อมูล (lms_reset_leave_requests_for_new_year) กรุณารัน SQL Migration ก่อนใช้งาน');
+    }
+    throw error;
+  }
+
+  if (
+    !data ||
+    typeof data.deleted_requests !== 'number' ||
+    typeof data.deleted_approval_steps !== 'number' ||
+    typeof data.deleted_attachments !== 'number' ||
+    data.next_request_id !== 'LEV-0001'
+  ) {
+    throw new Error('ไม่สามารถยืนยันผลการรีเซ็ตข้อมูลได้ กรุณาโหลดหน้าเว็บใหม่และตรวจสอบข้อมูลอีกครั้ง');
+  }
+
+  return data;
+};
+
+// Recursively list all file paths inside the 'attachments' bucket only (never touches 'avatars').
+export const listAllAttachmentStorageFiles = async () => {
+  const filePaths = [];
+  const queue = [''];
+  const pageSize = 100;
+
+  while (queue.length > 0) {
+    const prefix = queue.shift();
+    for (let offset = 0; ; offset += pageSize) {
+      const { data, error } = await supabase.storage
+        .from(ATTACHMENTS_BUCKET)
+        .list(prefix, {
+          limit: pageSize,
+          offset,
+          sortBy: { column: 'name', order: 'asc' }
+        });
+
+      if (error) throw error;
+      const items = Array.isArray(data) ? data : [];
+
+      for (const item of items) {
+        if (!item?.name) continue;
+        const fullPath = prefix ? `${prefix}/${item.name}` : item.name;
+        const isFolder = item.id === null || item.metadata === null;
+        if (isFolder) {
+          queue.push(fullPath);
+        } else {
+          filePaths.push(fullPath);
+        }
+      }
+
+      if (items.length < pageSize) break;
+    }
+  }
+
+  return filePaths;
+};
+
+export const purgeAttachmentStorageBucket = async (confirmationText) => {
+  if (confirmationText !== STORAGE_PURGE_CONFIRMATION_TEXT) {
+    throw new Error('คำยืนยันไม่ถูกต้อง กรุณาพิมพ์ข้อความยืนยันให้ตรงทุกตัวอักษร');
+  }
+
+  const paths = await listAllAttachmentStorageFiles();
+  if (paths.length === 0) {
+    return { deleted_files: 0, remaining_files: 0 };
+  }
+
+  const batchSize = 100;
+  let removedCount = 0;
+  for (let i = 0; i < paths.length; i += batchSize) {
+    const batch = paths.slice(i, i + batchSize);
+    const { data, error } = await supabase.storage
+      .from(ATTACHMENTS_BUCKET)
+      .remove(batch);
+
+    if (error) throw error;
+    if (Array.isArray(data)) {
+      removedCount += data.length;
+    }
+  }
+
+  const remaining = await listAllAttachmentStorageFiles();
+  if (remaining.length > 0 && removedCount === 0) {
+    throw new Error('ไม่สามารถลบไฟล์ใน Storage Bucket ได้ (สิทธิ์ RLS ยังไม่อนุญาต) กรุณารัน SQL Migration เพิ่มสิทธิ์ลบสำหรับ SuperAdmin ก่อน');
+  }
+
+  return {
+    deleted_files: paths.length - remaining.length,
+    remaining_files: remaining.length
+  };
+};

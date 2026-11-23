@@ -313,6 +313,28 @@ export default function App() {
     return result;
   };
 
+  // SuperAdmin annual reset: clears leave_requests (and cascaded approval_steps/attachments) without touching master data or quotas.
+  const handleResetLeaveRequests = async (confirmationText) => {
+    if (currentUserRef.current?.role !== 'SuperAdmin' || currentUserRef.current.id !== currentUser?.id) {
+      throw new Error('เฉพาะ SuperAdmin เท่านั้นที่สามารถรีเซ็ตข้อมูลคำขอลาขึ้นปีใหม่ได้');
+    }
+    const actorId = currentUserRef.current.id;
+    const result = await api.resetLeaveRequestsForNewYear(confirmationText);
+    if (currentUserRef.current?.id === actorId) {
+      setRequests([]);
+      setEditingRequest(null);
+      try {
+        const refreshed = await api.fetchAllRequests();
+        if (currentUserRef.current?.id === actorId) {
+          setRequests(refreshed);
+        }
+      } catch (refreshErr) {
+        console.warn('Could not refresh requests after annual reset:', refreshErr);
+      }
+    }
+    return result;
+  };
+
   // ดำเนินการอนุมัติ Step
   const handleApproveStep = async (requestId, stepNumber, comment) => {
     try {
@@ -602,6 +624,9 @@ export default function App() {
 
           {activeTab === 'settings' && (
             <SettingsPage
+              currentUser={currentUser}
+              requests={requests}
+              onResetLeaveRequests={handleResetLeaveRequests}
               userPolicies={userPolicies}
               setUserPolicies={setUserPolicies}
               holidays={holidays}
